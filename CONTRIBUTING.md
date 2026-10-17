@@ -17,8 +17,8 @@ Thanks for your interest. This repository is maintained by the pixsame team and 
 
 ## Adding your tool
 
-- **A converter** (your tool's output → manifest) is one file under `packages/visual-regression-manifest/src/convert/`, one fixture directory under `__tests__/`, and one test. Follow an existing converter.
-- **A comparison entry** for the site is one YAML file under `apps/site/data/tools/`. Every claim needs a source URL from your own docs and a `lastVerified` date.
+- A converter from your tool's output to a manifest is one file under `packages/visual-regression-manifest/src/convert/`, one fixture directory under `__tests__/`, and one test. Follow an existing converter.
+- A comparison entry for the site is one YAML file under `apps/site/data/tools/`. Every claim needs a source URL from your own docs and a `lastVerified` date.
 
 ## Development setup
 

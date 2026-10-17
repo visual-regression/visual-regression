@@ -201,8 +201,8 @@ const openInViewer = () => {
         </section>
       </div>
       <p class="text-xs text-muted">
-        The run is five screenshots of the mock checkout, compared in your browser; the sizes are those of the PNG files it
-        produced. Real full-page screenshots are many times larger, which is when "only the failures' images" starts to matter.
+        The run is five screenshots of the mock checkout, compared in your browser. Sizes are those of the PNG files it
+        produced. Real full-page screenshots are many times larger, so "only the failures' images" matters more there.
       </p>
     </div>
     <template #fallback>

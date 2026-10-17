@@ -25,9 +25,9 @@ We built the [visual regression manifest](https://visual-regression.dev/manifest
 
 ## Proposals
 
-1. **Document `type: "visual"`.** Add it as a known classification value next to `unit`, `integration` and `e2e`. Use it for tests where the outcome is an image comparison.
-2. **Add an optional `role` to attachments.** Make it a string with open values. We use `baseline`, `actual` and `diff`. Other possible values are `trace` and `video`. With `role`, a consumer can find the three images of a comparison in `attachments[]` without parsing names.
-3. **Add an optional `visual` object to a test.** If a new top-level key is too much before 1.0, document `extra.visualRegression` as an endorsed namespace instead.
+1. Document `type: "visual"`. Add it as a known classification value next to `unit`, `integration` and `e2e`. Use it for tests where the outcome is an image comparison.
+2. Add an optional `role` to attachments. Make it a string with open values. We use `baseline`, `actual` and `diff`. Other possible values are `trace` and `video`. With `role`, a consumer can find the three images of a comparison in `attachments[]` without parsing names.
+3. Add an optional `visual` object to a test. If a new top-level key is too much before 1.0, document `extra.visualRegression` as an endorsed namespace instead.
    ```json
    {
      "diffRatio": 0.0231,
@@ -41,9 +41,9 @@ We built the [visual regression manifest](https://visual-regression.dev/manifest
    - `baselineWritten` tells if the run wrote the baseline file.
    - `variant` is an id the producer selects. It tells baselines with the same name apart. Examples: device, theme, locale.
 
-## Nice to have proposals
+## Nice-to-have proposals
 
-4. **More statuses.** Visual tests have outcomes that the five statuses cannot show:
+4. More statuses. Visual tests have outcomes that the five statuses cannot show:
    - `missing-baseline`: no baseline existed, so a person must look at the actual image.
    - `created`: the run wrote a new baseline.
    - `updated`: the run replaced the baseline on request.
@@ -51,7 +51,7 @@ We built the [visual regression manifest](https://visual-regression.dev/manifest
 
    We can live without them. Today we map `missing-baseline` to `failed` and `created`, `updated` and `approved` to `passed`. We always set `rawStatus` to the original value. This works, but a consumer must know our `rawStatus` values to show the difference.
 
-5. **A few generic `environment` fields.** CI reporters need these, visual or not:
+5. A few generic `environment` fields. CI reporters need these, visual or not:
    - `ciProvider`: a string id of the CI system.
    - `pullRequestNumber`: an integer.
    - `headCommit`: the commit of the PR head. `commit` is often the merge commit.
@@ -64,5 +64,5 @@ All proposals are additive and optional. Existing reports stay valid. We can sen
 ## Evidence
 
 - Spec and converters: https://visual-regression.dev/manifest
-- The mapping table manifest ↔ CTRF: https://visual-regression.dev/manifest/converting
+- The mapping table between the manifest and CTRF: https://visual-regression.dev/manifest/converting
 - Tools whose output converts today: Playwright, Vitest, jest-image-snapshot, cypress-image-snapshot, cypress-visual-regression, BackstopJS, Roborazzi.

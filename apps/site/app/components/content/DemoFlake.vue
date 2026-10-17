@@ -100,8 +100,8 @@ const reset = () => CAUSES.forEach((c) => ((on[c.key] = false), (fixed[c.key] = 
         <UButton size="xs" variant="ghost" color="neutral" @click="reset">Reset</UButton>
       </div>
       <p class="text-xs text-muted">
-        Nothing in the code changed between the two renders. Every red pixel is noise, and each fix removes its own share;
-        raising the allowed ratio instead would hide a real regression of the same size.
+        Nothing in the code changed between the two renders. Every red pixel is noise, and each fix removes its own share.
+        Raising the allowed ratio instead would hide a real regression of the same size.
       </p>
     </div>
     <template #fallback>

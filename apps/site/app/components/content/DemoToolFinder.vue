@@ -140,10 +140,10 @@ const resultsColor = (value: string) =>
         </li>
       </ul>
       <p v-else class="px-3 py-6 text-center text-sm text-muted">
-        Nothing fits all four answers at once. Loosen one; the chapter's trade-offs are exactly the ones you are hitting.
+        Nothing fits all four answers. Loosen one; you are hitting the trade-offs the chapter describes.
       </p>
       <p class="border-t border-default px-3 py-2 text-xs text-muted">
-        Diff engines (pixelmatch, odiff, …) are left out: they are what these tools compare with, not an alternative to them.
+        Diff engines (pixelmatch, odiff, …) are left out because these tools are built on them.
         <NuxtLink :to="compareLink" class="underline">See every column in the comparison</NuxtLink>, or correct a tool's entry from there.
       </p>
     </div>

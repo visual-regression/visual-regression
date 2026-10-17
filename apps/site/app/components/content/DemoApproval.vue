@@ -119,10 +119,10 @@ const color = (s: Status) => (s === 'failed' ? 'error' : s === 'approved' ? 'suc
       variant="subtle"
       icon="i-lucide-triangle-alert"
       title="A bug just became the baseline"
-      :description="approvedAll ? 'Three approvals in one click, and the $4.20 price is now what the test expects. The next run passes. Nobody looked.' : 'The $4.20 price is now what the test expects, and the next run will pass.'"
+      :description="approvedAll ? 'Three approvals in one click, and the $4.20 price is now what the test expects. The next run passes without anyone looking.' : 'The $4.20 price is now what the test expects, and the next run will pass.'"
     />
     <p class="text-xs text-muted">
-      Look at each pair before deciding. The reviewer of the pull request should be the one clicking, not the author.
+      Look at each pair before deciding. The pull request's reviewer should do the clicking, not its author.
     </p>
   </div>
 </template>

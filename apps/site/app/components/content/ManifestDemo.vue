@@ -95,8 +95,8 @@ const tab = computed(() => TABS[active.value]!);
 }</pre>
     </div>
     <p class="text-xs text-muted">
-      The same keys, the same statuses, the same three images per entry. Only <code>tool</code>, <code>runner</code> and the
-      paths change. Anything that reads one manifest reads them all: PR bots, review apps, the <NuxtLink to="/viewer" class="underline">viewer</NuxtLink> on this site.
+      Every manifest has the same keys, statuses and three images per entry. Only <code>tool</code>, <code>runner</code> and the
+      paths change, so a PR bot, a review app or the <NuxtLink to="/viewer" class="underline">viewer</NuxtLink> on this site can read any of them.
     </p>
   </div>
 </template>

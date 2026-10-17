@@ -21,7 +21,7 @@ pricingModel: freemium
 machineReadableResults: manifest
 manifestSupport: native
 notes:
-  - Maintained by the same team that runs this site; the comparison is written to be fair, not flattering.
+  - Maintained by the same team that runs this site.
   - The GitHub App for approving baselines from a pull request and the hosted platform are announced, not released.
 lastVerified: '2026-10-13'
 sources:

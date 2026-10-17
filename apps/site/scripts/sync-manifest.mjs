@@ -187,11 +187,11 @@ const nested = (def, depth = 3) =>
 let ref = frontmatter({
   title: 'Schema reference',
   description:
-    'Every field of the manifest, generated from the JSON Schema at /schema/v1.json.',
+    'Every field of the manifest, as defined by the JSON Schema at /schema/v1.json.',
   generated: true,
   navigation: { icon: 'i-lucide-braces' },
 });
-ref += `The normative description of the format is the JSON Schema (draft 2020-12) at [\`${schema.$id}\`](${new URL(schema.$id).pathname}), shipped in the \`visual-regression-manifest\` package as \`schema.json\`. This page is generated from it.\n\n`;
+ref += `The JSON Schema (draft 2020-12) at [\`${schema.$id}\`](${new URL(schema.$id).pathname}) is the normative description of the format. The \`visual-regression-manifest\` package ships it as \`schema.json\`.\n\n`;
 ref += `${md(schema.description)}\n\n## Top level\n\n${table(schema, schema.required)}\n\n${nested(schema)}`;
 for (const [name, def] of Object.entries(schema.$defs ?? {})) {
   ref += `## ${name}\n\n${def.description ? md(def.description) + '\n\n' : ''}`;

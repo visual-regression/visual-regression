@@ -16,7 +16,7 @@ pricingModel: custom
 machineReadableResults: none-cloud
 manifestSupport: none
 notes:
-  - Nothing to convert or upload; the approach is a different one from screenshot assertions.
+  - Nothing to convert or upload, since it does not use screenshot assertions.
 lastVerified: '2026-10-13'
 sources:
   - https://www.meticulous.ai/how-it-works

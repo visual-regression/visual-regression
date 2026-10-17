@@ -106,8 +106,8 @@ const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
         aria-label="Compare baseline and actual"
       />
       <p class="max-w-xl text-xs text-muted">
-        Drag across the two renders. This run made the "Buy now" button wider and green and nothing else; with 1% of the
-        pixels allowed, the comparison fails and leaves these three files behind for someone to look at.
+        Drag across the two renders. The only change is a wider, green "Buy now" button. With 1% of the
+        pixels allowed, the comparison fails and leaves these three files for someone to review.
       </p>
     </div>
     <template #fallback>

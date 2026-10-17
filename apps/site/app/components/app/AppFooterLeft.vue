@@ -8,6 +8,12 @@
       class="underline underline-offset-2 hover:text-default"
       >pixsame</a
     >
+    ·
+    <NuxtLink
+      to="/privacy"
+      class="underline underline-offset-2 hover:text-default"
+      >Privacy</NuxtLink
+    >
     · content under
     <a
       href="https://creativecommons.org/licenses/by/4.0/"

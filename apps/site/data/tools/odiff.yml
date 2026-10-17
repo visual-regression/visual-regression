@@ -1,6 +1,6 @@
 name: odiff
 website: https://github.com/dmtrKovalenko/odiff
-summary: Fast native image comparison with a CLI and Node bindings, used by Lost Pixel and others where pixelmatch is too slow.
+summary: Native image comparison with a CLI and Node bindings, used by Lost Pixel and others where pixelmatch is too slow.
 category: diff-engine
 openSource: true
 license: MIT
