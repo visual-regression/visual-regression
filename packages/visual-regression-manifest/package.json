@@ -1,7 +1,7 @@
 {
   "name": "visual-regression-manifest",
   "description": "The visual regression run manifest: one JSON file per test run listing every screenshot comparison, built upon CTRF. JSON Schema, TypeScript types, reader, writer, merger and converters (CTRF, Playwright JSON report, plain image triples) for a runner-agnostic record of screenshot comparisons.",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "author": "Jakub Freisler <jakub.freisler@frsource.org>",
   "homepage": "https://visual-regression.dev/manifest",
   "repository": {
