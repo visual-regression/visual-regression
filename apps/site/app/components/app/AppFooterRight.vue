@@ -1,6 +1,6 @@
 <script setup lang="ts">
-const appConfig = useAppConfig()
-const { forced: forcedColorMode } = useDocusColorMode()
+const appConfig = useAppConfig();
+const { forced: forcedColorMode } = useDocusColorMode();
 </script>
 
 <template>

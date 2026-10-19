@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const route = useRoute()
+const route = useRoute();
 
 const items = computed(() => [
   {
@@ -22,15 +22,12 @@ const items = computed(() => [
     to: '/viewer',
     active: route.path.startsWith('/viewer'),
   },
-])
+]);
 </script>
 
 <template>
   <div class="flex w-full items-center justify-between gap-4">
-    <UNavigationMenu
-      :items="items"
-      variant="link"
-    />
+    <UNavigationMenu :items="items" variant="link" />
     <UContentSearchButton
       :collapsed="false"
       variant="soft"

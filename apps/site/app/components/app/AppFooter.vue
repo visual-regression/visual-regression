@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { ContentNavigationItem } from '@nuxt/content'
+import type { ContentNavigationItem } from '@nuxt/content';
 
-const appConfig = useAppConfig()
-const navigation = inject<Ref<ContentNavigationItem[]>>('navigation')
+const appConfig = useAppConfig();
+const navigation = inject<Ref<ContentNavigationItem[]>>('navigation');
 
 const childrenOf = (path: string) =>
   (navigation?.value.find((item) => item.path === path)?.children ?? []).map(
     (child) => ({ label: child.title, to: child.path }),
-  )
+  );
 
 const columns = computed(() => [
   { label: 'Guide', children: childrenOf('/learn') },
@@ -22,12 +22,16 @@ const columns = computed(() => [
   {
     label: 'Project',
     children: [
-      { label: 'Source on GitHub', to: appConfig.github?.url, target: '_blank' },
+      {
+        label: 'Source on GitHub',
+        to: appConfig.github?.url,
+        target: '_blank',
+      },
       { label: 'pixsame', to: 'https://pixsame.com', target: '_blank' },
       { label: 'Privacy', to: '/privacy' },
     ],
   },
-])
+]);
 </script>
 
 <template>
