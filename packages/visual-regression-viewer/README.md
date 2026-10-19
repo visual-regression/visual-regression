@@ -10,9 +10,9 @@
   </a>
 </p>
 
-The viewer reads the [`visual-regression-manifest`](https://visual-regression.dev/manifest) files of a run, merges them the way `mergeManifests` does (several machines, one file per worker, later CI attempts winning over earlier ones) and shows the result: the screenshots that need a human first, each with a baseline/actual slider and the diff image, then everything else. It works on a local run, on an unpacked CI artifact, and on a folder you publish as a report.
+The viewer reads the [`visual-regression-manifest`](https://visual-regression.dev/manifest) files of a run, merges them the way `mergeManifests` does (several machines, one file per worker, later CI attempts winning over earlier ones) and shows the result: the screenshots that need a human first, each with a baseline/actual slider and the diff image, then everything else. It works on a local run, a CI artifact and a report folder you publish.
 
-Nothing leaves your machine: the command makes no network requests and sends no telemetry. A browser-only version, where you drop the run folder onto the page, is at [visual-regression.dev/viewer](https://visual-regression.dev/viewer).
+The command makes no network requests and sends no telemetry. A browser-only version, where you drop the run folder onto the page, is at [visual-regression.dev/viewer](https://visual-regression.dev/viewer).
 
 - [Usage](#usage)
 - [Options](#options)
@@ -28,7 +28,7 @@ npx visual-regression-viewer path/to/run
 
 It needs Node 22.12 or newer. `path/to/run` is the folder that holds the manifests and the screenshots (the project root after a local run, an unpacked CI artifact), and defaults to the current directory. It can also be one manifest file, or a zip of the folder: a CI artifact as downloaded needs no unpacking. Every `visual-regression-manifest.json` and `visual-regression-manifest.<label>.json` below the folder is read, except inside `node_modules` and `.git`.
 
-By default the page is built in memory and served at `http://127.0.0.1:4173` (the next free port when that one is taken). Nothing is written to disk. The server hands out the page and exactly the image files the manifests name, nothing else from the folder.
+By default the page is built in memory and served at `http://127.0.0.1:4173` (the next free port when that one is taken). Nothing is written to disk. The server hands out the page and the image files the manifests name. Other files in the folder are not reachable.
 
 A zip is unpacked into a temporary folder, which is removed when the command stops. An entry that would land outside of that folder makes the command refuse the zip, and so does a zip that unpacks to more than 4 GiB.
 
@@ -43,7 +43,7 @@ An image path in a manifest is resolved against the folder of the manifest. When
 | Option                        |                                                                                                                                                         |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `-o, --out <dir>`             | Write the page (`index.html`) and the images it links to into `<dir>`. See [Writing a report](#writing-a-report).                                       |
-| `--no-serve`                  | Do not start the web server. Needs `-o`: without a server and without an output there is nothing to do.                                                 |
+| `--no-serve`                  | Do not start the web server. Requires `-o`, because without a server or an output there is nothing to do.                                               |
 | `--no-watch`                  | With a server and `-o`: do not reload open pages when the files in `<dir>` change.                                                                      |
 | `-p, --port <port>`           | Port of the web server. The default is `4173`, and the next free port when it is taken; a port you name must be free.                                   |
 | `--host <host>`               | Address the server listens on. The default is `127.0.0.1`, so only your machine can reach it. `0.0.0.0` exposes the page and the images to the network. |
