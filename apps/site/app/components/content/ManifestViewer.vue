@@ -1,7 +1,9 @@
 <script setup lang="ts">
 /**
  * A client-side viewer for `visual-regression-manifest.json` files: the
- * manifests and images never leave the browser. It mirrors the package's
+ * manifests and images never leave the browser. A run can come as a folder,
+ * as a zip (dropped, chosen, or fetched from a URL by the browser) or as
+ * several of those. It mirrors the package's
  * merge rules (identity = name + test file + platform + renderer + variant,
  * a later CI attempt wins) without importing the Node-only package.
  */
@@ -56,12 +58,15 @@ type Shown = Entry & {
 const NEEDS_HUMAN: Status[] = ['failed', 'missing-baseline'];
 const MANIFEST_NAME = /^visual-regression-manifest(\..+)?\.json$/;
 
-const files = ref<{ path: string; file: File }[]>([]);
+const files = ref<RunFile[]>([]);
 const manifests = ref<Loaded[]>([]);
 const errors = ref<string[]>([]);
 const selected = ref<string | null>(null);
 const slider = ref(50);
 const dragging = ref(false);
+const busy = ref('');
+const zipUrl = ref('');
+const fromZip = ref(false);
 const urls = new Map<string, string>();
 
 const urlFor = (file: File) => {
@@ -77,11 +82,16 @@ onBeforeUnmount(() => {
   for (const url of urls.values()) URL.revokeObjectURL(url);
 });
 
-/** Finds the dropped file whose path ends with the manifest's project-relative path. */
-const findFile = (relative: string | null) => {
+/**
+ * Finds the dropped file whose path ends with the manifest's project-relative
+ * path. When several files end the same way equally well none is returned and
+ * `warn` is told: showing the screenshot of another test would be worse than
+ * showing none.
+ */
+const findFile = (relative: string | null, warn: (message: string) => void) => {
   if (!relative) return undefined;
   const wanted = relative.replace(/^(\.\.\/)+/, '').split('/');
-  let best: { path: string; file: File } | undefined;
+  let best: RunFile[] = [];
   let bestScore = 0;
   for (const candidate of files.value) {
     const parts = candidate.path.split('/');
@@ -95,10 +105,16 @@ const findFile = (relative: string | null) => {
     }
     if (score > bestScore) {
       bestScore = score;
-      best = candidate;
+      best = [candidate];
+    } else if (score === bestScore && score > 0) {
+      best.push(candidate);
     }
   }
-  return bestScore > 0 ? best : undefined;
+  if (best.length > 1) {
+    warn(`${relative} matches ${best.length} files equally well (${best.map((f) => f.path).join(', ')}), so it is not shown`);
+    return undefined;
+  }
+  return best[0];
 };
 
 const platformLabel = (entry: Entry) => {
@@ -129,8 +145,10 @@ const entryKey = (entry: Entry) =>
     entry.variant ?? '',
   ].join('\u0000');
 
-const merged = computed<Shown[]>(() => {
+const run = computed(() => {
   const byKey = new Map<string, Shown>();
+  const warnings = new Set<string>();
+  const warn = (message: string) => warnings.add(message);
   for (const { label, manifest, attempt } of manifests.value) {
     for (const entry of manifest.entries) {
       const key = entryKey(entry);
@@ -143,15 +161,15 @@ const merged = computed<Shown[]>(() => {
         source: label,
         urls: {
           baseline: (() => {
-            const f = findFile(entry.images.baseline.path);
+            const f = findFile(entry.images.baseline.path, warn);
             return f && urlFor(f.file);
           })(),
           actual: (() => {
-            const f = findFile(entry.images.actual.path);
+            const f = findFile(entry.images.actual.path, warn);
             return f && urlFor(f.file);
           })(),
           diff: (() => {
-            const f = findFile(entry.images.diff.path);
+            const f = findFile(entry.images.diff.path, warn);
             return f && urlFor(f.file);
           })(),
         },
@@ -159,13 +177,16 @@ const merged = computed<Shown[]>(() => {
     }
   }
   const order = (e: Shown) => (NEEDS_HUMAN.includes(e.status) ? 0 : 1);
-  return [...byKey.values()].sort(
+  const entries = [...byKey.values()].sort(
     (a, b) =>
       order(a) - order(b) ||
       a.test.filePath.localeCompare(b.test.filePath) ||
       a.name.localeCompare(b.name),
   );
+  return { entries, warnings: [...warnings] };
 });
+const merged = computed<Shown[]>(() => run.value.entries);
+const warnings = computed(() => run.value.warnings);
 const existingAttempt = new Map<string, number>();
 
 const counts = computed(() => {
@@ -204,9 +225,18 @@ const readText = (file: File) =>
     reader.readAsText(file);
   });
 
-const load = async (incoming: { path: string; file: File }[]) => {
-  errors.value = [];
+const load = async (incoming: RunFile[], earlier: string[] = []) => {
+  errors.value = [...earlier];
   existingAttempt.clear();
+  try {
+    busy.value = incoming.some(({ file }) => isZipName(file.name)) ? 'Unpacking…' : '';
+    incoming = await expandZips(incoming);
+  } catch (error) {
+    errors.value.push((error as Error).message);
+    incoming = [];
+  } finally {
+    busy.value = '';
+  }
   files.value = incoming;
   const found: Loaded[] = [];
   for (const { path, file } of incoming) {
@@ -234,6 +264,26 @@ const load = async (incoming: { path: string; file: File }[]) => {
     errors.value.push('No visual-regression-manifest*.json file among the dropped files.');
   }
   selected.value = merged.value[0]?.key ?? null;
+};
+
+/** Fetches the zips in the visitor's browser and shows what is in them. */
+const loadAddresses = async (addresses: string[]) => {
+  busy.value = 'Fetching…';
+  const results = await Promise.allSettled(addresses.map(fetchRunFiles));
+  const fetched = results.flatMap((r) => (r.status === 'fulfilled' ? r.value : []));
+  const failures = results.flatMap((r) =>
+    r.status === 'rejected' ? [(r.reason as Error).message] : [],
+  );
+  busy.value = '';
+  await load(fetched, failures);
+  fromZip.value = manifests.value.length > 0;
+};
+
+const submitUrl = async () => {
+  const address = zipUrl.value.trim();
+  if (!address) return;
+  await navigateTo({ query: { zip: address }, hash: '' }, { replace: true });
+  await loadAddresses([address]);
 };
 
 const onInput = (event: Event) => {
@@ -296,15 +346,24 @@ const onDrop = async (event: DragEvent) => {
 const route = useRoute();
 const fromDemo = ref(false);
 onMounted(async () => {
-  if (route.query.demo !== DEMO_RUN_ID) return;
-  const { produced } = await generateDemoRun();
-  fromDemo.value = true;
-  await load(toDemoFiles(produced, demoOptionsFromQuery(route.query)));
+  if (route.query.demo === DEMO_RUN_ID) {
+    const { produced } = await generateDemoRun();
+    fromDemo.value = true;
+    await load(toDemoFiles(produced, demoOptionsFromQuery(route.query)));
+    return;
+  }
+  // `?zip=<url>`, or `#zip=<url>` for an address that must not reach the server
+  const addresses = zipAddressesOf(route.query.zip, route.hash);
+  if (addresses.length > 0) await loadAddresses(addresses);
 });
 
 const reset = () => {
-  if (fromDemo.value) void navigateTo({ query: {} }, { replace: true });
+  if (fromDemo.value || fromZip.value || route.query.zip || route.hash) {
+    void navigateTo({ query: {}, hash: '' }, { replace: true });
+  }
   fromDemo.value = false;
+  fromZip.value = false;
+  zipUrl.value = '';
   files.value = [];
   manifests.value = [];
   errors.value = [];
@@ -324,23 +383,56 @@ const reset = () => {
         @drop.prevent="onDrop"
       >
         <UIcon name="i-lucide-folder-input" class="mx-auto mb-3 size-8 text-muted" />
-        <p class="font-medium">Drop the run folder here</p>
+        <p class="font-medium">Drop the run folder, or a zip of it, here</p>
         <p class="mt-1 text-sm text-muted">
-          The folder that holds <code class="break-all">visual-regression-manifest.json</code> and the
-          screenshots. Nothing is uploaded.
+          The folder (or the artifact zip) that holds
+          <code class="break-all">visual-regression-manifest.json</code> and the screenshots. Nothing is uploaded.
         </p>
-        <label class="mt-4 inline-block">
-          <span class="cursor-pointer rounded-md bg-elevated px-3 py-1.5 text-sm font-medium hover:bg-accented">
-            or choose a folder
-          </span>
+        <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <label>
+            <span class="cursor-pointer rounded-md bg-elevated px-3 py-1.5 text-sm font-medium hover:bg-accented">
+              or choose a folder
+            </span>
+            <input
+              type="file"
+              multiple
+              webkitdirectory
+              class="sr-only"
+              @change="onInput"
+            />
+          </label>
+          <label>
+            <span class="cursor-pointer rounded-md bg-elevated px-3 py-1.5 text-sm font-medium hover:bg-accented">
+              or choose a zip
+            </span>
+            <input
+              type="file"
+              multiple
+              accept=".zip,application/zip"
+              class="sr-only"
+              @change="onInput"
+            />
+          </label>
+        </div>
+        <form class="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center" @submit.prevent="submitUrl">
           <input
-            type="file"
-            multiple
-            webkitdirectory
-            class="sr-only"
-            @change="onInput"
+            v-model="zipUrl"
+            type="url"
+            required
+            placeholder="https://example.com/artifact.zip"
+            aria-label="Address of a zip"
+            class="min-w-0 rounded-md border border-default bg-default px-3 py-1.5 text-sm sm:w-96"
           />
-        </label>
+          <UButton type="submit" size="sm" color="neutral" variant="subtle" :loading="!!busy">
+            Load a zip from a URL
+          </UButton>
+        </form>
+        <p class="mt-1 text-xs text-muted">
+          Your browser fetches the zip, so the server has to allow cross-origin requests (CORS).
+          Link straight to a zip with <code>?zip=&lt;url&gt;</code>, or <code>#zip=&lt;url&gt;</code> when the
+          address must not reach this site's server.
+        </p>
+        <p v-if="busy" class="mt-3 text-sm text-muted" role="status">{{ busy }}</p>
         <ul v-if="errors.length" class="mt-4 space-y-1 text-left text-sm text-error">
           <li v-for="error in errors" :key="error">{{ error }}</li>
         </ul>
@@ -377,6 +469,9 @@ const reset = () => {
         </div>
         <ul v-if="errors.length" class="space-y-1 text-sm text-error">
           <li v-for="error in errors" :key="error">{{ error }}</li>
+        </ul>
+        <ul v-if="warnings.length" class="space-y-1 text-sm text-warning">
+          <li v-for="warning in warnings" :key="warning">{{ warning }}</li>
         </ul>
 
         <div class="grid gap-4 lg:grid-cols-[280px_1fr]">

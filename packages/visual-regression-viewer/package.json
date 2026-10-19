@@ -1,0 +1,72 @@
+{
+  "name": "visual-regression-viewer",
+  "description": "Review a visual regression run in the browser: reads the visual-regression-manifest files of a run, builds a self-contained HTML viewer, serves it locally or writes it to disk. Themeable with CSS variables, the page template is replaceable.",
+  "version": "0.0.0",
+  "author": "Jakub Freisler <jakub.freisler@frsource.org>",
+  "homepage": "https://visual-regression.dev/viewer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/visual-regression/visual-regression.git",
+    "directory": "packages/visual-regression-viewer"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "visual-regression-viewer": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "del-cli dist && vite build && tsc -p tsconfig.build.json --noEmit && esbuild src/cli.ts --bundle --platform=node --target=node22 --format=esm --packages=external --banner:js='#!/usr/bin/env node' --outfile=dist/cli.js && node scripts/executable.mjs",
+    "format": "prettier --write .",
+    "format:ci": "prettier --check .",
+    "test:integration": "vitest run",
+    "test:integration:watch": "vitest",
+    "test:integration:coverage": "vitest run --coverage",
+    "test:integration:ci": "CI=true vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@12.6.0",
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "fflate": "^0.8.2",
+    "sirv": "^3.0.2",
+    "visual-regression-manifest": "workspace:*"
+  },
+  "devDependencies": {
+    "@frsource/prettier-config": "^1.11.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "22.20.5",
+    "@types/tmp": "0.2.6",
+    "@vitejs/plugin-vue": "6.0.10",
+    "@vitest/coverage-v8": "4.1.11",
+    "del-cli": "7.0.0",
+    "esbuild": "0.28.2",
+    "prettier": "3.9.8",
+    "tailwindcss": "4.3.3",
+    "tmp-promise": "3.0.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.4",
+    "vite-plugin-singlefile": "2.3.4",
+    "vitest": "4.1.11",
+    "vue": "3.5.43"
+  },
+  "keywords": [
+    "visual regression testing",
+    "visual diff",
+    "image diff",
+    "screenshot testing",
+    "report viewer",
+    "run manifest",
+    "CLI"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ]
+}

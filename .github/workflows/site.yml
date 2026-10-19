@@ -34,6 +34,7 @@ jobs:
               - 'apps/site/**'
               - 'packages/visual-regression-manifest/README.md'
               - 'packages/visual-regression-manifest/src/schema.json'
+              - 'packages/visual-regression-viewer/README.md'
               - '.github/workflows/site.yml'
               - 'pnpm-lock.yaml'
 

@@ -8,6 +8,11 @@
       "path": "packages/visual-regression-manifest",
       "component": "visual-regression-manifest",
       "release-as": "1.0.0"
+    },
+    "packages/visual-regression-viewer": {
+      "path": "packages/visual-regression-viewer",
+      "component": "visual-regression-viewer",
+      "release-as": "1.0.0"
     }
   }
 }
