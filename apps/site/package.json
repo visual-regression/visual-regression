@@ -7,9 +7,9 @@
     "dev": "nuxt dev",
     "build": "nuxt generate",
     "preview": "nuxt preview",
-    "sync": "node scripts/sync-manifest.mjs",
-    "predev": "node scripts/sync-manifest.mjs",
-    "prebuild": "node scripts/sync-manifest.mjs",
+    "sync": "node scripts/sync-manifest.mjs && node scripts/sync-viewer.mjs",
+    "predev": "pnpm sync",
+    "prebuild": "pnpm sync",
     "postinstall": "nuxt prepare",
     "format": "prettier --write .",
     "format:ci": "prettier --check ."

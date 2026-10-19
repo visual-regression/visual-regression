@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+/*
+ * Everything the viewer looks like comes from these variables. Override any
+ * of them in the stylesheet passed with `--css`; no rebuild needed.
+ */
+:root {
+  --vrv-bg: #ffffff;
+  --vrv-surface: #f4f4f5;
+  --vrv-fg: #18181b;
+  --vrv-muted: #71717a;
+  --vrv-border: #e4e4e7;
+  --vrv-accent: #4f46e5;
+  --vrv-error: #dc2626;
+  --vrv-warning: #d97706;
+  --vrv-success: #16a34a;
+  --vrv-info: #2563eb;
+  --vrv-radius: 0.5rem;
+  --vrv-font:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --vrv-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --vrv-bg: #09090b;
+    --vrv-surface: #18181b;
+    --vrv-fg: #fafafa;
+    --vrv-muted: #a1a1aa;
+    --vrv-border: #27272a;
+    --vrv-accent: #818cf8;
+    --vrv-error: #f87171;
+    --vrv-warning: #fbbf24;
+    --vrv-success: #4ade80;
+    --vrv-info: #60a5fa;
+  }
+}
+
+/* `inline` keeps the utilities pointing at the variables, so a later override wins */
+@theme inline {
+  --color-vrv-bg: var(--vrv-bg);
+  --color-vrv-surface: var(--vrv-surface);
+  --color-vrv-fg: var(--vrv-fg);
+  --color-vrv-muted: var(--vrv-muted);
+  --color-vrv-border: var(--vrv-border);
+  --color-vrv-accent: var(--vrv-accent);
+  --color-vrv-error: var(--vrv-error);
+  --color-vrv-warning: var(--vrv-warning);
+  --color-vrv-success: var(--vrv-success);
+  --color-vrv-info: var(--vrv-info);
+  --radius-vrv: var(--vrv-radius);
+  --font-vrv: var(--vrv-font);
+  --font-vrv-mono: var(--vrv-mono);
+}
+
+body {
+  background: var(--vrv-bg);
+  color: var(--vrv-fg);
+  font-family: var(--vrv-font);
+}

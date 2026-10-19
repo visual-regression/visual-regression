@@ -26,4 +26,9 @@ export default [
       },
     },
   },
+  // the viewer is a command line tool: printing is its interface
+  {
+    files: ['packages/visual-regression-viewer/src/{cli,main}.ts'],
+    rules: { 'no-console': 'off' },
+  },
 ];
