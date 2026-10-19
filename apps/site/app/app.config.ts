@@ -57,18 +57,4 @@ export default defineAppConfig({
     branch: 'main',
     rootDir: 'apps/site',
   },
-  toc: {
-    title: 'On this page',
-    bottom: {
-      title: 'Elsewhere',
-      links: [
-        {
-          icon: 'i-lucide-github',
-          label: 'Source on GitHub',
-          to: 'https://github.com/visual-regression/visual-regression',
-          target: '_blank',
-        },
-      ],
-    },
-  },
 });

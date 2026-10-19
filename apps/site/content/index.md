@@ -41,7 +41,7 @@ Screenshots catch what assertions miss. This site explains how visual regression
 Start here
 
 #description
-A diff you can't explain is a flake you can't fix. Six short chapters, in order, take you from the idea to a suite people trust.
+A short tutorial in six chapters. Read them in order or start with the one you prefer
 
 #default
 :learn-path
@@ -56,46 +56,4 @@ Thirty-one tools in one table, every claim sourced from the vendor's own docs. T
 
 #default
 :tools-teaser
-::
-
-::u-page-section
-#title
-What's on the site
-
-#features
-  :::u-page-feature
-  ---
-  icon: i-lucide-book-open
-  to: /learn/what-is-visual-regression-testing
-  ---
-  #title
-  Learn
-
-  #description
-  Six short chapters: what it is, how diffing works, why screenshots flake, baselines and approval, CI, and how to choose a tool.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-scale
-  to: /compare
-  ---
-  #title
-  Compare the tools
-
-  #description
-  Runner integrations, hosted review services, diff engines and mobile tools in one table, every claim sourced from the vendor's own docs.
-  :::
-
-  :::u-page-feature
-  ---
-  icon: i-lucide-file-json
-  to: /manifest
-  ---
-  #title
-  The manifest
-
-  #description
-  One JSON file per run that lists every comparison. Built upon CTRF, written by several tools, read by PR bots and review apps.
-  :::
 ::
