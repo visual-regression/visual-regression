@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { ManifestBuilder } from '../builder';
 import type { EnvLike } from '../ci';
+import { entryLimits, type ComparisonLimitOptions } from '../limits';
 import { readPngSize } from '../png';
 import type {
   Manifest,
@@ -66,7 +67,7 @@ export type PlaywrightAttachment = {
   path?: string;
 };
 
-export type FromPlaywrightReportOptions = {
+export type FromPlaywrightReportOptions = ComparisonLimitOptions & {
   /** Defaults to `config.rootDir` of the report. */
   projectRoot?: string;
   /**
@@ -79,8 +80,6 @@ export type FromPlaywrightReportOptions = {
   snapshotDir?: string;
   /** The OS the tests ran on (`{snapshotSuffix}` / `{platform}` of the template); defaults to this machine's. */
   platform?: string;
-  /** `maxDiffPixelRatio` the tests used, recorded as `comparison.threshold`; the report does not carry it. */
-  threshold?: number;
   /** Browser per Playwright project name, for the entries' `platform.browser`; defaults to the project name. */
   browsers?: Record<string, ManifestBrowser>;
   /** Run-level `platform`; defaults to this machine's. */
@@ -266,6 +265,10 @@ export const fromPlaywrightReport = (
           opts.browsers?.[projectName] ??
           (projectName ? { name: projectName } : undefined);
         const ratio = message.match(DIFF_RATIO_REGEX);
+        const baselineSize = fs.existsSync(baselinePath)
+          ? readPngSize(baselinePath)
+          : readPngSize(group.expected ?? '');
+        const actualSize = readPngSize(group.actual);
         builder.record({
           actualPath: group.actual,
           baselinePath,
@@ -276,13 +279,21 @@ export const fromPlaywrightReport = (
           retry: result.retry ?? 0,
           status,
           diffRatio: ratio ? Number(ratio[2]) : 0,
-          threshold: opts.threshold ?? 0,
+          // the report does not carry the limits: `maxDiffPixelRatio` and
+          // `maxDiffPixels` of your config, and the pixelmatch `threshold`
+          ...entryLimits(
+            {
+              maxDiffRatio: opts.maxDiffRatio,
+              maxDiffPixels: opts.maxDiffPixels,
+              colorThreshold: opts.colorThreshold,
+              colorMetric: opts.colorMetric ?? 'yiq',
+            },
+            actualSize ?? baselineSize,
+          ),
           baselineWritten: status === 'created',
           message: message.split('\n')[0]?.trim() ?? '',
-          baselineSize: fs.existsSync(baselinePath)
-            ? readPngSize(baselinePath)
-            : readPngSize(group.expected ?? ''),
-          actualSize: readPngSize(group.actual),
+          baselineSize,
+          actualSize,
           platform: browser && { osPlatform: snapshotSuffix, browser },
           recordedAt: result.startTime,
         });

@@ -2,33 +2,30 @@ import fs from 'fs';
 import path from 'path';
 import { ManifestBuilder, type ManifestHeaderInput } from '../builder';
 import { resolveInProject } from '../paths';
+import { entryLimits, type ComparisonLimitOptions } from '../limits';
 import { readPngSize } from '../png';
 import type { Manifest, ManifestRunner } from '../types';
 import { isImage, listFiles, stemOf } from './walk';
 
-export type FromJestImageSnapshotOptions = Omit<
-  ManifestHeaderInput,
-  'runner'
-> & {
-  /** Recorded as `runner`; defaults to `{ name: 'jest' }` (pass `{ name: 'cypress' }` for cypress-image-snapshot). */
-  runner?: ManifestRunner;
-  /** Directories to scan; default `[projectRoot]`. */
-  roots?: string[];
-  /** `customSnapshotsDir` folder name. */
-  snapshotsDirName?: string;
-  /** `customDiffDir` folder name, inside the snapshots folder. */
-  diffDirName?: string;
-  /** `customReceivedDir` folder name, inside the snapshots folder; defaults to the diff folder. */
-  receivedDirName?: string;
-  /** `customSnapshotIdentifier` postfix of baselines. */
-  snapshotPostfix?: string;
-  /** `customDiffPostfix`. */
-  diffPostfix?: string;
-  /** `customReceivedPostfix`. */
-  receivedPostfix?: string;
-  /** `failureThreshold` the tests used, when `failureThresholdType` is `percent` (recorded as a 0..1 ratio). */
-  threshold?: number;
-};
+export type FromJestImageSnapshotOptions = Omit<ManifestHeaderInput, 'runner'> &
+  ComparisonLimitOptions & {
+    /** Recorded as `runner`; defaults to `{ name: 'jest' }` (pass `{ name: 'cypress' }` for cypress-image-snapshot). */
+    runner?: ManifestRunner;
+    /** Directories to scan; default `[projectRoot]`. */
+    roots?: string[];
+    /** `customSnapshotsDir` folder name. */
+    snapshotsDirName?: string;
+    /** `customDiffDir` folder name, inside the snapshots folder. */
+    diffDirName?: string;
+    /** `customReceivedDir` folder name, inside the snapshots folder; defaults to the diff folder. */
+    receivedDirName?: string;
+    /** `customSnapshotIdentifier` postfix of baselines. */
+    snapshotPostfix?: string;
+    /** `customDiffPostfix`. */
+    diffPostfix?: string;
+    /** `customReceivedPostfix`. */
+    receivedPostfix?: string;
+  };
 
 /**
  * Builds a manifest from the files jest-image-snapshot (and its Cypress port,
@@ -46,7 +43,10 @@ export const fromJestImageSnapshots = ({
   snapshotPostfix = '-snap',
   diffPostfix = '-diff',
   receivedPostfix = '-received',
-  threshold,
+  maxDiffRatio, // your failureThreshold with failureThresholdType 'percent', as a 0..1 ratio
+  maxDiffPixels, // your failureThreshold with failureThresholdType 'pixel'
+  colorThreshold, // your customDiffConfig.threshold (pixelmatch)
+  colorMetric = 'yiq',
   runner,
   ...header
 }: FromJestImageSnapshotOptions): Manifest => {
@@ -94,6 +94,7 @@ export const fromJestImageSnapshots = ({
     const diff = diffs.get(key) ?? null;
     const actual = received.get(key);
     const hasBaseline = fs.existsSync(baseline);
+    const baselineSize = readPngSize(baseline);
     builder.record({
       // the received image is the "actual" when stored; without it the entry
       // points at where it would be, and the diff composite is what reviewers see
@@ -108,8 +109,12 @@ export const fromJestImageSnapshots = ({
       diffPath: diff,
       name: id,
       status: diff ? (hasBaseline ? 'failed' : 'missing-baseline') : 'passed',
-      threshold,
-      baselineSize: readPngSize(baseline),
+      // a failed comparison's received image can be a different size than the baseline
+      ...entryLimits(
+        { maxDiffRatio, maxDiffPixels, colorThreshold, colorMetric },
+        baselineSize,
+      ),
+      baselineSize,
       actualSize: actual ? readPngSize(actual) : undefined,
       // the test file lives in the folder that holds `__image_snapshots__`
       testFile: '',

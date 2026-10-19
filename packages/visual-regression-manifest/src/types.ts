@@ -107,7 +107,8 @@ export type ManifestPlatform = {
 export type ManifestEntryOptions = {
   imagesPath: string;
   title?: string;
-  maxDiffThreshold: number;
+  /** Largest share of differing pixels the comparison accepts, 0..1. */
+  maxDiffRatio: number;
   diffConfig: Record<string, unknown>;
   createMissingImages: boolean;
   updateImages: boolean | 'failures-only';
@@ -117,6 +118,13 @@ export type ManifestEntryOptions = {
   /** Capture options in the runner's vocabulary; only JSON-serialisable keys, callbacks are dropped. */
   screenshotConfig?: Record<string, unknown>;
 };
+
+/**
+ * The colour distance a `colorThreshold` is measured in: `yiq` is pixelmatch's
+ * weighted YIQ delta (0..1), `resemble` is Resemble.js's per-channel
+ * tolerance, `deltaE` is CIEDE2000.
+ */
+export type ManifestColorMetric = 'yiq' | 'resemble' | 'deltaE' | (string & {});
 
 /** Which kind of renderer produced the compared pixels. */
 export type ManifestRendererBackend =
@@ -207,7 +215,16 @@ export type ManifestEntry = {
   comparison: {
     /** Share of differing pixels, 0..1. `0` when no comparison ran. */
     diffRatio: number;
-    threshold: number;
+    /**
+     * Largest `diffRatio` the comparison accepts, 0..1. A pixel-count limit
+     * is stored as a ratio of the image size. Absent when the writer does
+     * not know it; `status` stays the source of truth for the outcome.
+     */
+    maxDiffRatio?: number;
+    /** Per-pixel colour tolerance the comparison used, on the scale `colorMetric` names. */
+    colorThreshold?: number;
+    /** Required with `colorThreshold`: the colour distance `colorThreshold` is measured in. */
+    colorMetric?: ManifestColorMetric;
   };
   images: {
     baseline: ManifestImage & { path: string };

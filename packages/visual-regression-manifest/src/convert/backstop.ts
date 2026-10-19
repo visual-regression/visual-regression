@@ -102,7 +102,10 @@ export const fromBackstopReport = (
       ),
       status,
       diffRatio: percent(pair.diff?.misMatchPercentage),
-      threshold: percent(pair.misMatchThreshold),
+      maxDiffRatio:
+        pair.misMatchThreshold === undefined
+          ? undefined
+          : percent(pair.misMatchThreshold),
       message: pair.error ?? '',
       baselineSize: readPngSize(baseline),
       actualSize: readPngSize(actual),

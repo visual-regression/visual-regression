@@ -166,7 +166,7 @@ describe('toCtrf', () => {
       visualRegression: {
         test: source.entries[0].test,
         status: 'failed',
-        comparison: { diffRatio: 0.12, threshold: 0.01 },
+        comparison: { diffRatio: 0.12, maxDiffRatio: 0.01 },
         images: source.entries[0].images,
         baselineWritten: false,
         recordedAt: source.entries[0].recordedAt,
@@ -407,7 +407,7 @@ describe('fromCtrf', () => {
         name: 'footer',
         test: { filePath: '', titlePath: [], retry: 0 },
         status: 'missing-baseline',
-        comparison: { diffRatio: 0, threshold: 0 },
+        comparison: { diffRatio: 0 },
         images: {
           baseline: { path: 'r/footer.png', width: 2, height: 2 },
           actual: { path: null },
@@ -421,7 +421,7 @@ describe('fromCtrf', () => {
         name: 'header',
         test: { filePath: 'home.spec.ts', titlePath: ['home'], retry: 0 },
         status: 'failed',
-        comparison: { diffRatio: 0, threshold: 0 },
+        comparison: { diffRatio: 0 },
         images: {
           baseline: { path: 'r/header-expected.png' },
           actual: { path: 'r/header-actual.png' },

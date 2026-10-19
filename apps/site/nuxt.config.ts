@@ -1,6 +1,8 @@
 export default defineNuxtConfig({
   extends: ['docus'],
 
+  css: ['~/assets/css/main.css'],
+
   site: {
     url: 'https://visual-regression.dev',
     name: 'visual-regression.dev',
@@ -23,6 +25,13 @@ export default defineNuxtConfig({
       crawlLinks: true,
       routes: ['/'],
     },
+  },
+
+  // Docus ships an MCP server (`/mcp`) and page-header links to it, but that
+  // needs a runtime. The site is static, so switch the module off rather than
+  // advertise an endpoint that 404s.
+  mcp: {
+    enabled: false,
   },
 
   compatibilityDate: '2026-10-01',

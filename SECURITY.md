@@ -13,4 +13,4 @@ This policy covers every package in this repository.
 
 ## Reporting a vulnerability
 
-Please do not open a public issue for a security problem. Use [private vulnerability reporting](https://github.com/Visual-Regression/visual-regression/security/advisories/new) on this repository instead. You will get an acknowledgement within a few days and a fix or a plan as soon as the problem is understood.
+Please do not open a public issue for a security problem. Use [private vulnerability reporting](https://github.com/visual-regression/visual-regression/security/advisories/new) on this repository instead. You will get an acknowledgement within a few days and a fix or a plan as soon as the problem is understood.

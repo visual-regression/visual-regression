@@ -18,7 +18,7 @@ describe('fromCypressVisualRegression', () => {
     const manifest = fromCypressVisualRegression({
       projectRoot: root,
       ci: null,
-      threshold: 0.05,
+      maxDiffRatio: 0.05,
     });
     expect(validateManifest(manifest)).toEqual([]);
     expect(manifest.runner).toEqual({ name: 'cypress' });
@@ -57,7 +57,7 @@ describe('fromCypressVisualRegression', () => {
         'cypress/snapshots/diff/home.cy.ts/hero.png',
       ],
     ]);
-    expect(manifest.entries[2].comparison.threshold).toBe(0.05);
+    expect(manifest.entries[2].comparison.maxDiffRatio).toBe(0.05);
   });
 
   it('honours custom directories and the generateDiff mode', async () => {

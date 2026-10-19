@@ -67,7 +67,7 @@
       "minLength": 1
     },
     "status": {
-      "description": "`passed`: within threshold. `failed`: above threshold, `.actual` and `.diff` images kept for review. `missing-baseline`: no baseline and the tool was told not to create one. `created`: no baseline, the actual image became the baseline. `updated`: the baseline was overwritten on request. `approved`: the baseline was replaced from a review UI. `failed` and `missing-baseline` are the entries that need a human. In CTRF terms `missing-baseline` is `failed` and `created`, `updated`, `approved` are `passed`, with the manifest status kept in `rawStatus`.",
+      "description": "`passed`: within the limits. `failed`: over the limits, `.actual` and `.diff` images kept for review. `missing-baseline`: no baseline and the tool was told not to create one. `created`: no baseline, the actual image became the baseline. `updated`: the baseline was overwritten on request. `approved`: the baseline was replaced from a review UI. `failed` and `missing-baseline` are the entries that need a human. In CTRF terms `missing-baseline` is `failed` and `created`, `updated`, `approved` are `passed`, with the manifest status kept in `rawStatus`.",
       "type": "string",
       "enum": [
         "passed",
@@ -379,7 +379,7 @@
       "type": "object",
       "required": [
         "imagesPath",
-        "maxDiffThreshold",
+        "maxDiffRatio",
         "diffConfig",
         "createMissingImages",
         "updateImages"
@@ -387,7 +387,7 @@
       "properties": {
         "imagesPath": { "type": "string" },
         "title": { "type": "string" },
-        "maxDiffThreshold": { "type": "number" },
+        "maxDiffRatio": { "type": "number", "minimum": 0, "maximum": 1 },
         "diffConfig": { "type": "object" },
         "createMissingImages": { "type": "boolean" },
         "updateImages": {
@@ -446,7 +446,8 @@
         "status": { "$ref": "#/$defs/status" },
         "comparison": {
           "type": "object",
-          "required": ["diffRatio", "threshold"],
+          "required": ["diffRatio"],
+          "dependentRequired": { "colorThreshold": ["colorMetric"] },
           "properties": {
             "diffRatio": {
               "description": "Share of differing pixels, 0..1. `0` when no comparison ran.",
@@ -454,7 +455,22 @@
               "minimum": 0,
               "maximum": 1
             },
-            "threshold": { "type": "number", "minimum": 0 }
+            "maxDiffRatio": {
+              "description": "Largest `diffRatio` the comparison accepts, 0..1. A pixel-count limit (`maxDiffPixels`, ...) is stored as a ratio of the image size; when both kinds were set, the stricter one. Absent when the writer does not know it. `status` stays the source of truth for the outcome: a ratio computed from a count can disagree with the tool at the boundary.",
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "colorThreshold": {
+              "description": "Per-pixel colour tolerance the comparison used, on the scale `colorMetric` names.",
+              "type": "number",
+              "minimum": 0
+            },
+            "colorMetric": {
+              "description": "The colour distance `colorThreshold` is measured in; required with it. `yiq`: pixelmatch's weighted YIQ delta, 0..1. `resemble`: Resemble.js's per-channel tolerance. `deltaE`: CIEDE2000. Other values are allowed.",
+              "type": "string",
+              "minLength": 1
+            }
           }
         },
         "images": {

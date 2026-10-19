@@ -6,7 +6,7 @@
   "homepage": "https://visual-regression.dev/manifest",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Visual-Regression/visual-regression.git",
+    "url": "https://github.com/visual-regression/visual-regression.git",
     "directory": "packages/visual-regression-manifest"
   },
   "license": "MIT",

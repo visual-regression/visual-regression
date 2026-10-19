@@ -6,10 +6,12 @@ import {
   ManifestBuilder,
   type ManifestHeaderInput,
 } from '../builder';
+import { entryLimits } from '../limits';
 import { resolveInProject } from '../paths';
 import { readPngSize } from '../png';
 import type {
   Manifest,
+  ManifestColorMetric,
   ManifestEntryOptions,
   ManifestEntryPlatform,
   ManifestRenderer,
@@ -37,7 +39,11 @@ export type ImageTriple = {
   /** Inferred from which files exist when absent (see `inferStatus`). */
   status?: ManifestStatus;
   diffRatio?: number;
-  threshold?: number;
+  /** Largest accepted share of differing pixels, 0..1; `maxDiffPixels` is converted to a ratio of the image size. */
+  maxDiffRatio?: number;
+  maxDiffPixels?: number;
+  colorThreshold?: number;
+  colorMetric?: ManifestColorMetric;
   baselineWritten?: boolean;
   message?: string;
   platform?: ManifestEntryPlatform;
@@ -86,6 +92,8 @@ export const fromImageTriples = ({
         : triple.diff === null
           ? null
           : resolveInProject(builder.projectRoot, triple.diff);
+    const baselineSize = readPngSize(baselineAbs);
+    const actualSize = readPngSize(actualAbs);
     builder.record({
       actualPath: actualAbs,
       baselinePath: baselineAbs,
@@ -102,11 +110,11 @@ export const fromImageTriples = ({
           actual: fs.existsSync(actualAbs),
         }),
       diffRatio: triple.diffRatio,
-      threshold: triple.threshold,
+      ...entryLimits(triple, actualSize ?? baselineSize),
       baselineWritten: triple.baselineWritten,
       message: triple.message,
-      baselineSize: readPngSize(baselineAbs),
-      actualSize: readPngSize(actualAbs),
+      baselineSize,
+      actualSize,
       platform: triple.platform,
       target: triple.target,
       variant: triple.variant,

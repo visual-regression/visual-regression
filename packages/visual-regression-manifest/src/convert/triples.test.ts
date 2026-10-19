@@ -36,7 +36,7 @@ describe('fromImageTriples', () => {
           testFile: 'e2e/home.spec.ts',
           titlePath: ['home'],
           diffRatio: 0.2,
-          threshold: 0.1,
+          maxDiffRatio: 0.1,
         },
         { baseline: path.join(root, 'shots', 'about.png') },
         { baseline: 'shots/new.png', message: 'no baseline yet' },
@@ -71,7 +71,7 @@ describe('fromImageTriples', () => {
         name: 'home',
         test: { filePath: 'e2e/home.spec.ts', titlePath: ['home'] },
         status: 'failed',
-        comparison: { diffRatio: 0.2, threshold: 0.1 },
+        comparison: { diffRatio: 0.2, maxDiffRatio: 0.1 },
         images: {
           baseline: { path: 'shots/home.png', width: 4, height: 3 },
           actual: { path: 'shots/home.actual.png', width: 4, height: 3 },

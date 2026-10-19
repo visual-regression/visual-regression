@@ -54,7 +54,7 @@ describe('fromRoborazziResults', () => {
     const manifest = fromRoborazziResults(results, {
       projectRoot: root,
       ci: null,
-      threshold: 0.01,
+      maxDiffRatio: 0.01,
     });
     expect(validateManifest(manifest)).toEqual([]);
     expect(manifest.runner).toEqual({ name: 'roborazzi' });
@@ -107,7 +107,7 @@ describe('fromRoborazziResults', () => {
       ],
     ]);
     expect(manifest.entries[0]).toMatchObject({
-      comparison: { threshold: 0.01 },
+      comparison: { maxDiffRatio: 0.01 },
       target: { kind: 'mobile', os: 'android', emulated: true },
       renderer: { backend: 'emulator', name: 'robolectric' },
       extra: { roborazzi: { 'roborazzi.test.name': 'home' } },

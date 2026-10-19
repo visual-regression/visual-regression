@@ -215,7 +215,7 @@ describe('fromPlaywrightReport', () => {
 
     const manifest = fromPlaywrightReport(report(root), {
       platform: 'linux',
-      threshold: 0.01,
+      maxDiffRatio: 0.01,
       ci: null,
       browsers: { webkit: { name: 'webkit', version: '18' } },
       createdAt: '2026-09-25T09:59:00.000Z',
@@ -241,7 +241,7 @@ describe('fromPlaywrightReport', () => {
           retry: 0,
         },
         status: 'created',
-        comparison: { diffRatio: 0, threshold: 0.01 },
+        comparison: { diffRatio: 0, maxDiffRatio: 0.01 },
         images: {
           baseline: {
             path: 'tests/home.spec.ts-snapshots/footer-chromium-linux.png',
@@ -270,7 +270,7 @@ describe('fromPlaywrightReport', () => {
           retry: 0,
         },
         status: 'failed',
-        comparison: { diffRatio: 0.02, threshold: 0.01 },
+        comparison: { diffRatio: 0.02, maxDiffRatio: 0.01 },
         images: {
           baseline: {
             path: 'tests/home.spec.ts-snapshots/header-chromium-linux.png',
@@ -307,7 +307,7 @@ describe('fromPlaywrightReport', () => {
           retry: 0,
         },
         status: 'missing-baseline',
-        comparison: { diffRatio: 0, threshold: 0.01 },
+        comparison: { diffRatio: 0, maxDiffRatio: 0.01 },
         images: {
           baseline: {
             path: 'tests/home.spec.ts-snapshots/header-webkit-linux.png',
@@ -426,7 +426,7 @@ describe('fromPlaywrightReport', () => {
       name: 'shot-linux',
       test: { filePath: 'a.spec.ts', titlePath: ['t'], retry: 2 },
       status: 'failed',
-      comparison: { diffRatio: 0.5, threshold: 0 },
+      comparison: { diffRatio: 0.5 },
       images: {
         baseline: { path: 'a.spec.ts-snapshots/shot-linux.png' },
         actual: { path: null },

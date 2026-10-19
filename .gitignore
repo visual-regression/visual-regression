@@ -36,3 +36,4 @@ coverage
 
 # OS
 .DS_Store
+.playwright-mcp/

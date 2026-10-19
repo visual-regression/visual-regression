@@ -4,8 +4,8 @@ Thanks for your interest. This repository is maintained by the pixsame team and 
 
 ## Questions and bugs
 
-- Questions go to [GitHub Discussions](https://github.com/Visual-Regression/visual-regression/discussions).
-- Bugs and feature requests go to [GitHub Issues](https://github.com/Visual-Regression/visual-regression/issues). Check for an existing one first.
+- Questions go to [GitHub Discussions](https://github.com/visual-regression/visual-regression/discussions).
+- Bugs and feature requests go to [GitHub Issues](https://github.com/visual-regression/visual-regression/issues). Check for an existing one first.
 - Security problems: see [SECURITY.md](SECURITY.md), never a public issue.
 
 ## Pull requests

@@ -19,6 +19,27 @@ export default defineAppConfig({
       // not wrap and pushed the page wider than the viewport.
       code: { base: 'max-w-full wrap-anywhere' },
     },
+    // "Previous / next chapter" cards: icon and label share one line, and the
+    // next card uses the primary colour. The label comes from the slot in
+    // app/pages/[[lang]]/[...slug].vue.
+    contentSurround: {
+      slots: {
+        link: 'px-5 py-4',
+        linkLeading:
+          'mb-3.5 gap-2 rounded-none bg-transparent p-0 ring-0 group-hover:bg-transparent group-hover:ring-0 text-xs font-medium uppercase tracking-wide text-muted',
+        linkTitle: 'mb-0.5',
+      },
+      variants: {
+        direction: {
+          right: {
+            // Nuxt UI only passes `direction` to `link` and `linkLeadingIcon`,
+            // so colour the label and title through descendant selectors. Light mode
+            // uses emerald-700 (~5:1 on white); the primary green is only ~2.5:1.
+            link: 'border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary [&_[data-slot=linkLeading]]:text-emerald-700 [&_[data-slot=linkTitle]]:text-emerald-700 dark:[&_[data-slot=linkLeading]]:text-primary dark:[&_[data-slot=linkTitle]]:text-primary',
+          },
+        },
+      },
+    },
     separator: {
       variants: {
         orientation: {
@@ -32,7 +53,7 @@ export default defineAppConfig({
     },
   },
   github: {
-    url: 'https://github.com/Visual-Regression/visual-regression',
+    url: 'https://github.com/visual-regression/visual-regression',
     branch: 'main',
     rootDir: 'apps/site',
   },
@@ -44,7 +65,7 @@ export default defineAppConfig({
         {
           icon: 'i-lucide-github',
           label: 'Source on GitHub',
-          to: 'https://github.com/Visual-Regression/visual-regression',
+          to: 'https://github.com/visual-regression/visual-regression',
           target: '_blank',
         },
       ],

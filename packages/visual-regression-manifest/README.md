@@ -5,7 +5,7 @@
   <a href="https://www.npmjs.com/package/visual-regression-manifest">
     <img src="https://img.shields.io/npm/v/visual-regression-manifest.svg" alt="NPM version badge">
   </a>
-  <a href="https://github.com/Visual-Regression/visual-regression/blob/main/LICENSE">
+  <a href="https://github.com/visual-regression/visual-regression/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/visual-regression/visual-regression.svg" alt="license MIT badge">
   </a>
 </p>
@@ -88,7 +88,12 @@ The normative description is the JSON Schema (draft 2020-12) at `https://visual-
         "retry": 0,
       },
       "status": "failed",
-      "comparison": { "diffRatio": 0.0231, "threshold": 0.01 },
+      "comparison": {
+        "diffRatio": 0.0231,
+        "maxDiffRatio": 0.01,
+        "colorThreshold": 0.1,
+        "colorMetric": "yiq",
+      },
       "images": {
         "baseline": {
           "path": "cypress/e2e/__image_snapshots__/home page renders_#0.png",
@@ -127,12 +132,21 @@ The normative description is the JSON Schema (draft 2020-12) at `https://visual-
 
 | `status`           | meaning                                                 | `images.actual.path` | `images.diff.path` | as CTRF `status` |
 | ------------------ | ------------------------------------------------------- | -------------------- | ------------------ | ---------------- |
-| `passed`           | within threshold                                        | `null`               | `null`             | `passed`         |
-| `failed`           | above threshold, actual and diff images kept for review | path                 | path (if any)      | `failed`         |
+| `passed`           | within the limits                                       | `null`               | `null`             | `passed`         |
+| `failed`           | over the limits, actual and diff images kept for review | path                 | path (if any)      | `failed`         |
 | `missing-baseline` | no baseline and the tool was told not to create one     | path                 | `null`             | `failed`         |
 | `created`          | no baseline, the actual image became the baseline       | `null`               | `null`             | `passed`         |
 | `updated`          | baseline overwritten on request                         | `null`               | `null`             | `passed`         |
 | `approved`         | baseline replaced from a review UI                      | `null`               | `null`             | `passed`         |
+
+### Limits
+
+A comparison has two limits, and the entry records both next to the measured `diffRatio`:
+
+- `comparison.maxDiffRatio`, the largest share of differing pixels the comparison accepts, from 0 to 1. This is the image-level limit: `maxDiffPixelRatio` in Playwright, `allowedMismatchedPixelRatio` in Vitest, `failureThreshold` in jest-image-snapshot, `errorThreshold` in cypress-visual-regression, `misMatchThreshold` in BackstopJS, `changeThreshold` in Roborazzi, `maxDiffThreshold` in `@pixsame/cypress-plugin-visual-regression-diff`. Tools that take a pixel count (`maxDiffPixels`, `allowedMismatchedPixels`, `failureThreshold` with `failureThresholdType: 'pixel'`) are stored as a ratio of the image size, and when both kinds are set the stricter one is stored. A ratio is portable across viewports, a count is not.
+- `comparison.colorThreshold`, the per-pixel colour tolerance: how far apart two colours may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
+
+Both are optional. A missing `maxDiffRatio` means the writer does not know the limit, not that the tolerance is zero. `status` stays the outcome to trust: a ratio computed from a pixel count can disagree with the tool by a rounding error at the boundary.
 
 Rules every writer and reader follows:
 
@@ -232,7 +246,7 @@ const writer = new ManifestWriter(
     projectRoot: process.cwd(),
     tool: { name: 'my-visual-plugin', version: '1.0.0' }, // what writes the file
     runner: { name: 'my-runner', version: '2.0.0' }, // what runs the tests; add any runner-specific keys
-    options: { threshold: 0.01 }, // your global options, verbatim
+    options: { maxDiffRatio: 0.01 }, // your global options, verbatim
     // platform and ci are detected (GitHub Actions, GitLab CI) unless given
   },
 );
@@ -246,7 +260,9 @@ writer.record({
   retry: 0, // a retry replaces the entries of the earlier attempts of that test
   status: 'failed',
   diffRatio: 0.02,
-  threshold: 0.01,
+  maxDiffRatio: 0.01, // or leave it out when you do not know it
+  colorThreshold: 0.1, // pixelmatch's per-pixel tolerance...
+  colorMetric: 'yiq', // ...and the scale it is on
   baselineWritten: false,
   duration: 840,
   actualSize: { width: 1280, height: 720 },
@@ -320,7 +336,9 @@ import {
 const manifest = fromPlaywrightReport(
   JSON.parse(fs.readFileSync('report.json', 'utf8')),
   {
-    threshold: 0.01, // your maxDiffPixelRatio, the report does not carry it
+    maxDiffRatio: 0.01, // your maxDiffPixelRatio; or maxDiffPixels: 100, converted with each image's size
+    // colorThreshold: 0.2, // your pixelmatch `threshold` (colorMetric defaults to 'yiq')
+    // the report carries none of these, so they come from your config
     // snapshotPathTemplate / snapshotDir: only when changed in playwright.config
     // browsers: { chromium: { name: 'chromium', version: '130' } } for richer `platform` blocks
   },
@@ -342,7 +360,8 @@ import { fromVitestScreenshots } from 'visual-regression-manifest';
 
 const manifest = fromVitestScreenshots({
   projectRoot: process.cwd(),
-  threshold: 0.01, // your allowedMismatchedPixelRatio
+  maxDiffRatio: 0.01, // your allowedMismatchedPixelRatio; or maxDiffPixels for allowedMismatchedPixels
+  // colorThreshold: 0.2, // your pixelmatch `threshold`
   // roots: ['src', 'tests'], screenshotsDirName, attachmentsDir: when changed
 });
 ```
@@ -359,6 +378,8 @@ import { fromJestImageSnapshots } from 'visual-regression-manifest';
 const manifest = fromJestImageSnapshots({
   projectRoot: process.cwd(),
   runner: { name: 'cypress' }, // for cypress-image-snapshot; defaults to jest
+  maxDiffRatio: 0.01, // your failureThreshold with failureThresholdType 'percent'; or maxDiffPixels with 'pixel'
+  // colorThreshold: 0.1, // your customDiffConfig.threshold
   // snapshotsDirName, diffDirName, receivedDirName, snapshotPostfix, diffPostfix, receivedPostfix: when customised
 });
 ```
@@ -374,7 +395,7 @@ import { fromCypressVisualRegression } from 'visual-regression-manifest';
 
 const manifest = fromCypressVisualRegression({
   projectRoot: process.cwd(),
-  threshold: 0.05, // your errorThreshold
+  maxDiffRatio: 0.05, // your errorThreshold; or maxDiffPixels when it counts pixels
   // baseDirectory, actualDirectory, diffDirectory, generateDiff: when changed
 });
 ```
@@ -397,7 +418,7 @@ const manifest = fromBackstopReport(
 );
 ```
 
-One entry per scenario and viewport (`titlePath: [label, viewportLabel]`, `variant: viewportLabel`), the mismatch percentage as `diffRatio`, `misMatchThreshold` as `threshold`, a `Reference file not found` error as `missing-baseline`, and the scenario's `url`, `selector` and the raw `diff` block under `extra.backstop`.
+One entry per scenario and viewport (`titlePath: [label, viewportLabel]`, `variant: viewportLabel`), the mismatch percentage as `diffRatio`, `misMatchThreshold` as `maxDiffRatio`, a `Reference file not found` error as `missing-baseline`, and the scenario's `url`, `selector` and the raw `diff` block under `extra.backstop`.
 
 ### Roborazzi
 
@@ -414,7 +435,7 @@ const manifest = fromRoborazziResults(
       'utf8',
     ),
   ),
-  { projectRoot: process.cwd(), threshold: 0.01 }, // your changeThreshold
+  { projectRoot: process.cwd(), maxDiffRatio: 0.01 }, // your changeThreshold
 );
 ```
 

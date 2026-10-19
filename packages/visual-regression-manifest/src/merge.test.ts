@@ -256,7 +256,7 @@ describe('producer-chosen variant', () => {
     name: 'home',
     test: { filePath: '', titlePath: [], retry: 0 },
     status: 'passed',
-    comparison: { diffRatio: 0, threshold: 0 },
+    comparison: { diffRatio: 0 },
     images: {
       baseline: { path: 'home.png' },
       actual: { path: null },

@@ -12,15 +12,18 @@ hosting: local-or-cloud
 runners:
   - Cypress
   - Playwright (in preparation)
+  - Storybook via Playwright (in preparation)
 diffEngine: pixelmatch-style pixel comparison with a configurable threshold; pinned Docker renderer optional
 reviewSurface:
   - local
   - pr
-baselineStorage: repo
+baselineStorage: repo-or-service
 pricingModel: freemium
 machineReadableResults: manifest
 manifestSupport: native
 notes:
+  - Hosted renderer (in preparation): comparisons can run on pixsame's side, so many contributors on many machines get the same rendering without a pinned Docker image; baselines then live in the service instead of the repository.
+  - Playwright runner plan (in preparation): besides pages, it is meant to screenshot components in isolation by pointing Playwright at a running Storybook, so one runner covers both suites.
   - Maintained by the same team that runs this site.
   - The GitHub App for approving baselines from a pull request and the hosted platform are announced, not released.
 lastVerified: '2026-10-13'

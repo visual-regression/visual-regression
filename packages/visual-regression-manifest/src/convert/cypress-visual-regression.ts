@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { ManifestBuilder, type ManifestHeaderInput } from '../builder';
 import { resolveInProject } from '../paths';
+import { entryLimits, type ComparisonLimitOptions } from '../limits';
 import { readPngSize } from '../png';
 import type { Manifest, ManifestRunner } from '../types';
 import { isImage, listFiles, stemOf } from './walk';
@@ -9,20 +10,19 @@ import { isImage, listFiles, stemOf } from './walk';
 export type FromCypressVisualRegressionOptions = Omit<
   ManifestHeaderInput,
   'runner'
-> & {
-  /** Recorded as `runner`; defaults to `{ name: 'cypress' }`. */
-  runner?: ManifestRunner;
-  /** `visualRegressionBaseDirectory`, relative to `projectRoot`. */
-  baseDirectory?: string;
-  /** `screenshotsFolder`, where the actual screenshots go. */
-  actualDirectory?: string;
-  /** `visualRegressionDiffDirectory`. */
-  diffDirectory?: string;
-  /** `visualRegressionGenerateDiff` the run used: with `always` a diff image does not mean a failure. */
-  generateDiff?: 'fail' | 'always' | 'never';
-  /** `errorThreshold` the tests used (a 0..1 ratio), recorded as `comparison.threshold`. */
-  threshold?: number;
-};
+> &
+  ComparisonLimitOptions & {
+    /** Recorded as `runner`; defaults to `{ name: 'cypress' }`. */
+    runner?: ManifestRunner;
+    /** `visualRegressionBaseDirectory`, relative to `projectRoot`. */
+    baseDirectory?: string;
+    /** `screenshotsFolder`, where the actual screenshots go. */
+    actualDirectory?: string;
+    /** `visualRegressionDiffDirectory`. */
+    diffDirectory?: string;
+    /** `visualRegressionGenerateDiff` the run used: with `always` a diff image does not mean a failure. */
+    generateDiff?: 'fail' | 'always' | 'never';
+  };
 
 /**
  * Builds a manifest from the folders of cypress-visual-regression:
@@ -38,7 +38,10 @@ export const fromCypressVisualRegression = ({
   actualDirectory = 'cypress/snapshots/actual',
   diffDirectory = 'cypress/snapshots/diff',
   generateDiff = 'fail',
-  threshold,
+  maxDiffRatio, // your errorThreshold, as a 0..1 ratio
+  maxDiffPixels, // your errorThreshold when it counts pixels
+  colorThreshold, // your pixelmatch `threshold`
+  colorMetric = 'yiq',
   runner,
   ...header
 }: FromCypressVisualRegressionOptions): Manifest => {
@@ -78,6 +81,8 @@ export const fromCypressVisualRegression = ({
           hasDiff && generateDiff === 'always'
           ? 'failed'
           : 'passed';
+    const baselineSize = readPngSize(baseline);
+    const actualSize = hasActual ? readPngSize(actual) : undefined;
     builder.record({
       actualPath: actual,
       baselinePath: baseline,
@@ -86,9 +91,12 @@ export const fromCypressVisualRegression = ({
       // cypress-visual-regression nests screenshots under the spec's path
       testFile: path.dirname(rel) === '.' ? '' : path.dirname(rel),
       status,
-      threshold,
-      baselineSize: readPngSize(baseline),
-      actualSize: hasActual ? readPngSize(actual) : undefined,
+      ...entryLimits(
+        { maxDiffRatio, maxDiffPixels, colorThreshold, colorMetric },
+        actualSize ?? baselineSize,
+      ),
+      baselineSize,
+      actualSize,
     });
   }
   return builder.toJSON();
