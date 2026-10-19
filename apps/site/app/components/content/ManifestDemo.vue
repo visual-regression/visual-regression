@@ -84,7 +84,7 @@ const tab = computed(() => TABS[active.value]!);
     {
       "name": "checkout-summary",
       "status": "failed",
-      "comparison": { "diffRatio": 0.0231, "threshold": 0.01 },
+      "comparison": { "diffRatio": 0.0231, "maxDiffRatio": 0.01, "colorThreshold": 0.1, "colorMetric": "yiq" },
       "images": {
         "baseline": { "path": "{{ tab.images.baseline }}" },
         "actual":   { "path": "{{ tab.images.actual }}" },

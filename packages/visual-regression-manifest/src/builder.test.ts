@@ -106,7 +106,7 @@ describe('ManifestBuilder', () => {
       titlePath: ['home', 'renders'],
       status: 'failed',
       diffRatio: 0.25,
-      threshold: 0.01,
+      maxDiffRatio: 0.01,
       actualSize: { width: 3, height: 2 },
       platform: {
         osPlatform: 'linux',
@@ -124,7 +124,7 @@ describe('ManifestBuilder', () => {
         retry: 0,
       },
       status: 'failed',
-      comparison: { diffRatio: 0.25, threshold: 0.01 },
+      comparison: { diffRatio: 0.25, maxDiffRatio: 0.01 },
       images: {
         baseline: { path: 'shots/home_#0.png' },
         actual: { path: 'shots/home_#0.actual.png', width: 3, height: 2 },
@@ -157,7 +157,7 @@ describe('ManifestBuilder', () => {
     expect(entry).toMatchObject({
       name: 'home',
       test: { filePath: '', titlePath: [], retry: 0 },
-      comparison: { diffRatio: 0, threshold: 0 },
+      comparison: { diffRatio: 0 },
       images: {
         baseline: { path: 'base/home.png' },
         actual: { path: null },
@@ -167,6 +167,29 @@ describe('ManifestBuilder', () => {
       message: '',
     });
     expect(entry.renderer).toBeUndefined();
+    // an unknown limit stays absent instead of reading as zero tolerance
+    expect(entry.comparison).toEqual({ diffRatio: 0 });
+  });
+
+  it('records the colour tolerance only together with its metric', async () => {
+    const root = await tmpDir();
+    const builder = builderIn(root);
+    const record = (name: string, extra: object) =>
+      builder.record({
+        actualPath: `${name}.png`,
+        baselinePath: `base/${name}.png`,
+        status: 'passed',
+        ...extra,
+      }).comparison;
+    expect(
+      record('a', { colorThreshold: 0.1, colorMetric: 'yiq', maxDiffRatio: 0 }),
+    ).toEqual({
+      diffRatio: 0,
+      maxDiffRatio: 0,
+      colorThreshold: 0.1,
+      colorMetric: 'yiq',
+    });
+    expect(record('b', { colorThreshold: 0.1 })).toEqual({ diffRatio: 0 });
   });
 
   it('honours an explicit diff path, name and renderer', async () => {
@@ -357,7 +380,7 @@ describe('ManifestBuilder', () => {
       titlePath: ['home'],
       status: 'failed',
       diffRatio: 0.3,
-      threshold: 0.01,
+      maxDiffRatio: 0.01,
       actualSize: { width: 10, height: 10 },
       platform: { osPlatform: 'linux', browser: { name: 'chrome' } },
     });
@@ -368,7 +391,7 @@ describe('ManifestBuilder', () => {
       name: 'home',
       test: { filePath: 'e2e/home.spec.ts', titlePath: ['home'], retry: 0 },
       status: 'approved',
-      comparison: { diffRatio: 0.3, threshold: 0.01 },
+      comparison: { diffRatio: 0.3, maxDiffRatio: 0.01 },
       images: {
         baseline: { path: 'shots/home.png' },
         actual: { path: null, width: 10, height: 10 },
@@ -395,7 +418,7 @@ describe('ManifestBuilder', () => {
       name: 'x',
       test: { filePath: 'e2e/x.spec.ts', titlePath: [], retry: 0 },
       status: 'approved',
-      comparison: { diffRatio: 0, threshold: 0 },
+      comparison: { diffRatio: 0 },
       images: {
         baseline: { path: 'other/custom.png' },
         actual: { path: null },

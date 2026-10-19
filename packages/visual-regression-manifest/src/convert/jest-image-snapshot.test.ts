@@ -28,7 +28,7 @@ describe('fromJestImageSnapshots', () => {
     const manifest = fromJestImageSnapshots({
       projectRoot: root,
       ci: null,
-      threshold: 0.02,
+      maxDiffRatio: 0.02,
     });
     expect(validateManifest(manifest)).toEqual([]);
     expect(manifest.runner).toEqual({ name: 'jest' });
@@ -67,7 +67,7 @@ describe('fromJestImageSnapshots', () => {
       width: 4,
       height: 4,
     });
-    expect(manifest.entries[2].comparison.threshold).toBe(0.02);
+    expect(manifest.entries[2].comparison.maxDiffRatio).toBe(0.02);
   });
 
   it('honours cypress-image-snapshot style custom names and a received directory', async () => {

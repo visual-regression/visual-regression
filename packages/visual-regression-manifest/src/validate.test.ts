@@ -121,13 +121,43 @@ describe('validateAgainst (cross-checked with Ajv)', () => {
       },
     ]);
     expect(
-      agreesWithAjv(withEntry({ comparison: { diffRatio: 2, threshold: 0 } })),
+      agreesWithAjv(
+        withEntry({ comparison: { diffRatio: 2, maxDiffRatio: 0 } }),
+      ),
     ).toEqual([
       { path: 'entries.0.comparison.diffRatio', message: 'must be <= 1' },
     ]);
     expect(
       agreesWithAjv(
-        withEntry({ images: { ...entry().images, baseline: { path: null } } }),
+        withEntry({
+          comparison: { diffRatio: 0, colorThreshold: 0.1 } as never,
+        }),
+      ),
+    ).toEqual([
+      {
+        path: 'entries.0.comparison.colorMetric',
+        message: 'is required with colorThreshold',
+      },
+    ]);
+    expect(
+      agreesWithAjv(
+        withEntry({
+          comparison: {
+            diffRatio: 0,
+            colorThreshold: 0.1,
+            colorMetric: 'yiq',
+          },
+        }),
+      ),
+    ).toEqual([]);
+    expect(agreesWithAjv(withEntry({ comparison: { diffRatio: 0 } }))).toEqual(
+      [],
+    );
+    expect(
+      agreesWithAjv(
+        withEntry({
+          images: { ...entry().images, baseline: { path: null } },
+        }),
       ),
     ).toEqual([
       {
@@ -183,7 +213,7 @@ describe('validateAgainst (cross-checked with Ajv)', () => {
         withEntry({
           options: {
             imagesPath: 'x',
-            maxDiffThreshold: 0.1,
+            maxDiffRatio: 0.1,
             diffConfig: {},
             createMissingImages: true,
             updateImages: 'always',

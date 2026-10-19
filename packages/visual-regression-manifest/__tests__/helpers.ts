@@ -73,7 +73,7 @@ export const entry = (
     retry: 0,
   },
   status: 'failed',
-  comparison: { diffRatio: 0.12, threshold: 0.01 },
+  comparison: { diffRatio: 0.12, maxDiffRatio: 0.01 },
   images: {
     baseline: {
       path: 'cypress/e2e/__image_snapshots__/home_#0.png',

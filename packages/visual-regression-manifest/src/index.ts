@@ -9,6 +9,11 @@ export {
   toProjectRelative,
   toRepoPath,
 } from './paths';
+export {
+  entryLimits,
+  maxRatioFrom,
+  type ComparisonLimitOptions,
+} from './limits';
 export { readPngSize } from './png';
 export { countByStatus, summarize } from './summary';
 export {

@@ -453,7 +453,7 @@ const fromCtrfTest = (
       retry: test.retries ?? 0,
     },
     status,
-    comparison: visual?.comparison ?? { diffRatio: 0, threshold: 0 },
+    comparison: visual?.comparison ?? { diffRatio: 0 },
     images,
     attachments: others.length > 0 ? others : undefined,
     baselineWritten: visual?.baselineWritten ?? false,

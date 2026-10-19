@@ -19,6 +19,7 @@ import type {
   Manifest,
   ManifestAttachment,
   ManifestCi,
+  ManifestColorMetric,
   ManifestEntry,
   ManifestEntryOptions,
   ManifestEntryPlatform,
@@ -78,7 +79,11 @@ export type ManifestEntryInput = {
   retry?: number;
   status: ManifestStatus;
   diffRatio?: number;
-  threshold?: number;
+  /** Largest accepted `diffRatio`, 0..1; leave out when unknown (see `maxRatioFrom` for pixel-count limits). */
+  maxDiffRatio?: number;
+  /** Per-pixel colour tolerance; needs `colorMetric`. */
+  colorThreshold?: number;
+  colorMetric?: ManifestColorMetric;
   baselineWritten?: boolean;
   message?: string;
   baselineSize?: ImageSize;
@@ -287,7 +292,14 @@ export class ManifestBuilder {
       status: input.status,
       comparison: {
         diffRatio: input.diffRatio ?? 0,
-        threshold: input.threshold ?? 0,
+        ...(input.maxDiffRatio !== undefined && {
+          maxDiffRatio: input.maxDiffRatio,
+        }),
+        ...(input.colorThreshold !== undefined &&
+          input.colorMetric && {
+            colorThreshold: input.colorThreshold,
+            colorMetric: input.colorMetric,
+          }),
       },
       images: {
         baseline: {
@@ -344,7 +356,7 @@ export class ManifestBuilder {
         retry: 0,
       },
       status: 'approved',
-      comparison: existing?.comparison ?? { diffRatio: 0, threshold: 0 },
+      comparison: existing?.comparison ?? { diffRatio: 0 },
       images: {
         baseline: {
           ...existing?.images.baseline,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Chapter 2: the two thresholds, on real pixels. Two renders of the mock
+// Chapter 2: the two limits, on real pixels. Two renders of the mock
 // screen are compared with the pixelmatch rule in `utils/pixelDiff.ts`;
-// the checkboxes choose what differs, the sliders set the thresholds.
+// the checkboxes choose what differs, the sliders set the limits.
 const SCALE = 1; // 240×150: small enough that single pixels show when enlarged
 
 const textShift = ref(true);
@@ -75,12 +75,12 @@ const passed = computed(() => (result.value ? result.value.ratio <= maxRatio.val
         <div class="space-y-3">
           <p class="text-xs font-medium uppercase tracking-wide text-muted">What the comparator is told</p>
           <label class="block">
-            <span class="flex justify-between font-mono text-xs"><span>per-pixel threshold</span><span>{{ threshold.toFixed(2) }}</span></span>
+            <span class="flex justify-between font-mono text-xs"><span>colour tolerance (threshold)</span><span>{{ threshold.toFixed(2) }}</span></span>
             <input v-model.number="threshold" type="range" min="0" max="1" step="0.01" class="w-full accent-primary" />
           </label>
           <UCheckbox v-model="includeAA" label="Count anti-aliased pixels too (includeAA)" />
           <label class="block">
-            <span class="flex justify-between font-mono text-xs"><span>maxDiffPixelRatio</span><span>{{ pct(maxRatio) }}</span></span>
+            <span class="flex justify-between font-mono text-xs"><span>max diff ratio (maxDiffPixelRatio)</span><span>{{ pct(maxRatio) }}</span></span>
             <input v-model.number="maxRatio" type="range" min="0" max="0.02" step="0.0005" class="w-full accent-primary" />
           </label>
         </div>

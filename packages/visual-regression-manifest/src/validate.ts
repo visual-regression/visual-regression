@@ -18,6 +18,7 @@ export type JsonSchema = {
   enum?: unknown[];
   properties?: Record<string, JsonSchema>;
   required?: string[];
+  dependentRequired?: Record<string, string[]>;
   items?: JsonSchema;
   anyOf?: JsonSchema[];
   allOf?: JsonSchema[];
@@ -115,6 +116,19 @@ const validateAt = (
     for (const key of schema.required ?? []) {
       if (record[key] === undefined) {
         issues.push({ path: join(path, key), message: 'is required' });
+      }
+    }
+    for (const [key, needed] of Object.entries(
+      schema.dependentRequired ?? {},
+    )) {
+      if (record[key] === undefined) continue;
+      for (const other of needed) {
+        if (record[other] === undefined) {
+          issues.push({
+            path: join(path, other),
+            message: `is required with ${key}`,
+          });
+        }
       }
     }
     for (const [key, subSchema] of Object.entries(schema.properties ?? {})) {

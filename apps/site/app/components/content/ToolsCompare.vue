@@ -161,7 +161,7 @@ const expanded = ref<string | null>(null);
                     }}</a><span v-if="i < tool.sources.length - 1">, </span>
                   </template>.
                   <a
-                    :href="`https://github.com/Visual-Regression/visual-regression/edit/main/apps/site/data/tools/${tool.stem?.split('/').pop()}.yml`"
+                    :href="`https://github.com/visual-regression/visual-regression/edit/main/apps/site/data/tools/${tool.stem?.split('/').pop()}.yml`"
                     target="_blank"
                     rel="noopener"
                     class="underline"

@@ -51,7 +51,7 @@ describe('fromVitestScreenshots', () => {
     const manifest = fromVitestScreenshots({
       projectRoot: root,
       ci: null,
-      threshold: 0.01,
+      maxDiffRatio: 0.01,
     });
     expect(validateManifest(manifest)).toEqual([]);
     expect(manifest.runner).toEqual({ name: 'vitest' });
@@ -70,7 +70,7 @@ describe('fromVitestScreenshots', () => {
         e.images.actual.path,
         e.images.diff.path,
         e.platform,
-        e.comparison.threshold,
+        e.comparison.maxDiffRatio,
       ]),
     ).toEqual([
       [
@@ -111,6 +111,51 @@ describe('fromVitestScreenshots', () => {
     expect(manifest.entries[0].images.actual).toMatchObject({
       width: 4,
       height: 4,
+    });
+  });
+
+  it('turns a pixel-count limit into a ratio of the image size', async () => {
+    const root = await tmpDir();
+    const shots = path.join(root, '__screenshots__', 'a.test.ts');
+    const attachments = path.join(root, '.vitest', 'attachments', 'a.test.ts');
+    writePng(path.join(shots, 'small-chromium-darwin.png'), 10, 10, 1);
+    writePng(
+      path.join(attachments, 'small-chromium-darwin-actual.png'),
+      10,
+      10,
+      2,
+    );
+    writePng(path.join(attachments, 'new-chromium-darwin-actual.png'), 5, 4, 2);
+    writePng(path.join(shots, 'both-chromium-darwin.png'), 10, 10, 1);
+    writePng(
+      path.join(attachments, 'both-chromium-darwin-actual.png'),
+      10,
+      10,
+      2,
+    );
+
+    const byName = (options: object) =>
+      Object.fromEntries(
+        fromVitestScreenshots({
+          projectRoot: root,
+          ci: null,
+          ...options,
+        }).entries.map((e) => [e.name, e.comparison]),
+      );
+    expect(byName({ maxDiffPixels: 5 })).toMatchObject({
+      'small-chromium-darwin': { maxDiffRatio: 0.05 },
+      'new-chromium-darwin': { maxDiffRatio: 0.25 },
+    });
+    // a count and a ratio at once: the stricter limit
+    expect(byName({ maxDiffPixels: 5, maxDiffRatio: 0.01 })).toMatchObject({
+      'both-chromium-darwin': { maxDiffRatio: 0.01 },
+    });
+    // without a limit the field stays absent
+    expect(byName({})['small-chromium-darwin']).toEqual({ diffRatio: 0 });
+    expect(byName({ colorThreshold: 0.2 })['small-chromium-darwin']).toEqual({
+      diffRatio: 0,
+      colorThreshold: 0.2,
+      colorMetric: 'yiq',
     });
   });
 

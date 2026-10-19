@@ -37,8 +37,8 @@ export type FromRoborazziResultsOptions = Omit<
 > & {
   /** Recorded as `runner`; defaults to `{ name: 'roborazzi' }`. */
   runner?: ManifestRunner;
-  /** `changeThreshold` the tests used, recorded as `comparison.threshold`. */
-  threshold?: number;
+  /** `changeThreshold` the tests used (a 0..1 ratio), recorded as `comparison.maxDiffRatio`; the results summary does not carry it. */
+  maxDiffRatio?: number;
 };
 
 const STATUS: Record<string, ManifestStatus> = {
@@ -63,7 +63,7 @@ const isoFromNanos = (ns: number | undefined) =>
  */
 export const fromRoborazziResults = (
   results: RoborazziResults,
-  { threshold, runner, ...header }: FromRoborazziResultsOptions,
+  { maxDiffRatio, runner, ...header }: FromRoborazziResultsOptions,
 ): Manifest => {
   if (!results || !Array.isArray(results.results)) {
     throw new TypeError(
@@ -88,7 +88,7 @@ export const fromRoborazziResults = (
       name: stemOf(golden),
       status,
       diffRatio: result.diff_percentage ?? 0,
-      threshold,
+      maxDiffRatio,
       baselineWritten: result.type === 'recorded',
       recordedAt: isoFromNanos(result.timestamp),
       baselineSize: readPngSize(golden),

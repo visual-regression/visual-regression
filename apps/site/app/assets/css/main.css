@@ -1,0 +1,10 @@
+/* Tailwind's preflight resets buttons to `cursor: default`; restore the pointer for everything clickable. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+summary {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

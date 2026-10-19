@@ -4,9 +4,9 @@
 // would write. The one change: the "Buy now" button is wider and green.
 // The numbers are measured with the comparator from chapter 2.
 const SCALE = 3;
-const THRESHOLD = 0.01;
+const MAX_DIFF_RATIO = 0.01;
 
-const cut = ref(50);
+const cut = ref(80);
 const view = ref<'slider' | 'diff'>('slider');
 const box = ref<HTMLElement | null>(null);
 const baselineCanvas = ref<HTMLCanvasElement | null>(null);
@@ -66,8 +66,8 @@ const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
           Diff image
         </UButton>
         <span v-if="ratio !== null" class="ml-auto font-mono text-xs text-muted">
-          status: <span :class="ratio > THRESHOLD ? 'text-error' : 'text-success'">{{ ratio > THRESHOLD ? 'failed' : 'passed' }}</span>
-          · diffRatio {{ ratio.toFixed(3) }} · threshold {{ THRESHOLD }}
+          status: <span :class="ratio > MAX_DIFF_RATIO ? 'text-error' : 'text-success'">{{ ratio > MAX_DIFF_RATIO ? 'failed' : 'passed' }}</span>
+          · diffRatio {{ ratio.toFixed(3) }} · maxDiffRatio {{ MAX_DIFF_RATIO }}
         </span>
       </div>
 

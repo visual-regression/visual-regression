@@ -1,25 +1,22 @@
 import path from 'path';
 import { ManifestBuilder, type ManifestHeaderInput } from '../builder';
 import { resolveInProject, toPosix } from '../paths';
+import { entryLimits, type ComparisonLimitOptions } from '../limits';
 import { readPngSize } from '../png';
 import type { Manifest, ManifestRunner, ManifestStatus } from '../types';
 import { isImage, listFiles, stemOf } from './walk';
 
-export type FromVitestScreenshotsOptions = Omit<
-  ManifestHeaderInput,
-  'runner'
-> & {
-  /** Recorded as `runner`; defaults to `{ name: 'vitest' }`. */
-  runner?: ManifestRunner;
-  /** Directories to scan, absolute or relative to `projectRoot`; default `[projectRoot]`. */
-  roots?: string[];
-  /** Name of the reference screenshot folders next to the test files. */
-  screenshotsDirName?: string;
-  /** Folder that holds the `-actual` and `-diff` images of failed comparisons, as a path relative to the directory it sits in. */
-  attachmentsDir?: string;
-  /** `allowedMismatchedPixelRatio` the tests used, recorded as `comparison.threshold`. */
-  threshold?: number;
-};
+export type FromVitestScreenshotsOptions = Omit<ManifestHeaderInput, 'runner'> &
+  ComparisonLimitOptions & {
+    /** Recorded as `runner`; defaults to `{ name: 'vitest' }`. */
+    runner?: ManifestRunner;
+    /** Directories to scan, absolute or relative to `projectRoot`; default `[projectRoot]`. */
+    roots?: string[];
+    /** Name of the reference screenshot folders next to the test files. */
+    screenshotsDirName?: string;
+    /** Folder that holds the `-actual` and `-diff` images of failed comparisons, as a path relative to the directory it sits in. */
+    attachmentsDir?: string;
+  };
 
 const BROWSERS = ['chrome', 'chromium', 'firefox', 'webkit', 'edge', 'safari'];
 const PLATFORMS = [
@@ -66,7 +63,10 @@ export const fromVitestScreenshots = ({
   roots,
   screenshotsDirName = '__screenshots__',
   attachmentsDir = '.vitest/attachments',
-  threshold,
+  maxDiffRatio, // your allowedMismatchedPixelRatio
+  maxDiffPixels, // your allowedMismatchedPixels
+  colorThreshold, // your pixelmatch `threshold`
+  colorMetric = 'yiq',
   runner,
   ...header
 }: FromVitestScreenshotsOptions): Manifest => {
@@ -143,6 +143,8 @@ export const fromVitestScreenshots = ({
         : 'missing-baseline'
       : 'passed';
     const parsed = parseVitestScreenshotName(stem);
+    const baselineSize = readPngSize(baseline);
+    const actualSize = group?.actual ? readPngSize(group.actual) : undefined;
     builder.record({
       actualPath: actual,
       baselinePath: baseline,
@@ -150,9 +152,12 @@ export const fromVitestScreenshots = ({
       name: stem,
       testFile: path.join(testDir, testFile),
       status,
-      threshold,
-      baselineSize: readPngSize(baseline),
-      actualSize: group?.actual ? readPngSize(group.actual) : undefined,
+      ...entryLimits(
+        { maxDiffRatio, maxDiffPixels, colorThreshold, colorMetric },
+        actualSize ?? baselineSize,
+      ),
+      baselineSize,
+      actualSize,
       platform: parsed.os
         ? {
             osPlatform: parsed.os,
