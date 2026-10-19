@@ -5,7 +5,7 @@ export const DEFAULT_HOST = '127.0.0.1';
 export const DEFAULT_TITLE = 'Visual regression viewer';
 
 export type ViewerOptions = {
-  /** Directory with the manifests and images of the run (or one manifest file). */
+  /** Directory with the manifests and images of the run, a zip of it, or one manifest file. */
   dir: string;
   /** Write the page and its images here. */
   out?: string;
@@ -79,9 +79,10 @@ export const resolveOptions = (
   };
 };
 
-export const helpText = `Usage: visual-regression-viewer [dir] [options]
+export const helpText = `Usage: visual-regression-viewer [dir|zip] [options]
 
-Review the visual regression run in [dir] (default: the current directory).
+Review the visual regression run in [dir] (default: the current directory)
+or in a zip of it, such as a downloaded CI artifact.
 The page is built in memory and served; nothing is written unless -o is given.
 
 Options:

@@ -17,6 +17,7 @@
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "docus": "^5.14.0",
+    "fflate": "^0.8.2",
     "nuxt": "^4.4.8"
   },
   "devDependencies": {

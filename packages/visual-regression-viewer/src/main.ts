@@ -7,23 +7,19 @@ import { startServer } from './serve';
 import { readTemplate } from './template';
 import { watchPaths } from './watch';
 import { writeOutput } from './write';
+import { openInput } from './zip';
 
 export type Running = { url?: string; close: () => Promise<void> };
 
-/**
- * Builds the page for the run in `options.dir`, writes it when asked to,
- * serves it unless told not to and, when serving a written page, reloads
- * open pages as the files in the output change. An edit of the template or
- * the stylesheet rebuilds the page into the output first.
- */
-export const main = async (
+const serveRun = async (
   options: ViewerOptions,
-  log: (message: string) => void = console.log,
+  dir: string,
+  log: (message: string) => void,
 ): Promise<Running> => {
   const build = () => {
     const template = readTemplate(options.template);
     const css = options.css ? fs.readFileSync(options.css, 'utf8') : undefined;
-    const { data, files } = loadRun(options.dir, options.title);
+    const { data, files } = loadRun(dir, options.title);
     const html = renderPage({ template, data, title: options.title, css });
     return { data, files, html };
   };
@@ -78,6 +74,36 @@ export const main = async (
     close: async () => {
       await watcher?.close();
       await server.close();
+    },
+  };
+};
+
+/**
+ * Builds the page for the run in `options.dir` (a directory, or a zip that
+ * is unpacked first), writes it when asked to, serves it unless told not to
+ * and, when serving a written page, reloads open pages as the files in the
+ * output change. An edit of the template or the stylesheet rebuilds the page
+ * into the output first.
+ */
+export const main = async (
+  options: ViewerOptions,
+  log: (message: string) => void = console.log,
+): Promise<Running> => {
+  const input = openInput(options.dir);
+  let running: Running;
+  try {
+    running = await serveRun(options, input.dir, log);
+  } catch (error) {
+    input.cleanup();
+    throw error;
+  }
+  // without a server nothing reads the unpacked files after the output is written
+  if (!running.url) input.cleanup();
+  return {
+    url: running.url,
+    close: async () => {
+      await running.close();
+      input.cleanup();
     },
   };
 };

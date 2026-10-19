@@ -1,6 +1,8 @@
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import os from 'os';
+import { zipSync } from 'fflate';
 import { afterEach, describe, expect, it } from 'vitest';
 import { png, tmpDir, writeFile, writeRun } from '../__tests__/helpers';
 import { main, type Running } from './main';
@@ -62,6 +64,30 @@ const until = async (check: () => boolean, ms = 5000) => {
     if (Date.now() - start > ms) throw new Error('timed out');
     await new Promise((r) => setTimeout(r, 25));
   }
+};
+
+const unpacked = () =>
+  fs
+    .readdirSync(os.tmpdir())
+    .filter((name) => name.startsWith('visual-regression-viewer-'));
+
+/** The run `writeRun` writes, as a zip next to nothing else. */
+const zipOf = async () => {
+  const run = await tmpDir();
+  writeRun(run);
+  const files: Record<string, Uint8Array> = {};
+  for (const rel of [
+    'visual-regression-manifest.json',
+    'shots/home.png',
+    'shots/home.actual.png',
+    'shots/home.diff.png',
+  ]) {
+    files[`artifact/${rel}`] = fs.readFileSync(path.join(run, rel));
+  }
+  return writeFile(
+    path.join(await tmpDir(), 'artifact.zip'),
+    Buffer.from(zipSync(files)),
+  );
 };
 
 describe('main', () => {
@@ -169,6 +195,40 @@ describe('main', () => {
     running = await main(await options({ out, watch: false }));
     fs.writeFileSync(path.join(out, 'index.html'), '<body>edited</body>');
     expect((await get(running.url ?? '')).body).toBe('<body>edited</body>');
+  });
+
+  it('reads a zip and removes what it unpacked when it stops', async () => {
+    const before = unpacked();
+    running = await main(await options({ dir: await zipOf() }));
+    expect(unpacked()).toHaveLength(before.length + 1);
+    const page = await get(running.url ?? '');
+    expect(page.body).toContain(
+      'shots/artifact/shots/home.png'.replace('shots/', ''),
+    );
+    expect((await get(`${running.url}artifact/shots/home.png`)).status).toBe(
+      200,
+    );
+    await running.close();
+    running = undefined;
+    expect(unpacked()).toEqual(before);
+  });
+
+  it('writes a report from a zip with --no-serve and leaves nothing unpacked', async () => {
+    const before = unpacked();
+    const out = path.join(await tmpDir(), 'report');
+    running = await main(
+      await options({ dir: await zipOf(), out, serve: false }),
+    );
+    expect(fs.existsSync(path.join(out, 'artifact/shots/home.png'))).toBe(true);
+    expect(unpacked()).toEqual(before);
+  });
+
+  it('does not leave a zip unpacked when the page cannot be built', async () => {
+    const before = unpacked();
+    await expect(
+      main(await options({ dir: await zipOf(), css: '/nope/theme.css' })),
+    ).rejects.toThrow(/ENOENT/);
+    expect(unpacked()).toEqual(before);
   });
 
   it('does not watch with --no-watch', async () => {
