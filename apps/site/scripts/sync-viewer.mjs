@@ -19,7 +19,24 @@ const readme = fs.readFileSync(
   'utf8',
 );
 
-const [head, ...sections] = readme.split(/^## /m);
+// a `## ` line inside a fenced code block is not a heading
+const splitSections = (text) => {
+  const parts = [[]];
+  let fence = null;
+  for (const line of text.split('\n')) {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/)?.[1];
+    if (marker && !fence) fence = marker[0];
+    else if (marker && marker[0] === fence) fence = null;
+    if (!fence && !marker && line.startsWith('## ')) {
+      parts.push([line.slice(3)]);
+    } else {
+      parts.at(-1).push(line);
+    }
+  }
+  return parts.map((lines) => lines.join('\n'));
+};
+
+const [head, ...sections] = splitSections(readme);
 const intro = head
   .split('\n')
   // the HTML header (`<h1>`, tagline, badges) and the table of contents

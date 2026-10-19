@@ -63,26 +63,44 @@ const sharedTail = (wanted: string[], candidate: string[]) => {
  * against the manifest's directory first; an unpacked CI artifact often has
  * another layout than the machine that wrote the manifest, so the file whose
  * path ends the same way wins as a fallback (the same rule the viewer on
- * the website uses for dropped folders).
+ * the website uses for dropped folders). When several files end the same
+ * way equally well the image is left out and `warn` is told: showing the
+ * screenshot of another test would be worse than showing none.
  */
-const createResolver = (root: string) => {
-  let index: { file: string; parts: string[] }[] | undefined;
+const createResolver = (root: string, warn: (message: string) => void) => {
+  let index: Map<string, { file: string; parts: string[] }[]> | undefined;
   const fallback = (p: string) => {
-    index ??= walk(root).map((file) => ({
-      file,
-      parts: toPosix(path.relative(root, file)).split('/'),
-    }));
+    if (!index) {
+      index = new Map();
+      for (const file of walk(root)) {
+        const parts = toPosix(path.relative(root, file)).split('/');
+        const name = parts[parts.length - 1];
+        index.set(name, [...(index.get(name) ?? []), { file, parts }]);
+      }
+    }
     const wanted = p.replace(/^(\.\.?\/)+/, '').split('/');
-    let best: string | undefined;
+    // a file has to share at least its name, so only those are scored
+    const candidates = index.get(wanted[wanted.length - 1]) ?? [];
+    let best: string[] = [];
     let bestScore = 0;
-    for (const candidate of index) {
+    for (const candidate of candidates) {
       const score = sharedTail(wanted, candidate.parts);
       if (score > bestScore) {
         bestScore = score;
-        best = candidate.file;
+        best = [candidate.file];
+      } else if (score === bestScore) {
+        best.push(candidate.file);
       }
     }
-    return best;
+    if (best.length > 1) {
+      warn(
+        `${p} matches ${best.length} files equally well (${best
+          .map((file) => toPosix(path.relative(root, file)))
+          .join(', ')}), so it is not shown`,
+      );
+      return undefined;
+    }
+    return best[0];
   };
   return (manifestFile: string, p: string | null) => {
     if (!p) return null;
@@ -124,7 +142,8 @@ export const loadRun = (dir: string, title: string): LoadedRun => {
     label: toPosix(path.relative(root, file)),
   }));
   const run = mergeManifests(sources);
-  const resolve = createResolver(root);
+  const warnings = new Set(run.warnings);
+  const resolve = createResolver(root, (message) => warnings.add(message));
   const files = new Map<string, string>();
   const image = (file: string, p: string | null) => {
     const rel = resolve(file, p);
@@ -133,6 +152,7 @@ export const loadRun = (dir: string, title: string): LoadedRun => {
     return urlOf(rel);
   };
 
+  const needsHuman = new Set(run.needsHuman.map((e) => e.keyHash));
   const entries: ViewerEntry[] = run.entries.map(
     ({ keyHash, entry, source }) => {
       const { comparison, images } = entry;
@@ -140,7 +160,7 @@ export const loadRun = (dir: string, title: string): LoadedRun => {
         id: keyHash,
         name: entry.name,
         status: entry.status,
-        needsHuman: run.needsHuman.some((e) => e.keyHash === keyHash),
+        needsHuman: needsHuman.has(keyHash),
         test: entry.test,
         platform: platformLabel(entry),
         viewport: entry.viewport,
@@ -175,7 +195,7 @@ export const loadRun = (dir: string, title: string): LoadedRun => {
       tool: first.tool,
       runner: first.runner,
       counts: run.counts,
-      warnings: run.warnings,
+      warnings: [...warnings],
       entries,
     },
   };

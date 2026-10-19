@@ -73,9 +73,12 @@ describe('parseCommand', () => {
     expect(() => parseCommand(['--no-serve'])).toThrow(UsageError);
   });
 
-  it.each(['abc', '-1', '70000', '1.5'])('rejects the port %s', (port) => {
-    expect(() => parseCommand([`--port=${port}`])).toThrow(/Invalid port/);
-  });
+  it.each(['abc', '-1', '70000', '1.5', '', ' ', '1e3'])(
+    'rejects the port %s',
+    (port) => {
+      expect(() => parseCommand([`--port=${port}`])).toThrow(/Invalid port/);
+    },
+  );
 
   it('rejects unknown flags and extra directories', () => {
     expect(() => parseCommand(['--nope'])).toThrow(UsageError);

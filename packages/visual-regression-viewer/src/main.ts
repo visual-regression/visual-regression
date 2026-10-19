@@ -9,6 +9,8 @@ import { watchPaths } from './watch';
 import { writeOutput } from './write';
 import { openInput } from './zip';
 
+const LOOPBACK_HOSTS = ['127.0.0.1', '::1', 'localhost'];
+
 export type Running = { url?: string; close: () => Promise<void> };
 
 const serveRun = async (
@@ -46,6 +48,9 @@ const serveRun = async (
       : () => html,
   });
   log(`Serving ${data.entries.length} screenshots at ${server.url}`);
+  if (!LOOPBACK_HOSTS.includes(options.host)) {
+    log(`Warning: ${options.host} is reachable from other machines`);
+  }
 
   const inputs = [options.template, options.css]
     .filter((file): file is string => !!file)

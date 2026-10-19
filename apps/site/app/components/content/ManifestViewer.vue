@@ -82,11 +82,16 @@ onBeforeUnmount(() => {
   for (const url of urls.values()) URL.revokeObjectURL(url);
 });
 
-/** Finds the dropped file whose path ends with the manifest's project-relative path. */
-const findFile = (relative: string | null) => {
+/**
+ * Finds the dropped file whose path ends with the manifest's project-relative
+ * path. When several files end the same way equally well none is returned and
+ * `warn` is told: showing the screenshot of another test would be worse than
+ * showing none.
+ */
+const findFile = (relative: string | null, warn: (message: string) => void) => {
   if (!relative) return undefined;
   const wanted = relative.replace(/^(\.\.\/)+/, '').split('/');
-  let best: { path: string; file: File } | undefined;
+  let best: RunFile[] = [];
   let bestScore = 0;
   for (const candidate of files.value) {
     const parts = candidate.path.split('/');
@@ -100,10 +105,16 @@ const findFile = (relative: string | null) => {
     }
     if (score > bestScore) {
       bestScore = score;
-      best = candidate;
+      best = [candidate];
+    } else if (score === bestScore && score > 0) {
+      best.push(candidate);
     }
   }
-  return bestScore > 0 ? best : undefined;
+  if (best.length > 1) {
+    warn(`${relative} matches ${best.length} files equally well (${best.map((f) => f.path).join(', ')}), so it is not shown`);
+    return undefined;
+  }
+  return best[0];
 };
 
 const platformLabel = (entry: Entry) => {
@@ -134,8 +145,10 @@ const entryKey = (entry: Entry) =>
     entry.variant ?? '',
   ].join('\u0000');
 
-const merged = computed<Shown[]>(() => {
+const run = computed(() => {
   const byKey = new Map<string, Shown>();
+  const warnings = new Set<string>();
+  const warn = (message: string) => warnings.add(message);
   for (const { label, manifest, attempt } of manifests.value) {
     for (const entry of manifest.entries) {
       const key = entryKey(entry);
@@ -148,15 +161,15 @@ const merged = computed<Shown[]>(() => {
         source: label,
         urls: {
           baseline: (() => {
-            const f = findFile(entry.images.baseline.path);
+            const f = findFile(entry.images.baseline.path, warn);
             return f && urlFor(f.file);
           })(),
           actual: (() => {
-            const f = findFile(entry.images.actual.path);
+            const f = findFile(entry.images.actual.path, warn);
             return f && urlFor(f.file);
           })(),
           diff: (() => {
-            const f = findFile(entry.images.diff.path);
+            const f = findFile(entry.images.diff.path, warn);
             return f && urlFor(f.file);
           })(),
         },
@@ -164,13 +177,16 @@ const merged = computed<Shown[]>(() => {
     }
   }
   const order = (e: Shown) => (NEEDS_HUMAN.includes(e.status) ? 0 : 1);
-  return [...byKey.values()].sort(
+  const entries = [...byKey.values()].sort(
     (a, b) =>
       order(a) - order(b) ||
       a.test.filePath.localeCompare(b.test.filePath) ||
       a.name.localeCompare(b.name),
   );
+  return { entries, warnings: [...warnings] };
 });
+const merged = computed<Shown[]>(() => run.value.entries);
+const warnings = computed(() => run.value.warnings);
 const existingAttempt = new Map<string, number>();
 
 const counts = computed(() => {
@@ -453,6 +469,9 @@ const reset = () => {
         </div>
         <ul v-if="errors.length" class="space-y-1 text-sm text-error">
           <li v-for="error in errors" :key="error">{{ error }}</li>
+        </ul>
+        <ul v-if="warnings.length" class="space-y-1 text-sm text-warning">
+          <li v-for="warning in warnings" :key="warning">{{ warning }}</li>
         </ul>
 
         <div class="grid gap-4 lg:grid-cols-[280px_1fr]">

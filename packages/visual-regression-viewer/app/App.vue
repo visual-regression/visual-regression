@@ -51,8 +51,15 @@ const percent = (ratio: number) =>
     : ratio < 0.0001
       ? '<0.01%'
       : `${(ratio * 100).toFixed(2)}%`;
-const badge = (entry: ViewerEntry) =>
-  entry.status === 'missing-baseline' ? 'new' : entry.status.slice(0, 4);
+const badges: Record<string, string> = {
+  failed: 'fail',
+  'missing-baseline': 'new',
+  passed: 'pass',
+  created: 'added',
+  updated: 'upd',
+  approved: 'ok',
+};
+const badge = (entry: ViewerEntry) => badges[entry.status] ?? entry.status;
 </script>
 
 <template>

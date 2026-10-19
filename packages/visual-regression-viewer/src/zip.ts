@@ -3,7 +3,11 @@ import os from 'os';
 import path from 'path';
 import { unzipSync } from 'fflate';
 
-/** Largest amount of data a zip may unpack to; a guard against zip bombs. */
+/**
+ * Largest amount of data a zip may unpack to; a guard against zip bombs.
+ * The sizes it adds up are the declared ones, which is sound: fflate never
+ * unpacks an entry to more than the size it declares.
+ */
 export const MAX_UNZIPPED_BYTES = 4 * 1024 ** 3;
 
 export type Input = {

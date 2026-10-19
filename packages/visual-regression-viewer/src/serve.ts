@@ -1,6 +1,7 @@
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import { pipeline } from 'stream';
 import sirv from 'sirv';
 import { EVENTS_PATH, injectReload } from './render';
 
@@ -37,6 +38,12 @@ const CONTENT_TYPES: Record<string, string> = {
   '.bmp': 'image/bmp',
 };
 
+/** An SVG opened on its own must not run script from this origin, and no file is sniffed into another type. */
+const FILE_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'Content-Security-Policy': 'sandbox',
+};
+
 const MAX_PORT_TRIES = 20;
 
 const listen = (server: http.Server, port: number, host: string) =>
@@ -52,7 +59,16 @@ const listen = (server: http.Server, port: number, host: string) =>
 export const startServer = async (options: ServeOptions): Promise<Server> => {
   const { host, page, files, dir, live } = options;
   const clients = new Set<http.ServerResponse>();
-  const serveDir = dir ? sirv(dir, { dev: true }) : undefined;
+  const serveDir = dir
+    ? sirv(dir, {
+        dev: true,
+        setHeaders: (res) => {
+          for (const [name, value] of Object.entries(FILE_HEADERS)) {
+            res.setHeader(name, value);
+          }
+        },
+      })
+    : undefined;
 
   const handler: http.RequestListener = (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -118,12 +134,12 @@ export const startServer = async (options: ServeOptions): Promise<Server> => {
         CONTENT_TYPES[path.extname(file).toLowerCase()] ??
         'application/octet-stream',
       'Cache-Control': 'no-cache',
+      ...FILE_HEADERS,
     });
     if (req.method === 'HEAD') res.end();
-    else
-      fs.createReadStream(file)
-        .on('error', () => res.destroy())
-        .pipe(res);
+    // a client that leaves or a file that cannot be read ends the response;
+    // `pipeline` also closes the file then
+    else pipeline(fs.createReadStream(file), res, () => {});
   };
 
   const server = http.createServer(handler);

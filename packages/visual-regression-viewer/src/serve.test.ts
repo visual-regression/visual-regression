@@ -13,24 +13,28 @@ afterEach(async () => {
 const base = { host: '127.0.0.1', port: 0, autoPort: false, live: false };
 
 const request = (url: string, method = 'GET') =>
-  new Promise<{ status: number; type?: string; body: Buffer }>(
-    (resolve, reject) => {
-      http
-        .request(url, { method }, (res) => {
-          const chunks: Buffer[] = [];
-          res.on('data', (c) => chunks.push(c));
-          res.on('end', () =>
-            resolve({
-              status: res.statusCode ?? 0,
-              type: res.headers['content-type'],
-              body: Buffer.concat(chunks),
-            }),
-          );
-        })
-        .on('error', reject)
-        .end();
-    },
-  );
+  new Promise<{
+    status: number;
+    type?: string;
+    headers: http.IncomingHttpHeaders;
+    body: Buffer;
+  }>((resolve, reject) => {
+    http
+      .request(url, { method }, (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () =>
+          resolve({
+            status: res.statusCode ?? 0,
+            type: res.headers['content-type'],
+            headers: res.headers,
+            body: Buffer.concat(chunks),
+          }),
+        );
+      })
+      .on('error', reject)
+      .end();
+  });
 
 /** Opens the event stream and resolves with what arrives until `until` matches. */
 const events = (url: string, until: RegExp) =>
@@ -107,6 +111,23 @@ describe('startServer with the page in memory', () => {
     );
   });
 
+  it('keeps the files from being sniffed or run as a page', async () => {
+    const root = await tmpDir();
+    writeFile(
+      path.join(root, 'a.svg'),
+      '<svg xmlns="http://www.w3.org/2000/svg"/>',
+    );
+    server = await startServer({
+      ...base,
+      page: () => 'page',
+      files: new Map([['a.svg', path.join(root, 'a.svg')]]),
+    });
+    expect((await request(`${server.url}a.svg`)).headers).toMatchObject({
+      'x-content-type-options': 'nosniff',
+      'content-security-policy': 'sandbox',
+    });
+  });
+
   it('reports a page that cannot be produced', async () => {
     server = await startServer({
       ...base,
@@ -134,7 +155,12 @@ describe('startServer with a directory', () => {
     writeFile(path.join(root, 'sub/a.png'), png(2, 2));
     let page = 'one';
     server = await startServer({ ...base, dir: root, page: () => page });
-    expect((await request(`${server.url}sub/a.png`)).body).toEqual(png(2, 2));
+    const image = await request(`${server.url}sub/a.png`);
+    expect(image.body).toEqual(png(2, 2));
+    expect(image.headers).toMatchObject({
+      'x-content-type-options': 'nosniff',
+      'content-security-policy': 'sandbox',
+    });
     expect((await request(`${server.url}missing.png`)).status).toBe(404);
     expect((await request(server.url)).body.toString()).toBe('one');
     page = 'two';

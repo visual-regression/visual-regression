@@ -106,6 +106,20 @@ describe('main', () => {
     expect(log.join('\n')).toContain('Serving 1 screenshots');
   });
 
+  it('warns when the server is reachable from other machines', async () => {
+    const log: string[] = [];
+    running = await main(await options({ host: '0.0.0.0' }), (m) =>
+      log.push(m),
+    );
+    expect(log.join('\n')).toContain(
+      '0.0.0.0 is reachable from other machines',
+    );
+    const quiet: string[] = [];
+    await running.close();
+    running = await main(await options(), (m) => quiet.push(m));
+    expect(quiet.join('\n')).not.toContain('reachable');
+  });
+
   it('applies the title and the stylesheet', async () => {
     const css = path.join(await tmpDir(), 'theme.css');
     writeFile(css, ':root{--vrv-accent:hotpink}');

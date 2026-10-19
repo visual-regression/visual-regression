@@ -4,9 +4,19 @@ import path from 'path';
 import { zipSync } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { tmpDir, writeFile } from '../__tests__/helpers';
-import { isZipPath, openInput, unzipInto } from './zip';
+import { MAX_UNZIPPED_BYTES, isZipPath, openInput, unzipInto } from './zip';
 
 const text = (value: string) => new TextEncoder().encode(value);
+
+/** Rewrites the unpacked size every central directory header of `zip` declares. */
+const declareSize = (zip: Uint8Array, size: number) => {
+  const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+  for (let i = 0; i + 28 < zip.length; i++) {
+    if (view.getUint32(i, true) === 0x02014b50)
+      view.setUint32(i + 24, size, true);
+  }
+  return zip;
+};
 
 describe('isZipPath', () => {
   it('goes by the extension', () => {
@@ -45,6 +55,25 @@ describe('unzipInto', () => {
       /outside of itself/,
     );
     expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it('refuses a zip that declares more than it may unpack to', async () => {
+    const dir = await tmpDir();
+    const zip = declareSize(
+      zipSync({ 'a.bin': text('a'), 'b.bin': text('b'), 'c.bin': text('c') }),
+      Math.ceil(MAX_UNZIPPED_BYTES / 2),
+    );
+    expect(() => unzipInto(zip, dir)).toThrow(/unpacks to more than/);
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it('never unpacks more than a zip declares, so a forged size is no way around the limit', async () => {
+    const dir = await tmpDir();
+    unzipInto(
+      declareSize(zipSync({ 'a.bin': new Uint8Array(1024 * 1024) }), 10),
+      dir,
+    );
+    expect(fs.statSync(path.join(dir, 'a.bin')).size).toBe(10);
   });
 
   it('refuses a zip that is not one', async () => {

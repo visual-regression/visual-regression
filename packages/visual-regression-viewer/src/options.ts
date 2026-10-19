@@ -61,7 +61,8 @@ export const resolveOptions = (
   let port = DEFAULT_PORT;
   if (flags.port !== undefined) {
     port = Number(flags.port);
-    if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    // `Number` alone takes '', ' ' (0) and '1e3' (1000)
+    if (!/^\d+$/.test(flags.port) || port > 65535) {
       throw new UsageError(`Invalid port ${JSON.stringify(flags.port)}`);
     }
   }

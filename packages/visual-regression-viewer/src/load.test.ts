@@ -77,6 +77,22 @@ describe('loadRun', () => {
     });
   });
 
+  it('leaves out an image that several files match equally well and says so', async () => {
+    const root = await tmpDir();
+    writeFile(
+      path.join(root, 'visual-regression-manifest.json'),
+      JSON.stringify(manifest([entry()])),
+    );
+    writeFile(path.join(root, 'a/home.png'), png(2, 2));
+    writeFile(path.join(root, 'b/home.png'), png(2, 2));
+    const { data, files } = loadRun(root, 'Run');
+    expect(data.entries[0].images.baseline).toBeNull();
+    expect(files.size).toBe(0);
+    expect(data.warnings).toEqual([
+      expect.stringMatching(/shots\/home\.png matches 2 files.*a\/home\.png/),
+    ]);
+  });
+
   it('never links files outside the run directory', async () => {
     const root = await tmpDir();
     const outside = await tmpDir();

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { main } from './main';
+import { main, type Running } from './main';
 import { UsageError, helpText, parseCommand } from './options';
 
 const fail = (error: unknown) => {
@@ -25,11 +25,21 @@ const run = async () => {
     );
     return console.log(version);
   }
-  const running = await main(command.options);
-  if (!running.url) return;
-  const stop = () => void running.close().then(() => process.exit(0));
+  // installed first: a signal while a zip is unpacked or the watcher starts
+  // must still exit through `process.exit`, which removes the unpacked files
+  const started: Running[] = [];
+  let stopping = false;
+  const stop = () => {
+    if (stopping) return;
+    stopping = true;
+    Promise.all(started.map((running) => running.close())).then(
+      () => process.exit(0),
+      fail,
+    );
+  };
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
+  started.push(await main(command.options));
 };
 
 run().catch(fail);
