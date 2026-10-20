@@ -82,8 +82,7 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-// diff engines are libraries the tools above are built on, not a choice for any of the four questions
-const candidates = computed(() => (tools.value ?? []).filter((t) => t.category !== 'diff-engine'));
+const candidates = computed(() => tools.value ?? []);
 
 const answers = reactive<Record<string, string>>(Object.fromEntries(QUESTIONS.map((q) => [q.key, 'any'])));
 const ruleFor = (q: Question) => q.items.find((i) => i.value === answers[q.key])?.rule ?? any;
@@ -107,8 +106,6 @@ const compareLink = computed(() => {
   const s = q.toString();
   return s ? `/compare?${s}` : '/compare';
 });
-const resultsColor = (value: string) =>
-  value === 'manifest' || value === 'json-report' ? 'primary' : value === 'images-only' ? 'warning' : 'neutral';
 </script>
 
 <template>
@@ -130,21 +127,12 @@ const resultsColor = (value: string) =>
         <span class="text-xs text-muted">after {{ answered }} of 4 answers</span>
         <UButton v-if="answered" size="xs" variant="ghost" color="neutral" class="ml-auto" @click="reset">Reset</UButton>
       </p>
-      <ul v-if="left.length" class="divide-y divide-default text-sm">
-        <li v-for="t in left" :key="t.id" class="flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3 py-2">
-          <a :href="t.website" target="_blank" rel="noopener" class="font-medium hover:underline">{{ t.name }}</a>
-          <span class="text-xs text-muted">{{ TOOL_CATEGORIES[t.category] }} · {{ toolLabel('hosting', t.hosting) }} · {{ toolLabel('pricingModel', t.pricingModel) }}</span>
-          <UBadge :color="resultsColor(t.machineReadableResults)" variant="subtle" size="sm" class="ml-auto">
-            {{ toolLabel('machineReadableResults', t.machineReadableResults) }}
-          </UBadge>
-        </li>
-      </ul>
+      <ToolList v-if="left.length" :tools="left" />
       <p v-else class="px-3 py-6 text-center text-sm text-muted">
         Nothing fits all four answers. Loosen one; you are hitting the trade-offs the chapter describes.
       </p>
       <p class="border-t border-default px-3 py-2 text-xs text-muted">
-        Diff engines (pixelmatch, odiff, …) are left out because these tools are built on them.
-        <NuxtLink :to="compareLink" class="underline">See every column in the comparison</NuxtLink>, or correct a tool's entry from there.
+        <NuxtLink :to="compareLink" class="underline">Open the comparison</NuxtLink> to filter by category, or to correct a tool's entry.
       </p>
     </div>
   </div>

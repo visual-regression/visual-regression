@@ -13,12 +13,7 @@ export const toolSchema = z.object({
   website: z.string().url(),
   /** One sentence, factual, no adjectives. */
   summary: z.string(),
-  category: z.enum([
-    'runner-integration',
-    'hosted-review',
-    'diff-engine',
-    'mobile-native',
-  ]),
+  category: z.enum(['runner-integration', 'hosted-review', 'mobile-native']),
   aliases: z.array(z.string()).optional(),
   openSource: z.boolean(),
   license: z.string().optional(),

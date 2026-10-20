@@ -22,7 +22,6 @@ const COLUMNS = [
 const KIND: Record<string, string> = {
   'runner-integration': 'runner',
   'hosted-review': 'hosted review',
-  'diff-engine': 'diff engine',
   'mobile-native': 'mobile',
 };
 const cell = (key: (typeof COLUMNS)[number]['key'], value: string) =>
