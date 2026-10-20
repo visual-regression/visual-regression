@@ -4,12 +4,12 @@ This policy covers every package in this repository.
 
 ## Supported versions
 
-| Version                                | Support                                                  |
-| -------------------------------------- | -------------------------------------------------------- |
-| Latest major (`latest` dist-tag)       | yes, security fixes ship as patch releases               |
-| Pre-releases (`beta` dist-tag)         | yes, ongoing; fixes land in the next pre-release         |
-| Previous major                         | six months after the new major ships on `latest`         |
-| Anything older than the previous major | no, please upgrade                                       |
+| Version                                | Support                                          |
+| -------------------------------------- | ------------------------------------------------ |
+| Latest major (`latest` dist-tag)       | yes, security fixes ship as patch releases       |
+| Pre-releases (`beta` dist-tag)         | yes, ongoing; fixes land in the next pre-release |
+| Previous major                         | six months after the new major ships on `latest` |
+| Anything older than the previous major | no, please upgrade                               |
 
 ## Reporting a vulnerability
 

@@ -21,7 +21,7 @@ pnpm lint           # eslint on **/*.ts, apps/ ignored; `pnpm fix` to autofix
                     # (CI uses `pnpm lint:ci`, which fails on warnings)
 pnpm test           # vitest in every package (test:integration:ci, with coverage)
 pnpm test:integration   # same without CI=true/coverage; `:watch` and `:coverage` variants exist
-pnpm format         # prettier --write in every workspace package
+pnpm format         # prettier --write on the whole repo (root config)
 ```
 
 Single package / single test:
@@ -32,7 +32,7 @@ pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts
 pnpm --filter visual-regression-viewer exec vitest run -t "name"
 ```
 
-Site: `pnpm --filter @visual-regression/site dev` / `build` (`nuxt generate`). Both first run `pnpm sync` (see below). Site files are not covered by `pnpm lint`; formatting is checked with `format:ci`.
+Site: `pnpm --filter @visual-regression/site dev` / `build` (`nuxt generate`). Both first run `pnpm sync` (see below). Site files are not covered by `pnpm lint`; formatting is checked by the root `format:ci`.
 
 Coverage thresholds are enforced in the viewer (90 lines/functions/statements, 85 branches); `src/cli.ts` and `src/types.ts` are excluded.
 
@@ -41,7 +41,8 @@ Coverage thresholds are enforced in the viewer (90 lines/functions/statements, 8
 **Manifest package** is built with microbundle (cjs + modern) and copies `schema.json` into `dist`. Tests live next to sources as `src/*.test.ts`, with fixtures under `__tests__/`. Adding a converter = one file in `src/convert/`, one fixture dir, one test.
 
 **Viewer pipeline** (`packages/visual-regression-viewer`):
-1. `app/` is a Vue 3 + Tailwind page built by Vite with `vite-plugin-singlefile` into one HTML file, `dist/template.html`. It is a *template*, not a finished page.
+
+1. `app/` is a Vue 3 + Tailwind page built by Vite with `vite-plugin-singlefile` into one HTML file, `dist/template.html`. It is a _template_, not a finished page.
 2. `src/load.ts` reads a run directory through `visual-regression-manifest` (read, merge) into `ViewerData` plus a map of URL path → absolute file path for every linked image.
 3. `src/render.ts` / `src/template.ts` inject the data (`<!--vrv:data-->`, JSON escaped for `<script>`) and optional `--css` (`<!--vrv:css-->`) into the template. `--template` swaps the built-in page for a user's own.
 4. `src/main.ts` orchestrates: `write.ts` (output folder), `serve.ts` (sirv server, loopback by default), `watch.ts` (chokidar, rebuild on change), `zip.ts` (zip input via fflate). `src/cli.ts` is the thin entry; `options.ts` parses args.
@@ -51,6 +52,7 @@ The `build` script chains `vite build` → `tsc --noEmit` → esbuild bundle of 
 Viewer tests alias `visual-regression-manifest` to the manifest **source** (`vitest.config.mts`), so they don't need a built manifest.
 
 **Site content is generated from the packages.** `apps/site/scripts/sync-manifest.mjs` and `sync-viewer.mjs` turn each package README (and the schema) into site pages, so edit the README or schema, never the generated files:
+
 - `content/3.manifest/[2-9].*.md`, `public/schema/` and `content/4.viewer/[2-9].*.md` are generated (`generated: true` frontmatter), gitignored, and rewritten on every run.
 - Hand-written pages (`1.index.md`) sit in the same folders and are left alone.
 - Both scripts strip the README's HTML header, TOC and License section, and rewrite `https://visual-regression.dev/...` links into site paths. Keep README `##` sections compatible with that.
