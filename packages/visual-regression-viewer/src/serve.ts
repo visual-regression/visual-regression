@@ -2,7 +2,6 @@ import fs from 'fs';
 import http from 'http';
 import path from 'path';
 import { pipeline } from 'stream';
-import sirv from 'sirv';
 import { EVENTS_PATH, injectReload } from './render';
 
 export type ServeOptions = {
@@ -46,6 +45,31 @@ const FILE_HEADERS = {
 
 const MAX_PORT_TRIES = 20;
 
+/**
+ * The file `rel` (a decoded URL path) names inside `dir`, or `undefined`: a file that
+ * is not there, a path that leads out of `dir` and dotfiles are not served. The path is
+ * resolved here, not by a static-file middleware, because those decode the URL again and
+ * miss names with `#` or `%` in them, which is how test runners name screenshots (`home_#0.png`).
+ */
+const fileInDir = (dir: string, rel: string) => {
+  if (
+    rel.includes('\0') ||
+    rel.split('/').some((part) => part.startsWith('.'))
+  ) {
+    return undefined;
+  }
+  const file = path.resolve(dir, rel);
+  const inside = path.relative(dir, file);
+  if (!inside || inside.startsWith('..') || path.isAbsolute(inside)) {
+    return undefined;
+  }
+  try {
+    return fs.statSync(file).isFile() ? file : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const listen = (server: http.Server, port: number, host: string) =>
   new Promise<void>((resolve, reject) => {
     const onError = (error: Error) => reject(error);
@@ -59,16 +83,6 @@ const listen = (server: http.Server, port: number, host: string) =>
 export const startServer = async (options: ServeOptions): Promise<Server> => {
   const { host, page, files, dir, live } = options;
   const clients = new Set<http.ServerResponse>();
-  const serveDir = dir
-    ? sirv(dir, {
-        dev: true,
-        setHeaders: (res) => {
-          for (const [name, value] of Object.entries(FILE_HEADERS)) {
-            res.setHeader(name, value);
-          }
-        },
-      })
-    : undefined;
 
   const handler: http.RequestListener = (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -118,13 +132,7 @@ export const startServer = async (options: ServeOptions): Promise<Server> => {
       return;
     }
 
-    if (serveDir) {
-      serveDir(req, res, () => {
-        res.writeHead(404).end('Not found');
-      });
-      return;
-    }
-    const file = files?.get(rel);
+    const file = dir ? fileInDir(dir, rel) : files?.get(rel);
     if (!file) {
       res.writeHead(404).end('Not found');
       return;
