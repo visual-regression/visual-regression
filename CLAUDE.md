@@ -8,11 +8,11 @@ The home of visual-regression.dev: a pnpm workspace with two published npm packa
 
 Details for each part live in project skills (`.claude/skills/`). **Load the matching skill before working on that part**:
 
-| Path | Skill | What it is |
-| --- | --- | --- |
+| Path                                  | Skill              | What it is                                                                                         |
+| ------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
 | `packages/visual-regression-manifest` | `manifest-package` | Run-manifest format: JSON Schema, types, reader/writer/merger, converters from other tools' output |
-| `packages/visual-regression-viewer` | `viewer-package` | The `visual-regression-viewer` CLI: serves a review page or writes it to a folder |
-| `apps/site` | `site` | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs |
+| `packages/visual-regression-viewer`   | `viewer-package`   | The `visual-regression-viewer` CLI: serves a review page or writes it to a folder                  |
+| `apps/site`                           | `site`             | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs    |
 
 Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`. `verify-manifest` owns the sample-run generator the other two reuse.
 
@@ -40,7 +40,7 @@ pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts
 pnpm --filter visual-regression-viewer exec vitest run -t "name"
 ```
 
-Site: `pnpm --filter @visual-regression/site dev` / `build`. Site files are not covered by `pnpm lint`; formatting is checked with `format:ci`.
+Site: `pnpm --filter @visual-regression/site dev` / `build`. Site files are not covered by `pnpm lint`; formatting is checked by the root `format:ci`.
 
 ## Release & CI
 

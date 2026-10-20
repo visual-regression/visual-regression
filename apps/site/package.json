@@ -10,9 +10,7 @@
     "sync": "node scripts/sync-manifest.mjs && node scripts/sync-viewer.mjs",
     "predev": "pnpm sync",
     "prebuild": "pnpm sync",
-    "postinstall": "nuxt prepare",
-    "format": "prettier --write .",
-    "format:ci": "prettier --check ."
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
@@ -21,10 +19,8 @@
     "nuxt": "^4.4.8"
   },
   "devDependencies": {
-    "@frsource/prettier-config": "^1.11.0",
     "@nuxt/content": "^3.16.2",
     "@nuxt/kit": "^4.6.1",
-    "prettier": "3.9.9",
     "wrangler": "4.145.0"
   }
 }
