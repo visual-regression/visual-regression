@@ -260,9 +260,6 @@ importers:
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
-      sirv:
-        specifier: ^3.0.2
-        version: 3.0.2
       visual-regression-manifest:
         specifier: workspace:*
         version: link:../visual-regression-manifest

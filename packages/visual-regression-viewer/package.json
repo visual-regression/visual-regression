@@ -28,7 +28,6 @@
   "dependencies": {
     "chokidar": "^5.0.0",
     "fflate": "^0.8.2",
-    "sirv": "^3.0.2",
     "visual-regression-manifest": "workspace:*"
   },
   "devDependencies": {

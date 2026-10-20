@@ -162,9 +162,42 @@ describe('startServer with a directory', () => {
       'content-security-policy': 'sandbox',
     });
     expect((await request(`${server.url}missing.png`)).status).toBe(404);
+    expect((await request(`${server.url}%2e%2e/%2e%2e/etc/hosts`)).status).toBe(
+      404,
+    );
     expect((await request(server.url)).body.toString()).toBe('one');
     page = 'two';
     expect((await request(server.url)).body.toString()).toBe('two');
+  });
+
+  it('serves files whose names hold reserved characters, as the page links them', async () => {
+    const root = await tmpDir();
+    writeFile(path.join(root, 'shots/home_#0.png'), png(2, 2));
+    writeFile(path.join(root, 'shots/100%.png'), png(3, 3));
+    server = await startServer({ ...base, dir: root, page: () => '' });
+    const hash = await request(`${server.url}shots/home_%230.png`);
+    expect(hash.status).toBe(200);
+    expect(hash.body).toEqual(png(2, 2));
+    expect((await request(`${server.url}shots/100%25.png`)).body).toEqual(
+      png(3, 3),
+    );
+  });
+
+  it('does not serve dotfiles, directories or anything outside the directory', async () => {
+    const root = await tmpDir();
+    writeFile(path.join(root, 'out/shots/a.png'), png(2, 2));
+    writeFile(path.join(root, 'out/.secret'), Buffer.from('x'));
+    writeFile(path.join(root, 'outside.png'), png(2, 2));
+    server = await startServer({
+      ...base,
+      dir: path.join(root, 'out'),
+      page: () => '',
+    });
+    for (const url of ['.secret', 'shots', 'shots/', '%2e%2e/outside.png']) {
+      expect((await request(`${server.url}${url}`)).status).toBe(404);
+    }
+    expect((await request(`${server.url}shots/a%00.png`)).status).toBe(404);
+    expect((await request(`${server.url}shots/a.png`)).status).toBe(200);
   });
 });
 
