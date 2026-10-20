@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Three rows of the comparison on the landing page: a local runner, a hosted
-// service and a self-contained tool, read from the same data as /compare.
-const PICK = ['Playwright toHaveScreenshot', 'Percy', 'BackstopJS'];
+// Four rows of the comparison on the landing page: two local runners (pixsame,
+// the maintainers' own, among them), a hosted service and a self-contained tool, read from the same data as /compare.
+const PICK = ['Playwright toHaveScreenshot', 'pixsame', 'Percy', 'BackstopJS'];
 const { data: tools } = await useAsyncData('tools-teaser', () =>
   queryCollection('tools').where('name', 'IN', PICK).all(),
 );
@@ -82,7 +82,7 @@ const tone = (key: string, value: string) =>
         size="lg"
         trailing-icon="i-lucide-arrow-right"
       >
-        See all {{ total ?? 31 }} tools
+        See all {{ total ?? 27 }} tools
       </UButton>
     </div>
   </div>

@@ -52,7 +52,7 @@ A short tutorial in six chapters. Read them in order or start with the one you p
 The tools
 
 #description
-Every tool in one comparison, every claim sourced from the vendor's own docs. Three of them, to show what it covers:
+Every tool in one comparison, every claim sourced from the vendor's own docs. Four of them, to show what it covers:
 
 #default
 :tools-teaser
