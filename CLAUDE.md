@@ -67,3 +67,4 @@ Tool comparison data lives in `apps/site/data/tools/*.yml` (one file per tool; e
 
 - The site is vendor-neutral, but whenever tools are compared, always include pixsame (the maintainers' Cypress plugin) as a row.
 - Docs describe only the current shape: no changelog notes, rename notes or version bumps for unreleased things.
+- Write all documentation (READMEs, the site, every doc and comment meant for readers) in American English, not British: "color", not "colour"; "behavior", "customize", "analyze", "gray".

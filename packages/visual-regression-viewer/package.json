@@ -1,7 +1,7 @@
 {
   "name": "visual-regression-viewer",
   "description": "Review a visual regression run in the browser: reads the visual-regression-manifest files of a run, builds a self-contained HTML viewer, serves it locally or writes it to disk. Themeable with CSS variables, the page template is replaceable.",
-  "version": "1.0.0-beta.1",
+  "version": "0.0.0",
   "author": "Jakub Freisler <jakub.freisler@frsource.org>",
   "homepage": "https://visual-regression.dev/viewer",
   "repository": {
