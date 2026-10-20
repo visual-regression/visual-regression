@@ -24,7 +24,7 @@ Docus (Nuxt) site, statically generated (`nuxt generate`) and deployed to Cloudf
 ## Verify
 
 1. `pnpm --filter @visual-regression/site build` succeeds (this also catches broken content links/frontmatter and invalid tool YAML).
-2. `pnpm --filter @visual-regression/site format:ci` (prettier). Site files are **not** covered by `pnpm lint`.
+2. `pnpm lint` (eslint with the Nuxt preset applied to `apps/site`, plus a prettier check; `pnpm fix` autofixes both).
 3. For visual/content changes, load the `verify-site` skill: it checks the static output and drives the compare page and the browser viewer against the production-like build.
 4. After a README edit, confirm the generated pages still exist and read well (`git status` should show no tracked generated files).
 

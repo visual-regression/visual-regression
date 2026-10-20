@@ -49,8 +49,7 @@ jobs:
           # the only job that saves the cache (fastest job, never on the critical path)
           save-cache: 'true'
           install-filter: ${{ env.PACKAGES_INSTALL_FILTER }}
-      - run: pnpm lint:ci
-      - run: pnpm format:ci
+      - run: pnpm lint
 
   test-integration-coverage:
     name: test-integration-coverage

@@ -50,8 +50,8 @@ jobs:
         with:
           # only the site and its workspace dependencies, not the packages' toolchains
           install-filter: --filter . --filter @visual-regression/site...
-      - name: Formatting (cheapest first)
-        run: pnpm format:ci
+      - name: Lint and formatting (cheapest first)
+        run: pnpm lint
       - name: Build (static generate)
         run: pnpm --filter @visual-regression/site build
       # Same job as the build, so the deployed output is exactly what was built

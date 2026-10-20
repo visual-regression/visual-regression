@@ -52,7 +52,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', move);
   window.removeEventListener('pointerup', up);
 });
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 </script>
 
 <template>

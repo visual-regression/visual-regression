@@ -37,7 +37,6 @@
  *   node scripts/publish.mjs --dry-run       # only print what would be published
  */
 
-/* global process, console */
 /* eslint-disable no-console */
 
 import { execFileSync } from 'child_process';

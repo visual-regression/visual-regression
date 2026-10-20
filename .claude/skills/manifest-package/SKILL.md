@@ -27,7 +27,7 @@ Published npm package defining the run-manifest format. Everything else in the r
 ## Verify
 
 1. `pnpm --filter visual-regression-manifest exec vitest run` passes.
-2. `pnpm lint` and `pnpm --filter visual-regression-manifest format:ci` pass (CI uses `pnpm lint:ci`, which fails on warnings).
+2. `pnpm lint` passes (eslint, which fails on warnings, plus a prettier check; `pnpm fix` autofixes both).
 3. `pnpm build` succeeds (the viewer's CLI build and the site need the built package), then load the `verify-manifest` skill to check the built package as a consumer sees it (exports, schema, reader, merge, converters).
 4. If the public API, schema or README changed, run `pnpm --filter @visual-regression/site sync` and check the generated pages still look right.
 

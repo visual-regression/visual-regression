@@ -25,7 +25,7 @@ CLI that loads the manifests of a run and serves a review page or writes it to a
 ## Verify
 
 1. `pnpm --filter visual-regression-viewer test:integration:coverage` — thresholds are enforced: 90 lines/functions/statements, 85 branches. `src/cli.ts` and `src/types.ts` are excluded, so keep logic out of them.
-2. `pnpm lint` (`lint:ci` fails on warnings) and `pnpm --filter visual-regression-viewer format:ci`.
+2. `pnpm lint` (eslint, which fails on warnings, plus a prettier check; `pnpm fix` autofixes both).
 3. `pnpm --filter visual-regression-viewer build` succeeds (includes the type-check).
 4. For anything user-visible (UI, serving, `-o` output, options), tests are not enough: load the `verify-viewer` skill, which builds the CLI, runs it on a sample run and drives the page.
 

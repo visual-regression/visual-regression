@@ -5,11 +5,8 @@
   "scripts": {
     "dev": "pnpm -r dev",
     "build": "pnpm -r --filter './packages/**' build",
-    "lint": "eslint '**/*.ts' --ignore-pattern '**/*.d.ts' --ignore-pattern 'apps/**'",
-    "fix": "pnpm lint --fix",
-    "lint:ci": "pnpm lint --max-warnings 0",
-    "format": "prettier --write .",
-    "format:ci": "prettier --check .",
+    "lint": "eslint . --max-warnings 0 && prettier --check .",
+    "fix": "eslint . --fix && prettier --write .",
     "test": "pnpm -r test:integration:ci",
     "test:integration": "pnpm -r test:integration",
     "test:integration:watch": "pnpm -r test:integration:watch",
@@ -24,10 +21,14 @@
   "devDependencies": {
     "@frsource/eslint-config": "1.85.13",
     "@frsource/prettier-config": "^1.48.0",
+    "@nuxt/eslint-config": "^1.17.0",
     "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-vue": "^10.11.1",
     "globals": "17.12.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "prettier": "3.9.9"
+    "prettier": "3.9.9",
+    "typescript-eslint": "8.70.0"
   }
 }
