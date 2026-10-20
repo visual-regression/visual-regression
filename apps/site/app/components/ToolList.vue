@@ -46,6 +46,14 @@ const toggle = (id: string) => {
             @click.stop
             >{{ t.name }}</a
           >
+          <UBadge
+            v-if="t.discontinued"
+            color="error"
+            variant="subtle"
+            size="sm"
+            class="-ml-1.5"
+            >discontinued</UBadge
+          >
           <span v-if="!t.openSource" class="-ml-1.5 text-xs text-muted"
             >proprietary</span
           >
@@ -64,6 +72,25 @@ const toggle = (id: string) => {
           </UBadge>
         </div>
         <div v-if="open.has(t.id)" class="space-y-2 bg-elevated/30 px-3 py-3">
+          <p
+            v-if="t.discontinued"
+            class="flex items-start gap-2 bg-error/10 px-3 py-2 text-sm text-error"
+          >
+            <UIcon
+              name="i-lucide-triangle-alert"
+              class="mt-0.5 size-4 shrink-0"
+            />
+            <span
+              >{{ t.discontinued.message }}
+              <a
+                :href="t.discontinued.url"
+                target="_blank"
+                rel="noopener"
+                class="underline"
+                >Read the announcement</a
+              >.</span
+            >
+          </p>
           <p>{{ t.summary }}</p>
           <dl
             class="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_1fr]"

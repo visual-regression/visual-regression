@@ -14,7 +14,7 @@ const onlyOpenSource = ref(false);
 
 const rows = computed(() =>
   (tools.value ?? [])
-    .filter((t) => category.value === 'all' || t.category === category.value)
+    .filter((t) => category.value === 'all' || t.category === category.value || t.alsoCategories?.includes(category.value))
     .filter((t) => !onlyManifest.value || t.manifestSupport !== 'none')
     .filter((t) => !onlyOpenSource.value || t.openSource)
     .sort((a, b) => a.name.localeCompare(b.name)),

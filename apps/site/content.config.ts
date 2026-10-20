@@ -14,7 +14,15 @@ export const toolSchema = z.object({
   /** One sentence, factual, no adjectives. */
   summary: z.string(),
   category: z.enum(['runner-integration', 'hosted-review', 'mobile-native']),
+  /** Further categories the tool is listed under when filtering, besides its own. */
+  alsoCategories: z
+    .array(z.enum(['runner-integration', 'hosted-review', 'mobile-native']))
+    .optional(),
   aliases: z.array(z.string()).optional(),
+  /** Set when the project is no longer maintained; shown as a visible notice. */
+  discontinued: z
+    .object({ message: z.string(), url: z.string().url() })
+    .optional(),
   openSource: z.boolean(),
   license: z.string().optional(),
   selfHostable: z.boolean(),
