@@ -7,7 +7,9 @@ import assert from 'node:assert/strict';
 
 const [base, ...rest] = process.argv.slice(2);
 if (!base) {
-  console.error('usage: check-served.mjs <base-url> [--expect-entries N] [--expect-needs-human N]');
+  console.error(
+    'usage: check-served.mjs <base-url> [--expect-entries N] [--expect-needs-human N]',
+  );
   process.exit(2);
 }
 const flag = (name) => {
@@ -30,7 +32,9 @@ const rawStatus = async (rawPath) => {
   const { connect } = await import('node:net');
   return new Promise((resolve, reject) => {
     const socket = connect(Number(port), hostname, () =>
-      socket.write(`GET ${rawPath} HTTP/1.1\r\nHost: ${hostname}\r\nConnection: close\r\n\r\n`),
+      socket.write(
+        `GET ${rawPath} HTTP/1.1\r\nHost: ${hostname}\r\nConnection: close\r\n\r\n`,
+      ),
     );
     let out = '';
     socket.on('data', (d) => (out += d));
@@ -45,11 +49,16 @@ await check('page: 200 html with the vrv-data block', async () => {
   assert.equal(res.status, 200);
   assert.match(res.headers.get('content-type') ?? '', /text\/html/);
   const html = await res.text();
-  const m = html.match(/<script type="application\/json" id="vrv-data">([\s\S]*?)<\/script>/);
+  const m = html.match(
+    /<script type="application\/json" id="vrv-data">([\s\S]*?)<\/script>/,
+  );
   assert.ok(m, 'no <script id="vrv-data">');
   assert.ok(!m[1].includes('</script'), 'data not escaped for <script>');
   data = JSON.parse(m[1].replace(/\\u003c/gi, '<'));
-  assert.ok(!/<!--vrv:/.test(html), 'an unreplaced <!--vrv:...--> marker is left');
+  assert.ok(
+    !/<!--vrv:/.test(html),
+    'an unreplaced <!--vrv:...--> marker is left',
+  );
 });
 if (!data) process.exit(1);
 
@@ -57,10 +66,13 @@ await check('data: expected counts', () => {
   const n = flag('--expect-entries');
   const h = flag('--expect-needs-human');
   if (n !== undefined) assert.equal(data.entries.length, n);
-  if (h !== undefined) assert.equal(data.entries.filter((e) => e.needsHuman).length, h);
+  if (h !== undefined)
+    assert.equal(data.entries.filter((e) => e.needsHuman).length, h);
 });
 await check('images: every linked image is served as an image', async () => {
-  const urls = data.entries.flatMap((e) => Object.values(e.images)).filter(Boolean);
+  const urls = data.entries
+    .flatMap((e) => Object.values(e.images))
+    .filter(Boolean);
   assert.ok(urls.length > 0, 'no images linked');
   for (const u of urls) {
     const res = await fetch(url(u));
@@ -69,14 +81,25 @@ await check('images: every linked image is served as an image', async () => {
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff', u);
   }
 });
-await check('isolation: manifest and other run files are not reachable', async () => {
-  for (const p of ['/visual-regression-manifest.json', '/e2e/pages.spec.ts', '/package.json']) {
-    const res = await fetch(url(p));
-    assert.ok(res.status === 404, `${p} -> ${res.status}`);
-  }
-});
+await check(
+  'isolation: manifest and other run files are not reachable',
+  async () => {
+    for (const p of [
+      '/visual-regression-manifest.json',
+      '/e2e/pages.spec.ts',
+      '/package.json',
+    ]) {
+      const res = await fetch(url(p));
+      assert.ok(res.status === 404, `${p} -> ${res.status}`);
+    }
+  },
+);
 await check('isolation: path traversal is refused', async () => {
-  for (const p of ['/../../../../etc/hosts', '/%2e%2e/%2e%2e/etc/hosts', '/..%2f..%2fetc/hosts']) {
+  for (const p of [
+    '/../../../../etc/hosts',
+    '/%2e%2e/%2e%2e/etc/hosts',
+    '/..%2f..%2fetc/hosts',
+  ]) {
     const status = await rawStatus(p);
     assert.ok([400, 403, 404].includes(status), `${p} -> ${status}`);
   }

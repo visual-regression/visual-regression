@@ -9,13 +9,21 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
-const dist = path.join(repo, 'packages/visual-regression-manifest/dist/index.mjs');
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../..',
+);
+const dist = path.join(
+  repo,
+  'packages/visual-regression-manifest/dist/index.mjs',
+);
 if (!fs.existsSync(dist)) {
   console.error('build first: pnpm --filter visual-regression-manifest build');
   process.exit(1);
 }
-const { ManifestWriter, getManifestFileName } = await import(pathToFileURL(dist));
+const { ManifestWriter, getManifestFileName } = await import(
+  pathToFileURL(dist)
+);
 
 const dir = path.resolve(process.argv[2] ?? '');
 if (!process.argv[2]) {
@@ -46,7 +54,12 @@ const png = (w, h, bg, box) => {
   const raw = Buffer.alloc((w * 3 + 1) * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const inBox = box && x >= box.x && x < box.x + box.w && y >= box.y && y < box.y + box.h;
+      const inBox =
+        box &&
+        x >= box.x &&
+        x < box.x + box.w &&
+        y >= box.y &&
+        y < box.y + box.h;
       raw.set(inBox ? box.color : bg, y * (w * 3 + 1) + 1 + x * 3);
     }
   }
@@ -66,7 +79,8 @@ const W = 160;
 const H = 100;
 const shots = path.join(dir, 'e2e/__image_snapshots__');
 fs.mkdirSync(shots, { recursive: true });
-const put = (name, bg, box) => fs.writeFileSync(path.join(shots, name), png(W, H, bg, box));
+const put = (name, bg, box) =>
+  fs.writeFileSync(path.join(shots, name), png(W, H, bg, box));
 
 const WHITE = [255, 255, 255];
 const RED = [220, 38, 38];
@@ -76,7 +90,13 @@ put('home_#0.png', WHITE, { x: 20, y: 20, w: 50, h: 30, color: BLUE });
 put('home_#0.actual.png', WHITE, { x: 40, y: 30, w: 50, h: 30, color: BLUE });
 put('home_#0.diff.png', [0, 0, 0], { x: 20, y: 20, w: 70, h: 40, color: RED });
 // checkout: actual only (no baseline yet)
-put('checkout_#0.actual.png', WHITE, { x: 10, y: 10, w: 30, h: 30, color: BLUE });
+put('checkout_#0.actual.png', WHITE, {
+  x: 10,
+  y: 10,
+  w: 30,
+  h: 30,
+  color: BLUE,
+});
 // about: passes
 put('about_#0.png', WHITE, { x: 10, y: 60, w: 100, h: 20, color: BLUE });
 // pricing: baseline created on this run
@@ -97,7 +117,10 @@ const base = {
   viewport: { width: W, height: H },
   actualSize: { width: W, height: H },
   baselineSize: { width: W, height: H },
-  platform: { osPlatform: 'linux', browser: { name: 'chromium', version: '130' } },
+  platform: {
+    osPlatform: 'linux',
+    browser: { name: 'chromium', version: '130' },
+  },
 };
 const at = (n) => `e2e/__image_snapshots__/${n}`;
 writer.record({
@@ -108,7 +131,8 @@ writer.record({
   baselinePath: at('home_#0.png'),
   actualPath: at('home_#0.actual.png'),
   diffPath: at('home_#0.diff.png'),
-  message: 'Image diff factor (8.25%) is bigger than maximum threshold option 1%.',
+  message:
+    'Image diff factor (8.25%) is bigger than maximum threshold option 1%.',
 });
 writer.record({
   ...base,

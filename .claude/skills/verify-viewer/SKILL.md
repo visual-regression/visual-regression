@@ -50,7 +50,7 @@ Checks the page carries an escaped `vrv-data` block with no unreplaced `<!--vrv:
 4. Click `checkout_#0` (missing baseline): only the Actual figure shows, no slider.
 5. `browser_console_messages` level `error`: the only expected one is `404 /favicon.ico`. Anything else is a finding.
 
-**3. Written report** (`-o`): 
+**3. Written report** (`-o`):
 
 ```sh
 node packages/visual-regression-viewer/dist/cli.js "$S/run" -o "$S/report" --no-serve    # prints "Wrote index.html and 6 images"
