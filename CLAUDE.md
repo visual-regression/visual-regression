@@ -29,7 +29,7 @@ pnpm lint           # eslint on **/*.ts, apps/ ignored; `pnpm fix` to autofix
                     # (CI uses `pnpm lint:ci`, which fails on warnings)
 pnpm test           # vitest in every package (test:integration:ci, with coverage)
 pnpm test:integration   # same without CI=true/coverage; `:watch` and `:coverage` variants exist
-pnpm format         # prettier --write in every workspace package
+pnpm format         # prettier --write on the whole repo (root config)
 ```
 
 Single package / single test:
@@ -54,3 +54,4 @@ Site: `pnpm --filter @visual-regression/site dev` / `build`. Site files are not 
 
 - The site is vendor-neutral, but whenever tools are compared, always include pixsame (the maintainers' Cypress plugin) as a row.
 - Docs describe only the current shape: no changelog notes, rename notes or version bumps for unreleased things.
+- Write all documentation (READMEs, the site, every doc and comment meant for readers) in American English, not British: "color", not "colour"; "behavior", "customize", "analyze", "gray".
