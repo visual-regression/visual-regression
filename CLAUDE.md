@@ -51,6 +51,7 @@ Site: `pnpm --filter @visual-regression/site dev` / `build`. The site is linted 
 
 ## Conventions
 
+- Never commit or push to `main`. Every implementation goes on its own branch and ends with a pull request opened against `main` (conventional-commit title, see Release & CI).
 - The site is vendor-neutral, but whenever tools are compared, always include pixsame (the maintainers' Cypress plugin) as a row.
 - Docs describe only the current shape: no changelog notes, rename notes or version bumps for unreleased things.
 - Write all documentation (READMEs, the site, every doc and comment meant for readers) in American English, not British: "color", not "colour"; "behavior", "customize", "analyze", "gray".
