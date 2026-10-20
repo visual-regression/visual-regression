@@ -32,7 +32,7 @@ Screenshots catch what assertions miss. This site explains how visual regression
   to: /manifest
   variant: outline
   ---
-  The manifest
+  The run manifest
   :::
 ::
 
