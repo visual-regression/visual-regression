@@ -28,7 +28,7 @@ The command makes no network requests and sends no telemetry. A browser-only ver
 
 ## Usage
 
-```sh
+```bash
 npx visual-regression-viewer path/to/run
 ```
 
@@ -38,7 +38,7 @@ By default the page is built in memory and served at `http://127.0.0.1:4173` (th
 
 A zip is unpacked into a temporary folder, which is removed when the command stops. An entry that would land outside of that folder makes the command refuse the zip, and so does a zip that unpacks to more than 4 GiB.
 
-```sh
+```bash
 npx visual-regression-viewer artifact.zip
 ```
 
@@ -51,7 +51,7 @@ An image path in a manifest is resolved against the folder of the manifest. When
 | `-o, --out <dir>`             | Write the page (`index.html`) and the images it links to into `<dir>`. See [Writing a report](#writing-a-report).                                       |
 | `--no-serve`                  | Do not start the web server. Requires `-o`, because without a server or an output there is nothing to do.                                               |
 | `--no-watch`                  | With a server and `-o`: do not reload open pages when the files in `<dir>` change.                                                                      |
-| `-p, --port <port>`           | Port of the web server. The default is `4173`, and the next free port when it is taken; a port you name must be free.                                   |
+| `-p, --port <port>`           | Port of the web server. The default is `4173`, and the next free port when it is taken.                                                                 |
 | `--host <host>`               | Address the server listens on. The default is `127.0.0.1`, so only your machine can reach it. `0.0.0.0` exposes the page and the images to the network. |
 | `--template <file>`           | Use this HTML page instead of the built-in one. See [Replacing the page](#replacing-the-page).                                                          |
 | `--css <file>`                | Add this stylesheet to the page. See [Theming](#theming).                                                                                               |
@@ -60,11 +60,13 @@ An image path in a manifest is resolved against the folder of the manifest. When
 
 ## Writing a report
 
-```sh
-# build the page and its images into ./report, serve it and reload it on changes
+Sometimes you might need to simply build the report webpage. To do that just use `-o` flag:
+
+```bash
+# builds the page and its images into path "./report", serve it and reload it on changes
 npx visual-regression-viewer path/to/run -o report
 
-# only write it, for publishing or for an artifact: opens from the file system too
+# only writes viewer page. Useful for publishing or for an artifact
 npx visual-regression-viewer path/to/run -o report --no-serve
 ```
 
@@ -76,7 +78,7 @@ The files given with `--template` and `--css` are watched too: saving one rebuil
 
 ## Theming
 
-The built-in page is styled only through CSS variables on `:root`. Override them in a stylesheet and pass it with `--css`; the stylesheet is added after the built-in one.
+The default HTML template page is styled only through CSS variables on `:root`. Override them in a stylesheet and pass it with `--css`. The stylesheet is added **after** the default one.
 
 ```css
 :root {
@@ -98,7 +100,7 @@ The built-in page is styled only through CSS variables on `:root`. Override them
 | `--vrv-radius`                                                | `0.5rem`                | Corner radius        |
 | `--vrv-font`, `--vrv-mono`                                    | system fonts            | Text and code fonts  |
 
-The dark palette follows `prefers-color-scheme`; override the variables inside a `@media (prefers-color-scheme: dark)` block to change it, or set them once to pin a theme.
+The dark palette follows `prefers-color-scheme` configuration. Override the variables inside a `@media (prefers-color-scheme: dark)` block to change it or set them once to pin a theme.
 
 ## Replacing the page
 
@@ -161,7 +163,29 @@ The data has this shape (every image URL is relative to the page and `null` when
 }
 ```
 
-When the pages are live-reloading, a small script that listens for changes is added before `</body>` of the page the server sends; the file on disk stays as it is.
+<details>
+<summary>Example HTML template</summary>
+
+This is and default HTML template. You can use it as a starting point for developing your own.
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visual regression viewer</title>
+    <!-- the app's script and styles, inlined at build time -->
+  </head>
+  <body>
+    <div id="app"></div>
+    <noscript>The viewer needs JavaScript.</noscript>
+    <!--vrv:data-->
+  </body>
+</html>
+```
+
+</details>
 
 ## License
 

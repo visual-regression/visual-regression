@@ -383,15 +383,15 @@ const reset = () => {
         @drop.prevent="onDrop"
       >
         <UIcon name="i-lucide-folder-input" class="mx-auto mb-3 size-8 text-muted" />
-        <p class="font-medium">Drop the run folder, or a zip of it, here</p>
+        <p class="font-medium">Drop the run folder (or a zip of it) here</p>
         <p class="mt-1 text-sm text-muted">
           The folder (or the artifact zip) that holds
-          <code class="break-all">visual-regression-manifest.json</code> and the screenshots. Nothing is uploaded.
+          <code class="break-all">visual-regression-manifest.json</code> and the screenshots. Nothing is uploaded to the server.
         </p>
-        <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <p class="mt-4 flex flex-wrap items-center justify-center gap-2">
           <label>
             <span class="cursor-pointer rounded-md bg-elevated px-3 py-1.5 text-sm font-medium hover:bg-accented">
-              or choose a folder
+              choose a folder
             </span>
             <input
               type="file"
@@ -401,9 +401,10 @@ const reset = () => {
               @change="onInput"
             />
           </label>
+          <span class="text-sm text-muted">or</span>
           <label>
             <span class="cursor-pointer rounded-md bg-elevated px-3 py-1.5 text-sm font-medium hover:bg-accented">
-              or choose a zip
+              choose a zip
             </span>
             <input
               type="file"
@@ -413,7 +414,9 @@ const reset = () => {
               @change="onInput"
             />
           </label>
-        </div>
+        </p>
+
+        <p class="mt-8 text-sm text-muted">You can also paste the URL of a zip file</p>
         <form class="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center" @submit.prevent="submitUrl">
           <input
             v-model="zipUrl"
@@ -427,11 +430,7 @@ const reset = () => {
             Load a zip from a URL
           </UButton>
         </form>
-        <p class="mt-1 text-xs text-muted">
-          Your browser fetches the zip, so the server has to allow cross-origin requests (CORS).
-          Link straight to a zip with <code>?zip=&lt;url&gt;</code>, or <code>#zip=&lt;url&gt;</code> when the
-          address must not reach this site's server.
-        </p>
+        <p class="mt-1 text-xs text-muted">Your browser will fetch the zip, so the server has to allow cross-origin requests (CORS).</p>
         <p v-if="busy" class="mt-3 text-sm text-muted" role="status">{{ busy }}</p>
         <ul v-if="errors.length" class="mt-4 space-y-1 text-left text-sm text-error">
           <li v-for="error in errors" :key="error">{{ error }}</li>
