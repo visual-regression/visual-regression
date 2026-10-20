@@ -68,14 +68,14 @@ const passed = computed(() => (result.value ? result.value.ratio <= maxRatio.val
       <div class="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
         <div class="space-y-2">
           <p class="text-xs font-medium uppercase tracking-wide text-muted">What changed in the actual</p>
-          <UCheckbox v-model="textShift" label="Text drawn 0.35px to the right (another machine's rasteriser)" />
+          <UCheckbox v-model="textShift" label="Text drawn 0.35px to the right (another machine's rasterizer)" />
           <UCheckbox v-model="buttonTint" label="Button one shade darker (rgb 5,150,105 instead of 16,185,129)" />
           <UCheckbox v-model="priceChange" label="Price $45.00 instead of $42.00 (a real change)" />
         </div>
         <div class="space-y-3">
           <p class="text-xs font-medium uppercase tracking-wide text-muted">What the comparator is told</p>
           <label class="block">
-            <span class="flex justify-between font-mono text-xs"><span>colour tolerance (threshold)</span><span>{{ threshold.toFixed(2) }}</span></span>
+            <span class="flex justify-between font-mono text-xs"><span>color tolerance (threshold)</span><span>{{ threshold.toFixed(2) }}</span></span>
             <input v-model.number="threshold" type="range" min="0" max="1" step="0.01" class="w-full accent-primary" />
           </label>
           <UCheckbox v-model="includeAA" label="Count anti-aliased pixels too (includeAA)" />

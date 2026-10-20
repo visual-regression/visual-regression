@@ -49,7 +49,7 @@ const chunk = (type, data) => {
   sum.writeUInt32BE(crc(body));
   return Buffer.concat([len, body, sum]);
 };
-/** RGB PNG: solid `bg` with a `box` rectangle of another colour, so baseline/actual/diff look different. */
+/** RGB PNG: solid `bg` with a `box` rectangle of another color, so baseline/actual/diff look different. */
 const png = (w, h, bg, box) => {
   const raw = Buffer.alloc((w * 3 + 1) * h);
   for (let y = 0; y < h; y++) {

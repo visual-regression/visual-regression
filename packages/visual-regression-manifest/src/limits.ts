@@ -13,7 +13,7 @@ export type ComparisonLimitOptions = {
   maxDiffRatio?: number;
   /** Largest accepted number of differing pixels (`maxDiffPixels`, ...); stored as a ratio of each image's size. */
   maxDiffPixels?: number;
-  /** Per-pixel colour tolerance the tool used; needs `colorMetric`. */
+  /** Per-pixel color tolerance the tool used; needs `colorMetric`. */
   colorThreshold?: number;
   colorMetric?: ManifestColorMetric;
 };

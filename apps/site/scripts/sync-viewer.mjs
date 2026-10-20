@@ -3,7 +3,7 @@
  * Generates the command line page of the viewer from the package README, so
  * the site can never drift from `visual-regression-viewer`:
  * `content/4.viewer/2.cli.md` is the README without its HTML header, its
- * table of contents and its licence section, with links to the site
+ * table of contents and its license section, with links to the site
  * rewritten to site paths.
  *
  * The generated file carries `generated: true` in its frontmatter and is

@@ -159,7 +159,7 @@ describe('fromVitestScreenshots', () => {
     });
   });
 
-  it('honours custom folder names, scan roots and a runner', async () => {
+  it('honors custom folder names, scan roots and a runner', async () => {
     const root = await tmpDir();
     writePng(path.join(root, 'src', 'shots', 'a.test.ts', 'hero.png'));
     writePng(path.join(root, 'src', 'out', 'a.test.ts', 'hero-actual.png'));

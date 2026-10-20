@@ -70,7 +70,7 @@ describe('fromJestImageSnapshots', () => {
     expect(manifest.entries[2].comparison.maxDiffRatio).toBe(0.02);
   });
 
-  it('honours cypress-image-snapshot style custom names and a received directory', async () => {
+  it('honors cypress-image-snapshot style custom names and a received directory', async () => {
     const root = await tmpDir();
     const snaps = path.join(root, 'cypress', 'snapshots');
     writePng(path.join(snaps, 'home.png'));

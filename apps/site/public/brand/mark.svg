@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="visual-regression.dev">
-  <!-- Colours follow the viewer's colour scheme: used as the favicon and in
+  <!-- Colors follow the viewer's color scheme: used as the favicon and in
        READMEs on GitHub, where the dark "actual" square would otherwise vanish
        on a dark background. Same shapes as app/components/content/BrandMark.vue. -->
   <style>

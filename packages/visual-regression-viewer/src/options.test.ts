@@ -85,7 +85,7 @@ describe('parseCommand', () => {
     expect(() => parseCommand(['a', 'b'])).toThrow(/one directory/);
   });
 
-  it('recognises help and version', () => {
+  it('recognizes help and version', () => {
     expect(parseCommand(['--help'])).toEqual({ kind: 'help' });
     expect(parseCommand(['-h'])).toEqual({ kind: 'help' });
     expect(parseCommand(['-v'])).toEqual({ kind: 'version' });

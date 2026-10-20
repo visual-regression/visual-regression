@@ -16,7 +16,7 @@ For each comparison, the data has:
 - An actual image.
 - Usually a diff image.
 - A diff ratio.
-- The limits the tool used: the share of differing pixels it accepts, and how far apart two colours may be before a pixel counts as different.
+- The limits the tool used: the share of differing pixels it accepts, and how far apart two colors may be before a pixel counts as different.
 - An outcome. The outcome has more values than pass or fail. Examples: "no baseline existed", "the tool created the baseline", "the tool updated the baseline on request", "a person approved it in a review UI".
 
 CTRF has `attachments[]` with `name`, `contentType` and `path`. It has one base64 `screenshot` field and five statuses. A reporter can put the three images in `attachments`. But nothing tells a consumer which image is which. The ratio, the limits and the detailed outcomes can only go into `extra`. In `extra`, each tool uses its own keys. A consumer cannot depend on them.
@@ -40,7 +40,7 @@ We built the [visual regression manifest](https://visual-regression.dev/manifest
    ```
    - `diffRatio` is the part of the pixels that differ, from 0 to 1.
    - `maxDiffRatio` is the ratio the tool compared against. A pixel-count limit is stored as a ratio of the image size.
-   - `colorThreshold` is the per-pixel colour tolerance and `colorMetric` names its scale (`yiq`, `resemble`, `deltaE`, or another string). A number without its scale cannot be compared across tools, so `colorMetric` is required with `colorThreshold`. Both are optional.
+   - `colorThreshold` is the per-pixel color tolerance and `colorMetric` names its scale (`yiq`, `resemble`, `deltaE`, or another string). A number without its scale cannot be compared across tools, so `colorMetric` is required with `colorThreshold`. Both are optional.
    - `baselineWritten` tells if the run wrote the baseline file.
    - `variant` is an id the producer selects. It tells baselines with the same name apart. Examples: device, theme, locale.
 

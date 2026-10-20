@@ -1,11 +1,11 @@
 /**
  * A compact port of pixelmatch's decision rule (ISC, Vladimir Agafonkin and
- * Mapbox): per-pixel colour distance in the YIQ space, anti-aliasing
+ * Mapbox): per-pixel color distance in the YIQ space, anti-aliasing
  * detection, and a diff image. It exists so the learn demos make the same
  * call a real comparator makes; use pixelmatch itself in a tool.
  */
 export interface PixelDiffOptions {
-  /** Per-pixel colour distance, 0 to 1 (pixelmatch's `threshold`, default 0.1). */
+  /** Per-pixel color distance, 0 to 1 (pixelmatch's `threshold`, default 0.1). */
   threshold?: number;
   /** Count anti-aliased pixels as differences (pixelmatch's `includeAA`). */
   includeAA?: boolean;
@@ -99,7 +99,7 @@ function hasManySiblings(
   return false;
 }
 
-/** pixelmatch's heuristic: a pixel between two very different neighbours. */
+/** pixelmatch's heuristic: a pixel between two very different neighbors. */
 function antialiased(
   img: Uint8ClampedArray,
   x1: number,

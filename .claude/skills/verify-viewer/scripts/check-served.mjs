@@ -26,7 +26,7 @@ const check = async (name, fn) => {
     process.exitCode = 1;
   }
 };
-// fetch() normalises `..`; a raw socket-level request keeps it
+// fetch() normalizes `..`; a raw socket-level request keeps it
 const rawStatus = async (rawPath) => {
   const { hostname, port } = new URL(base);
   const { connect } = await import('node:net');

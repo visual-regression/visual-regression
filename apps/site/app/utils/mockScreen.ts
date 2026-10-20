@@ -8,7 +8,7 @@ export interface MockScreenOptions {
   scale?: number;
   /** The heading drawn in the fallback font, as if the web font had not loaded. */
   fontFallback?: boolean;
-  /** A sub-pixel shift of every text run: another machine's rasteriser. */
+  /** A sub-pixel shift of every text run: another machine's rasterizer. */
   textNudge?: number;
   /** Position of the progress bar animation, 0 to 1. */
   animation?: number;
@@ -18,7 +18,7 @@ export interface MockScreenOptions {
   caret?: boolean;
   /** A scrollbar on the right, which shifts the content left. */
   scrollbar?: boolean;
-  /** The main button's colour. */
+  /** The main button's color. */
   buttonColor?: string;
   /** The main button's width. */
   buttonWidth?: number;

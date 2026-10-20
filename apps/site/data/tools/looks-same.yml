@@ -1,6 +1,6 @@
 name: looks-same
 website: https://github.com/gemini-testing/looks-same
-summary: Image comparison library with CIEDE2000 colour difference, anti-aliasing and caret tolerance, from the Gemini and Testplane authors.
+summary: Image comparison library with CIEDE2000 color difference, anti-aliasing and caret tolerance, from the Gemini and Testplane authors.
 category: diff-engine
 openSource: true
 license: MIT
@@ -8,7 +8,7 @@ selfHostable: true
 hosting: local
 runners:
   - any (library)
-diffEngine: CIEDE2000 colour difference with tolerance, anti-aliasing and ignore-caret options
+diffEngine: CIEDE2000 color difference with tolerance, anti-aliasing and ignore-caret options
 reviewSurface:
   - local
 baselineStorage: repo
@@ -16,7 +16,7 @@ pricingModel: free
 machineReadableResults: none
 manifestSupport: none
 notes:
-  - Returns equality and the diff bounds and clusters; can build a diff image with configurable highlight colour.
+  - Returns equality and the diff bounds and clusters; can build a diff image with configurable highlight color.
 lastVerified: '2026-10-13'
 sources:
   - https://github.com/gemini-testing/looks-same

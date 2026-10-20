@@ -8,7 +8,7 @@ selfHostable: true
 hosting: local
 runners:
   - any (library)
-diffEngine: per-pixel YIQ colour distance with a threshold, anti-aliased pixels ignored by default
+diffEngine: per-pixel YIQ color distance with a threshold, anti-aliased pixels ignored by default
 reviewSurface:
   - local
 baselineStorage: repo
