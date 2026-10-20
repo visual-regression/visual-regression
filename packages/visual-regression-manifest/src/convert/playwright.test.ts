@@ -338,7 +338,7 @@ describe('fromPlaywrightReport', () => {
     ]);
   });
 
-  it('honours a custom snapshot path template and directory, and a project root', async () => {
+  it('honors a custom snapshot path template and directory, and a project root', async () => {
     const root = (await tmpDir()).replace(/\\/g, '/');
     const manifest = fromPlaywrightReport(report(root), {
       projectRoot: path.join(root, 'tests'),

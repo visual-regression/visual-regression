@@ -60,7 +60,7 @@ describe('fromCypressVisualRegression', () => {
     expect(manifest.entries[2].comparison.maxDiffRatio).toBe(0.05);
   });
 
-  it('honours custom directories and the generateDiff mode', async () => {
+  it('honors custom directories and the generateDiff mode', async () => {
     const root = await tmpDir();
     writePng(path.join(root, 'b', 'x.png'));
     writePng(path.join(root, 'a', 'x.png'));

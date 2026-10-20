@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// The brand mark, inline so the colours follow the colour mode: a baseline
+// The brand mark, inline so the colors follow the color mode: a baseline
 // screenshot, the new screenshot laid over it, and the emerald overlap where
 // the two agree. Same shapes as `public/brand/mark.svg` (the favicon).
 // Decorative by default; pass `title` to make it an accessible image.

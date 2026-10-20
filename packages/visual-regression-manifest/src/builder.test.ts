@@ -171,7 +171,7 @@ describe('ManifestBuilder', () => {
     expect(entry.comparison).toEqual({ diffRatio: 0 });
   });
 
-  it('records the colour tolerance only together with its metric', async () => {
+  it('records the color tolerance only together with its metric', async () => {
     const root = await tmpDir();
     const builder = builderIn(root);
     const record = (name: string, extra: object) =>
@@ -192,7 +192,7 @@ describe('ManifestBuilder', () => {
     expect(record('b', { colorThreshold: 0.1 })).toEqual({ diffRatio: 0 });
   });
 
-  it('honours an explicit diff path, name and renderer', async () => {
+  it('honors an explicit diff path, name and renderer', async () => {
     const root = await tmpDir();
     writePng(path.join(root, 'out', 'd.png'));
     const entry = builderIn(root).record({
@@ -495,7 +495,7 @@ describe('ManifestBuilder', () => {
     expect(builder.dropTestFile('./e2e/a.spec.ts')).toBe(true);
   });
 
-  it('serialises with the header first and the entries last', async () => {
+  it('serializes with the header first and the entries last', async () => {
     const root = await tmpDir();
     const builder = new ManifestBuilder({
       projectRoot: root,

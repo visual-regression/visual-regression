@@ -7,7 +7,7 @@ import {
 } from './constants';
 
 describe('manifest file names', () => {
-  it('builds and recognises them', () => {
+  it('builds and recognizes them', () => {
     expect(getManifestFileName()).toBe('visual-regression-manifest.json');
     expect(getManifestFileName('e2e')).toBe(
       'visual-regression-manifest.e2e.json',

@@ -8,7 +8,7 @@ selfHostable: true
 hosting: local
 runners:
   - any (library, browser or Node)
-diffEngine: per-pixel colour tolerance with ignore modes (antialiasing, colors, alpha, nothing)
+diffEngine: per-pixel color tolerance with ignore modes (antialiasing, colors, alpha, nothing)
 reviewSurface:
   - local
 baselineStorage: repo

@@ -8,7 +8,7 @@ interface Cause {
   fix: string;
 }
 const CAUSES: Cause[] = [
-  { key: 'renderer', cause: 'Different machine: text rasterised 0.4px off', fix: 'Pin the renderer (Docker image, bundled fonts)' },
+  { key: 'renderer', cause: 'Different machine: text rasterized 0.4px off', fix: 'Pin the renderer (Docker image, bundled fonts)' },
   { key: 'font', cause: 'Web font still loading, heading in the fallback serif', fix: 'Wait for document.fonts.ready' },
   { key: 'animation', cause: 'Progress bar caught mid-animation', fix: 'Disable animations before capturing' },
   { key: 'clock', cause: 'The clock shows the current time', fix: 'Freeze the clock, or mask the region' },

@@ -86,7 +86,7 @@ The built-in page is styled only through CSS variables on `:root`. Override them
 }
 ```
 
-| Variable                                                      | Default (light)         | What it colours      |
+| Variable                                                      | Default (light)         | What it colors       |
 | ------------------------------------------------------------- | ----------------------- | -------------------- |
 | `--vrv-bg`                                                    | `#ffffff`               | Page background      |
 | `--vrv-surface`                                               | `#f4f4f5`               | List headings, hover |
@@ -94,7 +94,7 @@ The built-in page is styled only through CSS variables on `:root`. Override them
 | `--vrv-muted`                                                 | `#71717a`               | Secondary text       |
 | `--vrv-border`                                                | `#e4e4e7`               | Borders              |
 | `--vrv-accent`                                                | `#4f46e5`               | Selection, slider    |
-| `--vrv-error`, `--vrv-warning`, `--vrv-success`, `--vrv-info` | red, amber, green, blue | Status colours       |
+| `--vrv-error`, `--vrv-warning`, `--vrv-success`, `--vrv-info` | red, amber, green, blue | Status colors        |
 | `--vrv-radius`                                                | `0.5rem`                | Corner radius        |
 | `--vrv-font`, `--vrv-mono`                                    | system fonts            | Text and code fonts  |
 

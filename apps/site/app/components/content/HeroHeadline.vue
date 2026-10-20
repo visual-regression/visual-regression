@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // The landing page headline: what goes wrong in a UI, one phrase at a time.
-const WORDS = ['Pixels drift.', 'Fonts change.', 'Layouts break.', 'Colours shift.'];
+const WORDS = ['Pixels drift.', 'Fonts change.', 'Layouts break.', 'Colors shift.'];
 const i = ref(0);
 onMounted(() => {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;

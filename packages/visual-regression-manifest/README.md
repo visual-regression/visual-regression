@@ -150,7 +150,7 @@ The normative description is the JSON Schema (draft 2020-12) at `https://visual-
 A comparison has two limits, and the entry records both next to the measured `diffRatio`:
 
 - `comparison.maxDiffRatio`, the largest share of differing pixels the comparison accepts, from 0 to 1. This is the image-level limit: `maxDiffPixelRatio` in Playwright, `allowedMismatchedPixelRatio` in Vitest, `failureThreshold` in jest-image-snapshot, `errorThreshold` in cypress-visual-regression, `misMatchThreshold` in BackstopJS, `changeThreshold` in Roborazzi, `maxDiffThreshold` in `@pixsame/cypress-plugin-visual-regression-diff`. Tools that take a pixel count (`maxDiffPixels`, `allowedMismatchedPixels`, `failureThreshold` with `failureThresholdType: 'pixel'`) are stored as a ratio of the image size, and when both kinds are set the stricter one is stored. A ratio is portable across viewports, a count is not.
-- `comparison.colorThreshold`, the per-pixel colour tolerance: how far apart two colours may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
+- `comparison.colorThreshold`, the per-pixel color tolerance: how far apart two colors may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
 
 Both are optional. A missing `maxDiffRatio` means the writer does not know the limit, not that the tolerance is zero. `status` stays the outcome to trust: a ratio computed from a pixel count can disagree with the tool by a rounding error at the boundary.
 
@@ -238,7 +238,7 @@ Any object with a `manifest` property is a source; extra properties (an artifact
 
 ## Writing manifests
 
-Test-runner integrations use `ManifestWriter`: a builder bound to a file that rewrites it atomically on every change. For runs with thousands of screenshots pass `{ writeDelayMs: 200 }` as the third argument to coalesce the rewrites; pending changes are written on `flush()` and when the process exits (not if it is killed outright, which is why the default is `0`). A `passed` entry never lists `.actual` or `.diff` files, even when leftovers of an earlier run sit next to it, and test files are recorded normalised (`./a.spec.ts` and `a.spec.ts` are one file).
+Test-runner integrations use `ManifestWriter`: a builder bound to a file that rewrites it atomically on every change. For runs with thousands of screenshots pass `{ writeDelayMs: 200 }` as the third argument to coalesce the rewrites; pending changes are written on `flush()` and when the process exits (not if it is killed outright, which is why the default is `0`). A `passed` entry never lists `.actual` or `.diff` files, even when leftovers of an earlier run sit next to it, and test files are recorded normalized (`./a.spec.ts` and `a.spec.ts` are one file).
 
 ```ts
 import {
@@ -386,7 +386,7 @@ const manifest = fromJestImageSnapshots({
   runner: { name: 'cypress' }, // for cypress-image-snapshot; defaults to jest
   maxDiffRatio: 0.01, // your failureThreshold with failureThresholdType 'percent'; or maxDiffPixels with 'pixel'
   // colorThreshold: 0.1, // your customDiffConfig.threshold
-  // snapshotsDirName, diffDirName, receivedDirName, snapshotPostfix, diffPostfix, receivedPostfix: when customised
+  // snapshotsDirName, diffDirName, receivedDirName, snapshotPostfix, diffPostfix, receivedPostfix: when customized
 });
 ```
 

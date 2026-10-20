@@ -115,12 +115,12 @@ export type ManifestEntryOptions = {
   /** Browser runners only. */
   forceDeviceScaleFactor?: boolean;
   matchAgainstPath?: string;
-  /** Capture options in the runner's vocabulary; only JSON-serialisable keys, callbacks are dropped. */
+  /** Capture options in the runner's vocabulary; only JSON-serializable keys, callbacks are dropped. */
   screenshotConfig?: Record<string, unknown>;
 };
 
 /**
- * The colour distance a `colorThreshold` is measured in: `yiq` is pixelmatch's
+ * The color distance a `colorThreshold` is measured in: `yiq` is pixelmatch's
  * weighted YIQ delta (0..1), `resemble` is Resemble.js's per-channel
  * tolerance, `deltaE` is CIEDE2000.
  */
@@ -221,9 +221,9 @@ export type ManifestEntry = {
      * not know it; `status` stays the source of truth for the outcome.
      */
     maxDiffRatio?: number;
-    /** Per-pixel colour tolerance the comparison used, on the scale `colorMetric` names. */
+    /** Per-pixel color tolerance the comparison used, on the scale `colorMetric` names. */
     colorThreshold?: number;
-    /** Required with `colorThreshold`: the colour distance `colorThreshold` is measured in. */
+    /** Required with `colorThreshold`: the color distance `colorThreshold` is measured in. */
     colorMetric?: ManifestColorMetric;
   };
   images: {

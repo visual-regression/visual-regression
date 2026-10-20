@@ -81,7 +81,7 @@ export type ManifestEntryInput = {
   diffRatio?: number;
   /** Largest accepted `diffRatio`, 0..1; leave out when unknown (see `maxRatioFrom` for pixel-count limits). */
   maxDiffRatio?: number;
-  /** Per-pixel colour tolerance; needs `colorMetric`. */
+  /** Per-pixel color tolerance; needs `colorMetric`. */
   colorThreshold?: number;
   colorMetric?: ManifestColorMetric;
   baselineWritten?: boolean;

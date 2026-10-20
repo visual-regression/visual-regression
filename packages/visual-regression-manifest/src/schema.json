@@ -399,7 +399,7 @@
         },
         "matchAgainstPath": { "type": "string" },
         "screenshotConfig": {
-          "description": "Capture options in the runner's vocabulary (Cypress `screenshot` config); JSON-serialisable keys only.",
+          "description": "Capture options in the runner's vocabulary (Cypress `screenshot` config); JSON-serializable keys only.",
           "type": "object"
         }
       }
@@ -462,12 +462,12 @@
               "maximum": 1
             },
             "colorThreshold": {
-              "description": "Per-pixel colour tolerance the comparison used, on the scale `colorMetric` names.",
+              "description": "Per-pixel color tolerance the comparison used, on the scale `colorMetric` names.",
               "type": "number",
               "minimum": 0
             },
             "colorMetric": {
-              "description": "The colour distance `colorThreshold` is measured in; required with it. `yiq`: pixelmatch's weighted YIQ delta, 0..1. `resemble`: Resemble.js's per-channel tolerance. `deltaE`: CIEDE2000. Other values are allowed.",
+              "description": "The color distance `colorThreshold` is measured in; required with it. `yiq`: pixelmatch's weighted YIQ delta, 0..1. `resemble`: Resemble.js's per-channel tolerance. `deltaE`: CIEDE2000. Other values are allowed.",
               "type": "string",
               "minLength": 1
             }

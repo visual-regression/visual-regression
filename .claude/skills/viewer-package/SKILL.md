@@ -20,7 +20,7 @@ CLI that loads the manifests of a run and serves a review page or writes it to a
 - **Build before running the CLI from source**: `readTemplate` throws if `dist/template.html` is missing. The manifest package must be built too.
 - Tests: `pnpm --filter visual-regression-viewer test:integration` (vitest run); one test: `pnpm --filter visual-regression-viewer exec vitest run -t "name"`. Fixtures/helpers in `__tests__/helpers.ts`.
 - Tests alias `visual-regression-manifest` to the manifest **source** (`vitest.config.mts`), so no built manifest is needed for tests.
-- A new CLI flag touches `options.ts` (parsing), `main.ts` (behaviour), the README (options docs) and tests.
+- A new CLI flag touches `options.ts` (parsing), `main.ts` (behavior), the README (options docs) and tests.
 
 ## Verify
 

@@ -31,7 +31,7 @@ export default defineAppConfig({
       },
     },
     // "Previous / next chapter" cards: icon and label share one line, and the
-    // next card uses the primary colour. The label comes from the slot in
+    // next card uses the primary color. The label comes from the slot in
     // app/pages/[[lang]]/[...slug].vue.
     contentSurround: {
       slots: {
@@ -44,7 +44,7 @@ export default defineAppConfig({
         direction: {
           right: {
             // Nuxt UI only passes `direction` to `link` and `linkLeadingIcon`,
-            // so colour the label and title through descendant selectors. Light mode
+            // so color the label and title through descendant selectors. Light mode
             // uses emerald-700 (~5:1 on white); the primary green is only ~2.5:1.
             link: 'border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary [&_[data-slot=linkLeading]]:text-emerald-700 [&_[data-slot=linkTitle]]:text-emerald-700 dark:[&_[data-slot=linkLeading]]:text-primary dark:[&_[data-slot=linkTitle]]:text-primary',
           },

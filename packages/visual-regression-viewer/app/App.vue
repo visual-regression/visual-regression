@@ -152,7 +152,7 @@ const badge = (entry: ViewerEntry) => badges[entry.status] ?? entry.status;
               · max {{ percent(current.comparison.maxDiffRatio) }}</template
             >
             <template v-if="current.comparison.colorThreshold !== undefined">
-              · colour tolerance {{ current.comparison.colorThreshold }} ({{
+              · color tolerance {{ current.comparison.colorThreshold }} ({{
                 current.comparison.colorMetric
               }})
             </template>

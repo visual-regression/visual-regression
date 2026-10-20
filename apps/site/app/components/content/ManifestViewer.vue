@@ -509,7 +509,7 @@ const reset = () => {
               <span class="text-sm text-muted">
                 diff {{ percent(current.comparison.diffRatio) }}
                 <template v-if="current.comparison.maxDiffRatio !== undefined"> · max {{ percent(current.comparison.maxDiffRatio) }}</template>
-                <template v-if="current.comparison.colorThreshold !== undefined"> · colour tolerance {{ current.comparison.colorThreshold }} ({{ current.comparison.colorMetric }})</template>
+                <template v-if="current.comparison.colorThreshold !== undefined"> · color tolerance {{ current.comparison.colorThreshold }} ({{ current.comparison.colorMetric }})</template>
                 <template v-if="current.viewport"> · {{ current.viewport.width }}×{{ current.viewport.height }}</template>
                 <template v-if="platformLabel(current)"> · {{ platformLabel(current) }}</template>
               </span>

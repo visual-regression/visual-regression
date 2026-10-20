@@ -10,7 +10,7 @@ on:
     branches:
       - main
 
-# A newer push to the same PR cancels the running check; a deploy from main is never cancelled.
+# A newer push to the same PR cancels the running check; a deploy from main is never canceled.
 concurrency:
   group: site-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}

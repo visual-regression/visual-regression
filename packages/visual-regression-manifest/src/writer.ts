@@ -65,7 +65,7 @@ export type ManifestWriterOptions = {
    * milliseconds (and always on process exit and `flush()`). `0`, the default,
    * rewrites the file after every change, so it is complete even if the
    * process is killed; raise it for runs with thousands of screenshots, where
-   * serialising the whole manifest on every change adds up.
+   * serializing the whole manifest on every change adds up.
    */
   writeDelayMs?: number;
 };
