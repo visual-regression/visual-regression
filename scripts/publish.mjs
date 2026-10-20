@@ -24,9 +24,15 @@
  * prerelease run can never land on `latest`. A prerelease with an unknown
  * channel is refused.
  *
+ * `--packages a,b` limits any mode to the named packages. A beta run requires
+ * it and publishes nothing without it; stable and canary runs publish every
+ * eligible package when it is omitted. A selected package's `workspace:`
+ * dependencies are not published along with it, so select them too when they
+ * have no matching version on npm yet.
+ *
  * Usage (from the repository root, after `pnpm build`):
  *   node scripts/publish.mjs                 # stable versions -> latest
- *   node scripts/publish.mjs --beta 2        # X.Y.Z-beta.2 -> beta
+ *   node scripts/publish.mjs --beta 2 --packages a,b   # X.Y.Z-beta.2 -> beta
  *   node scripts/publish.mjs --canary        # X.Y.Z-canary-YYYYMMDD-xxxxxxxx -> canary
  *   node scripts/publish.mjs --dry-run       # only print what would be published
  */
@@ -43,6 +49,14 @@ const dryRun = args.includes('--dry-run');
 const canary = args.includes('--canary');
 const betaFlag = args.indexOf('--beta');
 const beta = betaFlag === -1 ? null : args[betaFlag + 1];
+const packagesFlag = args.indexOf('--packages');
+const selected =
+  packagesFlag === -1
+    ? null
+    : (args[packagesFlag + 1] ?? '')
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean);
 
 if (betaFlag !== -1 && !/^\d+$/.test(beta ?? '')) {
   console.error(
@@ -54,6 +68,16 @@ if (betaFlag !== -1 && !/^\d+$/.test(beta ?? '')) {
 if (canary && beta !== null) {
   console.error('--beta and --canary are mutually exclusive');
   process.exit(1);
+}
+
+if (selected !== null && !selected.length) {
+  console.error('--packages expects a comma-separated list of package names');
+  process.exit(1);
+}
+
+if (beta !== null && selected === null) {
+  console.log('nothing to publish: a beta run needs --packages <a,b>');
+  process.exit(0);
 }
 
 const canarySuffix = () => {
@@ -89,6 +113,18 @@ let packages = JSON.parse(
     !pkg.private &&
     (pkg.version !== '0.0.0' || beta !== null),
 );
+
+if (selected !== null) {
+  const known = packages.map(({ name }) => name);
+  const unknown = selected.filter((name) => !known.includes(name));
+  if (unknown.length) {
+    console.error(
+      `--packages names no publishable package: ${unknown.join(', ')} (available: ${known.join(', ')})`,
+    );
+    process.exit(1);
+  }
+  packages = packages.filter(({ name }) => selected.includes(name));
+}
 
 const isPublished = (name, version) => {
   try {

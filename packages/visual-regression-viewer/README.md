@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://visual-regression.dev">
+    <img src="https://visual-regression.dev/brand/mark.svg" alt="visual-regression.dev" width="96" height="96">
+  </a>
+</p>
+
 <h1 align="center">visual-regression-viewer</h1>
 <p align="center">Review a visual regression run in the browser: baseline, actual and diff side by side, from the manifests the run left behind.</p>
 

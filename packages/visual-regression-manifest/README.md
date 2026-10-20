@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://visual-regression.dev">
+    <img src="https://visual-regression.dev/brand/mark.svg" alt="visual-regression.dev" width="96" height="96">
+  </a>
+</p>
+
 <h1 align="center">visual-regression-manifest</h1>
 <p align="center">One JSON file per test run that lists every screenshot comparison, built on CTRF. JSON Schema, TypeScript types, reader, writer, merger and converters.</p>
 
