@@ -1,8 +1,7 @@
-/** Human labels for the enum fields of `data/tools/*.yml`, shared by the comparison table and the landing page teaser. */
+/** Human labels for the enum fields of `data/tools/*.yml`, shared by the tool list and the landing page teaser. */
 export const TOOL_CATEGORIES = {
   'runner-integration': 'Runner integrations',
   'hosted-review': 'Hosted review services',
-  'diff-engine': 'Diff engines',
   'mobile-native': 'Mobile and native',
 } as const;
 
@@ -48,3 +47,23 @@ export const TOOL_LABELS: Record<string, Record<string, string>> = {
 
 export const toolLabel = (field: string, value: string) =>
   TOOL_LABELS[field]?.[value] ?? value;
+
+export const resultsColor = (value: string) =>
+  value === 'manifest' || value === 'json-report'
+    ? 'primary'
+    : value === 'images-only'
+      ? 'warning'
+      : 'neutral';
+
+export const manifestColor = (value: string) =>
+  value === 'native' ? 'primary' : value === 'converter' ? 'info' : 'neutral';
+
+/** `URL` is not exposed to Vue templates, so format source links here. */
+export const sourceLabel = (source: string) => {
+  try {
+    const { hostname, pathname } = new URL(source);
+    return hostname + pathname;
+  } catch {
+    return source;
+  }
+};

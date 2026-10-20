@@ -3,7 +3,7 @@ const route = useRoute();
 
 const items = computed(() => [
   {
-    label: 'Guide',
+    label: 'Learn',
     to: '/learn/what-is-visual-regression-testing',
     active: route.path.startsWith('/learn'),
   },

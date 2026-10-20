@@ -2,6 +2,9 @@ name: Lost Pixel
 website: https://lost-pixel.com
 summary: Open-source engine that screenshots Storybook, Ladle, Histoire or a list of pages and diffs locally, with an optional hosted platform for review.
 category: hosted-review
+discontinued:
+  message: The Lost Pixel project is no longer maintained; the team is joining Figma.
+  url: https://www.lost-pixel.com/blog/lost-pixel-team-is-joining-figma
 openSource: true
 license: MIT (engine), platform proprietary
 selfHostable: true
@@ -25,5 +28,6 @@ notes:
   - The engine writes .lostpixel/baseline, current and difference folders; no JSON summary was found.
 lastVerified: '2026-10-13'
 sources:
+  - https://www.lost-pixel.com/blog/lost-pixel-team-is-joining-figma
   - https://docs.lost-pixel.com/user-docs/api-reference/lost-pixel.config.js-or-ts.md
   - https://github.com/lost-pixel/lost-pixel

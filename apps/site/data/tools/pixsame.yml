@@ -2,6 +2,8 @@ name: pixsame
 website: https://pixsame.com
 summary: Cypress plugin (Playwright in preparation) that compares screenshots in the runner, shows the diff in the Cypress UI, and writes the run manifest for review tooling.
 category: runner-integration
+alsoCategories:
+  - hosted-review
 aliases:
   - '@pixsame/cypress-plugin-visual-regression-diff'
   - '@frsource/cypress-plugin-visual-regression-diff'

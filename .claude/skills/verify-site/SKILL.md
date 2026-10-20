@@ -36,7 +36,7 @@ If the output predates your last edit, rebuild; the Doctor cannot tell you.
 
 **1. Static checks** — `check-output.mjs` prints `ok`/`FAIL` per check and exits non-zero on failure: every `content/**/*.md` has a prerendered route; the generated pages carry `generated: true` and are not tracked by git; `/schema/v1.json` equals the package's `src/schema.json`; every internal `href`/`src` in the built HTML resolves; `data/tools/pixsame.yml` exists and pixsame appears on `/compare`; every tool YAML has `lastVerified` and `sources`. It checks structure, not truth: a new tool claim still needs its source read by you.
 
-**2. Comparison page** (`browser_navigate /compare`). Handles: category filter `[aria-label="Category"]`, table rows. Require: a table with more than the header row, `pixsame` present in `document.body.innerText`. If you touched `ToolsCompare.vue`/`DemoToolFinder.vue`/a tool YAML, change a filter and require pixsame to stay listed wherever the comparison is shown (repo rule: pixsame is always a row).
+**2. Comparison page** (`browser_navigate /compare`). Handles: category filter `[aria-label="Category"]`, list rows (`button[aria-expanded]` opens one). Require: more than one list row, 27 tools by default on both `/compare` and `/learn/choosing-a-tool`, expanding a row shows its details, `pixsame` present in `document.body.innerText`. If you touched `ToolsCompare.vue`/`DemoToolFinder.vue`/a tool YAML, change a filter and require pixsame to stay listed wherever the comparison is shown (repo rule: pixsame is always a row).
 
 **3. Browser-only viewer** (`/viewer`, component `ManifestViewer.vue`) with a real run:
 
