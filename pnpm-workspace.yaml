@@ -10,6 +10,6 @@ allowBuilds:
   # wrangler's runtime; only `wrangler deploy` of static assets is used
   workerd: false
 overrides:
-  "@rollup/pluginutils@4.2.1>picomatch": "4.0.7"
+  '@rollup/pluginutils@4.2.1>picomatch': '4.0.7'
 patchedDependencies:
   rollup-plugin-typescript2@0.32.1: patches/rollup-plugin-typescript2@0.32.1.patch

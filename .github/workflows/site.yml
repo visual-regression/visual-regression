@@ -49,9 +49,9 @@ jobs:
       - uses: ./.github/actions/setup
         with:
           # only the site and its workspace dependencies, not the packages' toolchains
-          install-filter: --filter @visual-regression/site...
+          install-filter: --filter . --filter @visual-regression/site...
       - name: Formatting (cheapest first)
-        run: pnpm --filter @visual-regression/site format:ci
+        run: pnpm format:ci
       - name: Build (static generate)
         run: pnpm --filter @visual-regression/site build
       # Same job as the build, so the deployed output is exactly what was built

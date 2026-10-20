@@ -18,6 +18,17 @@ export default defineAppConfig({
       // `build/test-results/roborazzi/<variant>/results-summary.json` could
       // not wrap and pushed the page wider than the viewport.
       code: { base: 'max-w-full wrap-anywhere' },
+      // The collapsible toggle is a tinted button instead of muted text, so
+      // readers notice there is something to open. Light mode uses emerald-700
+      // for contrast; the primary green is only ~2.5:1 on white.
+      collapsible: {
+        slots: {
+          trigger:
+            'w-full rounded-md border border-primary/40 bg-primary/5 px-3 py-2 font-medium hover:border-primary hover:bg-primary/10',
+          triggerIcon: 'text-emerald-700 dark:text-primary',
+          triggerLabel: 'text-emerald-700 dark:text-primary',
+        },
+      },
     },
     // "Previous / next chapter" cards: icon and label share one line, and the
     // next card uses the primary colour. The label comes from the slot in

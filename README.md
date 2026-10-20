@@ -8,11 +8,11 @@
 
 <p align="center">The home of <a href="https://visual-regression.dev">visual-regression.dev</a>: a vendor-neutral place to learn visual regression testing, compare the tools, and share one run manifest between them.</p>
 
-| Path | What it is |
-| --- | --- |
+| Path                                                                         | What it is                                                                                                                              |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | [`packages/visual-regression-manifest`](packages/visual-regression-manifest) | The `visual-regression-manifest` format: JSON Schema, TypeScript types, reader, writer, merger and converters from other tools' output. |
-| [`packages/visual-regression-viewer`](packages/visual-regression-viewer) | The `visual-regression-viewer` command: reads the manifests of a run, serves a review page for it or writes it to a folder. |
-| `apps/site` | The visual-regression.dev site (Docus, statically generated). |
+| [`packages/visual-regression-viewer`](packages/visual-regression-viewer)     | The `visual-regression-viewer` command: reads the manifests of a run, serves a review page for it or writes it to a folder.             |
+| `apps/site`                                                                  | The visual-regression.dev site (Docus, statically generated).                                                                           |
 
 Maintained by the [pixsame](https://pixsame.com) team. Contributions from every visual regression tool are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 

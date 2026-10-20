@@ -1,7 +1,7 @@
 {
   "name": "visual-regression-viewer",
   "description": "Review a visual regression run in the browser: reads the visual-regression-manifest files of a run, builds a self-contained HTML viewer, serves it locally or writes it to disk. Themeable with CSS variables, the page template is replaceable.",
-  "version": "1.0.0-beta.1",
+  "version": "0.0.0",
   "author": "Jakub Freisler <jakub.freisler@frsource.org>",
   "homepage": "https://visual-regression.dev/viewer",
   "repository": {
@@ -16,8 +16,6 @@
   },
   "scripts": {
     "build": "del-cli dist && vite build && tsc -p tsconfig.build.json --noEmit && esbuild src/cli.ts --bundle --platform=node --target=node22 --format=esm --packages=external --banner:js='#!/usr/bin/env node' --outfile=dist/cli.js && node scripts/executable.mjs",
-    "format": "prettier --write .",
-    "format:ci": "prettier --check .",
     "test:integration": "vitest run",
     "test:integration:watch": "vitest",
     "test:integration:coverage": "vitest run --coverage",
@@ -34,7 +32,6 @@
     "visual-regression-manifest": "workspace:*"
   },
   "devDependencies": {
-    "@frsource/prettier-config": "^1.11.0",
     "@tailwindcss/vite": "4.3.3",
     "@types/node": "22.20.5",
     "@types/tmp": "0.2.6",
@@ -42,7 +39,6 @@
     "@vitest/coverage-v8": "4.1.11",
     "del-cli": "7.0.0",
     "esbuild": "0.28.2",
-    "prettier": "3.9.8",
     "tailwindcss": "4.3.3",
     "tmp-promise": "3.0.3",
     "typescript": "6.0.3",
