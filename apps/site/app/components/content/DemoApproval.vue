@@ -38,7 +38,7 @@ const initial = (): Entry[] => [
     name: 'footer-links',
     test: 'footer.spec.ts › legal links',
     diffRatio: 0.013,
-    what: 'Footer links switched from grey to the brand color, as designed.',
+    what: 'Footer links switched from gray to the brand color, as designed.',
     honest: 'intended',
     baseline: { '--link': '#a1a1aa' },
     actual: { '--link': '#10b981' },
