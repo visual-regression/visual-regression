@@ -48,3 +48,5 @@ examples/**/__received_output__/
 examples/**/__diff_output__/
 examples/**/visual-regression-manifest*.json
 examples/**/*-snapshots/
+examples/**/__screenshots__/
+examples/**/.vitest/
