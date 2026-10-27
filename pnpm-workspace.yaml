@@ -9,6 +9,8 @@ allowBuilds:
   better-sqlite3: true
   # the Cypress binary is fetched by the e2e-cypress CI job behind a cache keyed by version
   cypress: false
+  # BackstopJS's engine; the e2e-backstopjs CI job fetches Chrome behind a cache keyed by version
+  puppeteer: false
   esbuild: true
   sharp: true
   unrs-resolver: false

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Manifest } from 'visual-regression-manifest';
 import {
   checkManifest,
@@ -9,9 +9,10 @@ import {
   viewerReport,
   type Expectation,
 } from './assert-manifest.js';
+import { serveStatic } from './serve.js';
 import { sh } from './shell.js';
 
-export type Ctx = { sh: typeof sh };
+export type Ctx = { sh: typeof sh; serveStatic: typeof serveStatic };
 
 /** What every `examples/converters/<tool>/scenario.mjs` exports. */
 export type Scenario = {
@@ -33,6 +34,8 @@ export type Scenario = {
   convert(mode: string): Manifest;
   /** Copies the tool's output into a unit-test fixture folder. */
   capture?(outDir: string, mode: string): Promise<void>;
+  /** Stops whatever `record` started (a static server, for tools that need a URL). */
+  teardown?(ctx: Ctx): Promise<void>;
 };
 
 /** Where `E2E_CAPTURE=1` stores real output for the manifest package's unit tests. */
@@ -57,13 +60,16 @@ export const cleanHarnessOutput = ({ name, projectRoot, modes }: Scenario) => {
 };
 
 export const runScenario = (scenario: Scenario) => {
-  const ctx: Ctx = { sh };
+  const ctx: Ctx = { sh, serveStatic };
   describe(scenario.name, () => {
     beforeAll(async () => {
       cleanHarnessOutput(scenario);
       await scenario.clean(ctx);
       await scenario.record(ctx);
       await scenario.perturb(ctx);
+    });
+    afterAll(async () => {
+      await scenario.teardown?.(ctx);
     });
     for (const mode of scenario.modes) {
       it(`${mode}: converts the real output into a valid manifest`, async () => {
@@ -80,7 +86,7 @@ export const runScenario = (scenario: Scenario) => {
             expectation.reportsDiffRatio ?? scenario.reportsDiffRatio,
         });
         try {
-          const out = viewerReport(
+          const out = await viewerReport(
             manifest,
             scenario.projectRoot,
             `${scenario.name}-${mode}`,

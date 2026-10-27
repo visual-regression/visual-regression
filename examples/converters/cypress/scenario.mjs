@@ -117,7 +117,7 @@ export async function record(ctx) {
     pixsame: { PIXSAME_UPDATE: '1' },
   };
   for (const [mode, env] of Object.entries(runs)) {
-    const run = cypress(ctx, mode, { ...env, E2E_VARIANT: 'a' });
+    const run = await cypress(ctx, mode, { ...env, E2E_VARIANT: 'a' });
     if (run.status !== 0) {
       throw new Error(`recording ${mode} failed:\n${run.output}`);
     }
@@ -147,7 +147,7 @@ export async function compare(mode, ctx) {
     'pixsame-create': {},
   }[mode];
   // exits 1: box-b fails by design, box-c too in most modes
-  cypress(ctx, mode, { ...env, E2E_VARIANT: 'b' });
+  await cypress(ctx, mode, { ...env, E2E_VARIANT: 'b' });
 }
 
 export function convert(mode) {

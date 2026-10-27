@@ -1,10 +1,72 @@
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { tmpDir, writePng } from '../../__tests__/helpers';
+import {
+  expectRealOutput,
+  fixtureJson,
+  must,
+  realOutput,
+  tmpDir,
+  writePng,
+} from '../../__tests__/helpers';
 import { validateManifest } from '../reader';
 import { fromBackstopReport, type BackstopReport } from './backstop';
 
 describe('fromBackstopReport', () => {
+  // captured by examples/converters/backstopjs: BackstopJS 6 with the puppeteer engine,
+  // one reference run, one reference deleted, one test run with the JSON report
+  describe.each(realOutput('backstopjs'))(
+    'real output of a backstop $mode run',
+    ({ root, expectations }) => {
+      it('converts the JSON report, resolving its paths against json_report', () => {
+        const report = fixtureJson<BackstopReport>(
+          root,
+          'backstop_data/json_report/jsonReport.json',
+        );
+        const manifest = fromBackstopReport(report, {
+          projectRoot: root,
+          ci: null,
+        });
+        expectRealOutput(manifest, root, expectations);
+        expect(manifest.runner).toEqual({ name: 'backstopjs' });
+        const failed = must(
+          manifest.entries.find((e) => e.status === 'failed'),
+        );
+        expect(failed).toMatchObject({
+          name: 'e2e_box-b_0_box-b_0_phone',
+          test: { titlePath: ['box-b', 'phone'] },
+          variant: 'phone',
+          comparison: { maxDiffRatio: 0 },
+          images: {
+            baseline: {
+              path: 'backstop_data/bitmaps_reference/e2e_box-b_0_box-b_0_phone.png',
+            },
+            actual: {
+              path: expect.stringMatching(
+                /^backstop_data\/bitmaps_test\/\d{8}-\d{6}\/e2e_box-b_0_box-b_0_phone\.png$/,
+              ),
+            },
+            diff: {
+              path: expect.stringMatching(
+                /\/failed_diff_e2e_box-b_0_box-b_0_phone\.png$/,
+              ),
+            },
+          },
+          subject: { kind: 'page' },
+          extra: { backstop: { selector: '#box-b', label: 'box-b' } },
+        });
+        expect(failed.comparison.diffRatio).toBeGreaterThan(0);
+        const missing = must(
+          manifest.entries.find((e) => e.name === 'e2e_box-c_0_box-c_0_phone'),
+        );
+        expect(missing).toMatchObject({
+          status: 'missing-baseline',
+          message: expect.stringMatching(/reference file not found/i),
+          images: { diff: { path: null } },
+        });
+      });
+    },
+  );
+
   it('converts the pairs of a JSON report, resolving paths against the report directory', async () => {
     const root = await tmpDir();
     const data = path.join(root, 'backstop_data');

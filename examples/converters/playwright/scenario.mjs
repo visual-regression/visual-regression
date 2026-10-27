@@ -62,7 +62,7 @@ export async function clean() {
 }
 
 export async function record(ctx) {
-  const run = playwright(ctx, {
+  const run = await playwright(ctx, {
     PW_UPDATE: 'all',
     PW_OUTPUT: 'test-results/record',
     E2E_VARIANT: 'a',
@@ -77,7 +77,7 @@ export async function perturb() {
 export async function compare(mode, ctx) {
   if (mode.startsWith('ctrf-')) return; // converts the run of the mode before it
   // exits 1: box-b fails by design, and so does box-c in both modes
-  playwright(ctx, {
+  await playwright(ctx, {
     PW_UPDATE: mode === 'none' ? 'none' : undefined,
     PW_OUTPUT: `test-results/${mode}`,
     E2E_VARIANT: 'b',
