@@ -12,14 +12,28 @@ export const nameOf = (base) => base;
 
 const lib = path.join(projectRoot, 'lib');
 const outputs = path.join(lib, 'build', 'outputs', 'roborazzi');
-const summary = path.join(
-  lib,
-  'build',
-  'test-results',
-  'roborazzi',
-  'debug',
-  'results-summary.json',
-);
+const results = path.join(lib, 'build', 'test-results', 'roborazzi');
+
+/** `<results>/<variant>/results-summary.json`; found by walking so a layout change shows up in the fixture. */
+const findSummary = (dir = results) => {
+  if (!fs.existsSync(dir)) return undefined;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      const found = findSummary(full);
+      if (found) return found;
+    } else if (entry.name === 'results-summary.json') {
+      return full;
+    }
+  }
+  return undefined;
+};
+
+const summaryFile = () => {
+  const found = findSummary();
+  if (!found) throw new Error(`no results-summary.json below ${results}`);
+  return found;
+};
 
 /**
  * `compare`: unchanged, changed and added images. `record` afterwards: a second record
@@ -69,6 +83,8 @@ export async function compare(mode, ctx) {
 }
 
 export function convert() {
+  const summary = summaryFile();
+  console.log(`summary: ${path.relative(projectRoot, summary)}`);
   return fromRoborazziResults(JSON.parse(fs.readFileSync(summary, 'utf8')), {
     projectRoot,
     maxDiffRatio: 0, // changeThreshold
@@ -80,6 +96,7 @@ export async function capture(outDir) {
   fs.cpSync(outputs, path.join(outDir, 'lib', 'build', 'outputs', 'roborazzi'), {
     recursive: true,
   });
+  const summary = summaryFile();
   const target = path.join(outDir, path.relative(projectRoot, summary));
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(
