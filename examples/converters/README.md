@@ -23,7 +23,7 @@ pnpm --filter @visual-regression/e2e-jest-image-snapshot exec playwright install
 pnpm --filter @visual-regression/e2e-harness e2e tests/jest-image-snapshot.test.ts
 ```
 
-Every example that screenshots through Playwright (`jest-image-snapshot`, `playwright`) needs that browser install once per Playwright version.
+Every example that screenshots through Playwright (`jest-image-snapshot`, `playwright`, `vitest-browser`) needs that browser install once per Playwright version.
 
 `pnpm --filter @visual-regression/e2e-harness typecheck` checks the harness and every `scenario.mjs` against the `Scenario` type (`harness/src/scenario.ts`); it needs the two packages built.
 
@@ -36,6 +36,7 @@ Every example that screenshots through Playwright (`jest-image-snapshot`, `playw
 | Example               | Converter                                                                          | Modes                                          | Statuses on disk                                                                                                                                                                                                                             |
 | --------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `jest-image-snapshot` | `fromJestImageSnapshots`                                                           | `ci`, `local`                                  | `passed`, `failed`; `--ci` writes nothing for a missing baseline (no entry), without it the baseline is written (`passed`)                                                                                                                   |
+| `vitest-browser`      | `fromVitestScreenshots`                                                            | `ci`, `local`                                  | `passed`, `failed`, `missing-baseline` (on CI the missing reference is stored as a `-reference-` attachment); locally the reference is written (`passed`)                                                                                    |
 | `playwright`          | `fromPlaywrightReport`, `fromCtrf` (lenient, from `playwright-ctrf-json-reporter`) | `none`, `default`, `ctrf-none`, `ctrf-default` | `failed`, `missing-baseline` (`updateSnapshots: 'none'`, from the error alone), `created` (default); a passing comparison leaves no trace. CTRF: no diff ratio, no entry without a baseline attachment, a written baseline reads as `failed` |
 
 ## Adding a tool
