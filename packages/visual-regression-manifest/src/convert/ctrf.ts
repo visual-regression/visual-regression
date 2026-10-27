@@ -18,6 +18,7 @@ import type {
   ManifestTool,
 } from '../types';
 import { inferStatus } from './triples';
+import { toProjectRelative } from '../paths';
 
 /**
  * CTRF (Common Test Report Format, https://ctrf.io): the subset of the schema
@@ -389,8 +390,12 @@ const fromCtrfTest = (
   test: CtrfTest,
   fallbackTime: string,
   lenient: boolean,
+  projectRoot: string,
 ): ManifestEntry | undefined => {
   const visual = visualOf(test.extra) as VisualExtra | undefined;
+  // reporters of other tools write absolute paths; a manifest's are project-relative
+  const relative = (p: string) =>
+    path.isAbsolute(p) ? toProjectRelative(projectRoot, p) : p;
   const byRole: Partial<Record<ImageRole, CtrfAttachment>> = {};
   const others: ManifestAttachment[] = [];
   for (const attachment of test.attachments ?? []) {
@@ -402,7 +407,7 @@ const fromCtrfTest = (
         compact({
           name: attachment.name,
           contentType: attachment.contentType,
-          path: attachment.path,
+          path: relative(attachment.path),
           attachmentId: attachment.attachmentId,
           extra: Object.keys(extra).length > 0 ? extra : undefined,
         }),
@@ -421,12 +426,15 @@ const fromCtrfTest = (
       });
     };
     images = {
-      baseline: { path: byRole.baseline.path, ...dimensions(byRole.baseline) },
+      baseline: {
+        path: relative(byRole.baseline.path),
+        ...dimensions(byRole.baseline),
+      },
       actual: {
-        path: byRole.actual?.path ?? null,
+        path: byRole.actual ? relative(byRole.actual.path) : null,
         ...dimensions(byRole.actual),
       },
-      diff: { path: byRole.diff?.path ?? null },
+      diff: { path: byRole.diff ? relative(byRole.diff.path) : null },
     };
   }
   const status = isManifestStatus(visual?.status)
@@ -448,7 +456,7 @@ const fromCtrfTest = (
   return compact({
     name: test.name,
     test: visual?.test ?? {
-      filePath: test.filePath ?? '',
+      filePath: test.filePath ? relative(test.filePath) : '',
       titlePath: test.suite ?? [],
       retry: test.retries ?? 0,
     },
@@ -544,7 +552,9 @@ export const fromCtrf = (
   const updatedAt = iso(stop, report.timestamp ?? now());
   const createdAt = iso(start, updatedAt);
   const entries = results.tests
-    .map((test) => fromCtrfTest(test, updatedAt, opts.lenient ?? false))
+    .map((test) =>
+      fromCtrfTest(test, updatedAt, opts.lenient ?? false, projectRoot),
+    )
     .filter((entry): entry is ManifestEntry => entry !== undefined)
     .sort(compareEntries);
   const tool: ManifestTool = results.tool

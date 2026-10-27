@@ -1,0 +1,294 @@
+{
+  "config": {
+    "argv": [
+      "/Users/jakubfreisler/.nvm/versions/node/v22.14.0/bin/node",
+      "/Users/jakubfreisler/Projects/Web/visual-regression/node_modules/.pnpm/@playwright+test@1.64.1/node_modules/@playwright/test/cli.js",
+      "test"
+    ],
+    "configFile": "__PROJECT_ROOT__/playwright.config.mjs",
+    "rootDir": "__PROJECT_ROOT__/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "__PROJECT_ROOT__/test-results/none",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "__PROJECT_ROOT__/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "__PROJECT_ROOT__/test-results/none",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "__PROJECT_ROOT__/tests",
+        "snapshotDir": "__PROJECT_ROOT__/tests",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 30000,
+        "use": {
+          "viewport": {
+            "width": 320,
+            "height": 200
+          },
+          "deviceScaleFactor": 1,
+          "browserName": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json",
+        {
+          "outputFile": "test-results/none-reports/report.json"
+        }
+      ],
+      [
+        "/Users/jakubfreisler/Projects/Web/visual-regression/node_modules/.pnpm/playwright-ctrf-json-reporter@0.2.0/node_modules/playwright-ctrf-json-reporter/dist/index.cjs",
+        {
+          "outputDir": "test-results/none-reports",
+          "outputFile": "ctrf-report.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "none",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "box.spec.mjs",
+      "file": "box.spec.mjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "box-a",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 145,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:51:09.593Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "aea8beda5bce5a47d6dc-bde9f5235400ce51223d",
+          "file": "box.spec.mjs",
+          "line": 8,
+          "column": 3
+        },
+        {
+          "title": "box-b",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 307,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46",
+                    "location": {
+                      "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                      "column": 46,
+                      "line": 10
+                    },
+                    "snippet": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                        "column": 46,
+                        "line": 10
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\n\n   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:51:09.841Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "box-b-expected.png",
+                      "contentType": "image/png",
+                      "path": "__PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-b-chromium-darwin.png"
+                    },
+                    {
+                      "name": "box-b-actual.png",
+                      "contentType": "image/png",
+                      "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/box-b-actual.png"
+                    },
+                    {
+                      "name": "box-b-diff.png",
+                      "contentType": "image/png",
+                      "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/box-b-diff.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                    "column": 46,
+                    "line": 10
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "aea8beda5bce5a47d6dc-daf98066a08fe943a518",
+          "file": "box.spec.mjs",
+          "line": 8,
+          "column": 3
+        },
+        {
+          "title": "box-c",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 89,
+                  "error": {
+                    "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.",
+                    "stack": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46",
+                    "location": {
+                      "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                      "column": 46,
+                      "line": 10
+                    },
+                    "snippet": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                        "column": 46,
+                        "line": 10
+                      },
+                      "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.\n\n   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-27T16:51:10.619Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "__PROJECT_ROOT__/test-results/none/box-box-c-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "__PROJECT_ROOT__/tests/box.spec.mjs",
+                    "column": 46,
+                    "line": 10
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "aea8beda5bce5a47d6dc-1f5e4f912bbed5f9197e",
+          "file": "box.spec.mjs",
+          "line": 8,
+          "column": 3
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-27T16:51:09.160Z",
+    "duration": 1686.051,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

@@ -15,6 +15,10 @@ export type Expectation = {
   statuses: Record<string, ManifestStatus>;
   /** Screenshot names that must have no entry: the tool left nothing behind for them. */
   absent?: string[];
+  /** Overrides the scenario's `reportsDiffRatio` for this mode. */
+  reportsDiffRatio?: boolean;
+  /** Overrides the scenario's `nameOf` for this mode (a report may name entries differently than the files). */
+  nameOf?: (base: string) => string;
 };
 export type Check = { name: string; error?: string };
 export type CheckOptions = {
