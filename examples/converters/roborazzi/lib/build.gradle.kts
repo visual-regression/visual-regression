@@ -12,12 +12,13 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
-            all {
-                // -Pvariant=b recolors box-b, read by the test as a system property
-                systemProperty("e2e.variant", project.findProperty("variant")?.toString() ?: "a")
-            }
         }
     }
+}
+
+// -Pvariant=b recolors box-b, read by the test as a system property
+tasks.withType<Test>().configureEach {
+    systemProperty("e2e.variant", project.findProperty("variant")?.toString() ?: "a")
 }
 
 dependencies {
