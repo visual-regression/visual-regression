@@ -186,6 +186,17 @@ export const realOutput = (tool: string) => {
     }));
 };
 
+/** A JSON file of a captured fixture; `__PROJECT_ROOT__` stands for the example folder the tool named in absolute paths. */
+export const fixtureJson = <T = Record<string, unknown>>(
+  root: string,
+  file: string,
+): T =>
+  JSON.parse(
+    fs
+      .readFileSync(path.join(root, file), 'utf8')
+      .replaceAll('__PROJECT_ROOT__', root.replace(/\\/g, '/')),
+  ) as T;
+
 /**
  * What every converter must get right about captured output: the checks the
  * examples' harness runs on the live output, applied to the fixture.

@@ -58,7 +58,6 @@ export const cleanHarnessOutput = ({ name, projectRoot, modes }: Scenario) => {
 
 export const runScenario = (scenario: Scenario) => {
   const ctx: Ctx = { sh };
-  const nameOf = scenario.nameOf ?? ((base) => base);
   describe(scenario.name, () => {
     beforeAll(async () => {
       cleanHarnessOutput(scenario);
@@ -70,12 +69,15 @@ export const runScenario = (scenario: Scenario) => {
       it(`${mode}: converts the real output into a valid manifest`, async () => {
         const expectation = scenario.expectations[mode];
         expect(expectation, `expectations for mode ${mode}`).toBeDefined();
+        const nameOf =
+          expectation.nameOf ?? scenario.nameOf ?? ((base: string) => base);
         await scenario.compare(mode, ctx);
         const manifest = scenario.convert(mode);
         const checks = checkManifest(manifest, expectation, {
           projectRoot: scenario.projectRoot,
           nameOf,
-          reportsDiffRatio: scenario.reportsDiffRatio,
+          reportsDiffRatio:
+            expectation.reportsDiffRatio ?? scenario.reportsDiffRatio,
         });
         try {
           const out = viewerReport(
@@ -106,7 +108,8 @@ export const runScenario = (scenario: Scenario) => {
               ]),
             ),
             absent: (expectation.absent ?? []).map(nameOf),
-            reportsDiffRatio: scenario.reportsDiffRatio ?? true,
+            reportsDiffRatio:
+              expectation.reportsDiffRatio ?? scenario.reportsDiffRatio ?? true,
           };
           fs.writeFileSync(
             path.join(dir, 'expectations.json'),
