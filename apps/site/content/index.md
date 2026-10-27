@@ -12,7 +12,7 @@ seo:
 :hero-headline
 
 #description
-Screenshots catch what assertions miss. This site explains how visual regression testing works, compares the tools, and documents one run manifest any tool can write and any review tool can read.
+Learn how visual regression testing works and compare the existing tools. Help us shaping one run manifest standard that any tool can write and any reporting/reviewing library can read.
 
 #links
   :::u-button
@@ -36,6 +36,8 @@ Screenshots catch what assertions miss. This site explains how visual regression
   :::
 ::
 
+:scroll-hint
+
 ::u-page-section
 #title
 Start here
@@ -52,7 +54,7 @@ A short tutorial in six chapters. Read them in order or start with the one you p
 The tools
 
 #description
-Every tool in one comparison, every claim sourced from the vendor's own docs. Four of them, to show what it covers:
+Every tool in one comparison, for your convenience.
 
 #default
 :tools-teaser
