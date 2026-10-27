@@ -1,5 +1,7 @@
 package dev.visualregression.e2e
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.view.View
 import androidx.test.core.app.ApplicationProvider
@@ -10,7 +12,11 @@ import org.junit.runner.RunWith
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
-/** Three solid views, like the boxes of the shared page; `e2e.variant=b` recolors box-b. */
+/**
+ * Three solid views, like the boxes of the shared page; `e2e.variant=b` recolors box-b.
+ * A detached View cannot be captured (Roborazzi wants its Activity), so each one is
+ * drawn into a Bitmap, which Roborazzi captures as it does any screenshot.
+ */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(sdk = [35])
@@ -31,7 +37,9 @@ class BoxTest {
                 View.MeasureSpec.makeMeasureSpec(120, View.MeasureSpec.EXACTLY),
             )
             view.layout(0, 0, 80, 120)
-            view.captureRoboImage("build/outputs/roborazzi/box-$box.png")
+            val bitmap = Bitmap.createBitmap(80, 120, Bitmap.Config.ARGB_8888)
+            view.draw(Canvas(bitmap))
+            bitmap.captureRoboImage("build/outputs/roborazzi/box-$box.png")
         }
     }
 }
