@@ -290,6 +290,8 @@ writer.reset(); // start of a run: forget everything, delete the file
 
 ## Converting to and from other formats
 
+Every converter below is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+
 ### CTRF
 
 [CTRF](https://ctrf.io) is the test results format a growing number of reporters write and CI integrations read (PR summaries, Slack messages, dashboards). A manifest becomes a CTRF report with one test of `type: "visual"` per entry, named after the screenshot, with the baseline, actual and diff images as attachments and everything CTRF has no field for under `extra.visualRegression`:
@@ -376,7 +378,7 @@ A reference without attachments passed, attachments without a reference are `mis
 
 ### jest-image-snapshot and cypress-image-snapshot
 
-Baselines are `<id>-snap.png` in `__image_snapshots__/`; failures leave `<id>-diff.png` (a baseline | diff | received composite unless `onlyDiff`) in `__image_snapshots__/__diff_output__/`, plus `<id>-received.png` when `storeReceivedOnFailure` is on:
+Baselines are `<id>.png` in `__image_snapshots__/`, where `<id>` is your `customSnapshotIdentifier` or `<test file>-<test name>-<n>-snap`; failures leave `<id>-diff.png` (a baseline | diff | received composite unless `onlyDiff`) in `__image_snapshots__/__diff_output__/`, plus `<id>-received.png` in `__image_snapshots__/__received_output__/` when `storeReceivedOnFailure` is on:
 
 ```ts
 import { fromJestImageSnapshots } from 'visual-regression-manifest';
@@ -390,7 +392,7 @@ const manifest = fromJestImageSnapshots({
 });
 ```
 
-The received image is the entry's `actual` when it exists; the diff composite is the entry's `diff` image either way.
+The received image is the entry's `actual` when it exists; the diff composite is the entry's `diff` image either way. A trailing `-snap` is dropped from the entry name.
 
 ### cypress-visual-regression
 

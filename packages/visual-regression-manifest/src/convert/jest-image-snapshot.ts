@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 import { ManifestBuilder, type ManifestHeaderInput } from '../builder';
 import { resolveInProject } from '../paths';
@@ -17,11 +16,11 @@ export type FromJestImageSnapshotOptions = Omit<ManifestHeaderInput, 'runner'> &
     snapshotsDirName?: string;
     /** `customDiffDir` folder name, inside the snapshots folder. */
     diffDirName?: string;
-    /** `customReceivedDir` folder name, inside the snapshots folder; defaults to the diff folder. */
+    /** `customReceivedDir` folder name, inside the snapshots folder. */
     receivedDirName?: string;
-    /** `customSnapshotIdentifier` postfix of baselines. */
+    /** The postfix of default snapshot identifiers (`<test file>-<test name>-<n>-snap`), dropped from the entry name when present. */
     snapshotPostfix?: string;
-    /** `customDiffPostfix`. */
+    /** The postfix of diff images. */
     diffPostfix?: string;
     /** `customReceivedPostfix`. */
     receivedPostfix?: string;
@@ -29,17 +28,19 @@ export type FromJestImageSnapshotOptions = Omit<ManifestHeaderInput, 'runner'> &
 
 /**
  * Builds a manifest from the files jest-image-snapshot (and its Cypress port,
- * cypress-image-snapshot) leaves behind: `<id>-snap.png` baselines in
- * `__image_snapshots__/`, and for failed comparisons `<id>-diff.png` in
- * `__image_snapshots__/__diff_output__/` (a baseline | diff | received
- * composite unless `onlyDiff` was set) plus, with `storeReceivedOnFailure`,
- * `<id>-received.png`. A baseline with no diff image passed.
+ * cypress-image-snapshot) leaves behind: `<id>.png` baselines in
+ * `__image_snapshots__/`, where `<id>` is the `customSnapshotIdentifier` or
+ * `<test file>-<test name>-<n>-snap`, and for failed comparisons
+ * `<id>-diff.png` in `__image_snapshots__/__diff_output__/` (a baseline |
+ * diff | received composite unless `onlyDiff` was set) plus, with
+ * `storeReceivedOnFailure`, `__image_snapshots__/__received_output__/<id>-received.png`.
+ * A baseline with no diff image passed.
  */
 export const fromJestImageSnapshots = ({
   roots,
   snapshotsDirName = '__image_snapshots__',
   diffDirName = '__diff_output__',
-  receivedDirName,
+  receivedDirName = '__received_output__',
   snapshotPostfix = '-snap',
   diffPostfix = '-diff',
   receivedPostfix = '-received',
@@ -67,10 +68,9 @@ export const fromJestImageSnapshots = ({
       const dir = path.basename(path.dirname(file));
       const parent = path.basename(path.dirname(path.dirname(file)));
       const stem = stemOf(file);
+      // every image directly in the snapshots folder is a baseline, named by its identifier
       if (dir === snapshotsDirName) {
-        const id = strip(stem, snapshotPostfix);
-        if (id !== null)
-          baselines.set(`${path.dirname(file)}\u0000${id}`, file);
+        baselines.set(`${path.dirname(file)}\u0000${stem}`, file);
         continue;
       }
       if (parent !== snapshotsDirName) continue;
@@ -79,7 +79,7 @@ export const fromJestImageSnapshots = ({
         const id = strip(stem, diffPostfix);
         if (id !== null) diffs.set(`${snapshotsDir}\u0000${id}`, file);
       }
-      if (dir === (receivedDirName ?? diffDirName)) {
+      if (dir === receivedDirName) {
         const id = strip(stem, receivedPostfix);
         if (id !== null) received.set(`${snapshotsDir}\u0000${id}`, file);
       }
@@ -88,27 +88,23 @@ export const fromJestImageSnapshots = ({
 
   for (const key of new Set([...baselines.keys(), ...diffs.keys()])) {
     const [snapshotsDir, id] = key.split('\u0000');
-    const baseline =
-      baselines.get(key) ??
-      path.join(snapshotsDir, `${id}${snapshotPostfix}.png`);
+    const baseline = baselines.get(key) ?? path.join(snapshotsDir, `${id}.png`);
     const diff = diffs.get(key) ?? null;
     const actual = received.get(key);
-    const hasBaseline = fs.existsSync(baseline);
     const baselineSize = readPngSize(baseline);
     builder.record({
-      // the received image is the "actual" when stored; without it the entry
-      // points at where it would be, and the diff composite is what reviewers see
+      // the received image is the "actual" when stored; without it the builder
+      // records `null` (the file does not exist), and the diff composite is what
+      // reviewers see
       actualPath:
         actual ??
-        path.join(
-          snapshotsDir,
-          receivedDirName ?? diffDirName,
-          `${id}${receivedPostfix}.png`,
-        ),
+        path.join(snapshotsDir, receivedDirName, `${id}${receivedPostfix}.png`),
       baselinePath: baseline,
       diffPath: diff,
-      name: id,
-      status: diff ? (hasBaseline ? 'failed' : 'missing-baseline') : 'passed',
+      name: strip(id, snapshotPostfix) ?? id,
+      // a missing baseline leaves nothing behind (not written in CI mode, written and
+      // passed otherwise), so the files can only tell passed from failed
+      status: diff ? 'failed' : 'passed',
       // a failed comparison's received image can be a different size than the baseline
       ...entryLimits(
         { maxDiffRatio, maxDiffPixels, colorThreshold, colorMetric },
