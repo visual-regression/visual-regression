@@ -50,3 +50,7 @@ examples/**/visual-regression-manifest*.json
 examples/**/*-snapshots/
 examples/**/__screenshots__/
 examples/**/.vitest/
+examples/**/cypress/snapshots/
+examples/**/cypress/screenshots/
+examples/**/cypress/videos/
+examples/**/cypress/image-snapshot/

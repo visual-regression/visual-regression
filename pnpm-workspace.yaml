@@ -7,6 +7,8 @@ allowBuilds:
   # jest's watcher; `jest run` in the examples does not need the native binding
   '@parcel/watcher': false
   better-sqlite3: true
+  # the Cypress binary is fetched by the e2e-cypress CI job behind a cache keyed by version
+  cypress: false
   esbuild: true
   sharp: true
   unrs-resolver: false

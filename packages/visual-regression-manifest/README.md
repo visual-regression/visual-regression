@@ -396,9 +396,23 @@ const manifest = fromJestImageSnapshots({
 
 The received image is the entry's `actual` when it exists; the diff composite is the entry's `diff` image either way. A trailing `-snap` is dropped from the entry name.
 
+cypress-image-snapshot keeps one folder per spec file under `cypress/snapshots/` (next to Cypress's screenshots folder), with `<name>.snap.png` baselines and `__diff_output__/<name>.diff.png` diffs; point the converter at that folder:
+
+```ts
+const manifest = fromJestImageSnapshots({
+  projectRoot: process.cwd(),
+  runner: { name: 'cypress' },
+  snapshotsDir: 'cypress/snapshots',
+  snapshotPostfix: '.snap',
+  diffPostfix: '.diff',
+});
+```
+
+The spec folder becomes the entry's test file.
+
 ### cypress-visual-regression
 
-Reads the `base`, `actual` and `diff` folders (`cypress/snapshots/...` by default), nested by spec file:
+Reads the `base`, `actual` and `diff` folders (`cypress/snapshots/...` by default), nested by spec file; the actual screenshots sit below the spec prefix Cypress adds, which the converter matches to the base images:
 
 ```ts
 import { fromCypressVisualRegression } from 'visual-regression-manifest';
