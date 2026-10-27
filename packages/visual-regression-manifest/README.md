@@ -33,7 +33,7 @@ The spec lives at [visual-regression.dev/manifest](https://visual-regression.dev
 
 ## The format
 
-The normative description is the JSON Schema (draft 2020-12) at `https://visual-regression.dev/schema/v1.json`, shipped as `schema.json` (in the package, and in the repository under `src/`) and importable as `visual-regression-manifest/schema.json` or the `manifestSchema` export. The TypeScript types (`Manifest`, `ManifestEntry`, ...) mirror it. A trimmed example:
+Available as JSON Schema at `https://visual-regression.dev/schema/v1.json` or `schema.json` (in the repository under `src/`) and importable as `visual-regression-manifest/schema.json` or the `manifestSchema` export. The TypeScript types (`Manifest`, `ManifestEntry`, ...) mirror it. A trimmed structure example:
 
 ```jsonc
 {
@@ -149,7 +149,7 @@ The normative description is the JSON Schema (draft 2020-12) at `https://visual-
 
 A comparison has two limits, and the entry records both next to the measured `diffRatio`:
 
-- `comparison.maxDiffRatio`, the largest share of differing pixels the comparison accepts, from 0 to 1. This is the image-level limit: `maxDiffPixelRatio` in Playwright, `allowedMismatchedPixelRatio` in Vitest, `failureThreshold` in jest-image-snapshot, `errorThreshold` in cypress-visual-regression, `misMatchThreshold` in BackstopJS, `changeThreshold` in Roborazzi, `maxDiffThreshold` in `@pixsame/cypress-plugin-visual-regression-diff`. Tools that take a pixel count (`maxDiffPixels`, `allowedMismatchedPixels`, `failureThreshold` with `failureThresholdType: 'pixel'`) are stored as a ratio of the image size, and when both kinds are set the stricter one is stored. A ratio is portable across viewports, a count is not.
+- `comparison.maxDiffRatio`, the largest share of differing pixels the comparison accepts, from 0 to 1. This is the image-level limit: `maxDiffPixelRatio` in Playwright, `allowedMismatchedPixelRatio` in Vitest, `failureThreshold` in jest-image-snapshot, `errorThreshold` in cypress-visual-regression, `misMatchThreshold` in BackstopJS, `changeThreshold` in Roborazzi, `maxDiffThreshold` in `@pixsame/cypress-plugin-visual-regression-diff`. Tools that take a pixel count (`maxDiffPixels`, `allowedMismatchedPixels`, `failureThreshold` with `failureThresholdType: 'pixel'`) are stored as a ratio of the image size and when both kinds are set the stricter one is stored. A ratio is portable across viewports, a count is not.
 - `comparison.colorThreshold`, the per-pixel color tolerance: how far apart two colors may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
 
 Both are optional. A missing `maxDiffRatio` means the writer does not know the limit, not that the tolerance is zero. `status` stays the outcome to trust: a ratio computed from a pixel count can disagree with the tool by a rounding error at the boundary.
@@ -158,7 +158,7 @@ Rules every writer and reader follows:
 
 - Paths are relative to `projectRoot` with `/` separators and may point outside the project (`../…`). `projectRoot` is the tested project, not necessarily the repository root: `ci.workspace` is the checkout directory.
 - `failed` and `missing-baseline` need a human. Copying `images.actual.path` over `images.baseline.path` approves them. `baselineWritten` says whether the working tree changed, whatever the status. `summary.needsHuman` counts them, so a consumer can decide without reading the entries.
-- `tool` wrote the file, `runner` ran the tests. A Cypress plugin reports itself as `tool` and Cypress as `runner`; a converter reports itself as `tool` and the tool it converted from as `runner`.
+- `tool` wrote the file, `runner` ran the tests. A Cypress plugin reports itself as `tool` and Cypress as `runner`, a converter reports itself as `tool` and the tool it converted from as `runner`.
 - `platform` is where the test ran, `renderer` is where the pixels came from. Under `native` the renderer is the test browser itself. Entries with different renderers are different baselines.
 - Browsers are optional. Desktop and mobile tools leave `platform.browser` out and describe what they captured in the entry's `target` (device, OS version, display density and orientation, locale, theme, app, driver). The run-level `platform` is the host that ran the tests, not necessarily the device. `renderer.backend` is an open string (`native`, `docker`, `cloud`, or your own, e.g. `device`); `renderer.name` names what rendered the pixels.
 - `variant` is the baseline identity you control. Entries of the same screenshot name with a different `variant` (`iphone-16-ios18-dark`) never overwrite each other when manifests are merged. Without one, identity is `platform.osPlatform` + `platform.browser.name` + renderer.
