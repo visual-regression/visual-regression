@@ -56,7 +56,7 @@ export async function clean() {
 }
 
 export async function record(ctx) {
-  const run = vitest(ctx, ['--update'], { ...notCi, E2E_VARIANT: 'a' });
+  const run = await vitest(ctx, ['--update'], { ...notCi, E2E_VARIANT: 'a' });
   if (run.status !== 0) throw new Error(`recording failed:\n${run.output}`);
 }
 
@@ -66,7 +66,7 @@ export async function perturb() {
 
 export async function compare(mode, ctx) {
   // exits 1: box-b fails by design, box-c too
-  vitest(ctx, [], {
+  await vitest(ctx, [], {
     ...(mode === 'ci' ? { CI: 'true' } : notCi),
     E2E_VARIANT: 'b',
   });
