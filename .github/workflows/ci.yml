@@ -271,8 +271,9 @@ jobs:
       - id: versions
         run: |
           toml=examples/converters/roborazzi/gradle/libs.versions.toml
-          echo "gradle=$(grep -E '^gradle = ' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
-          echo "robolectric=$(grep -E '^robolectric = ' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+          # only the [versions] entries have a quoted value on the line; [libraries] repeat the names
+          echo "gradle=$(grep -m1 -E '^gradle = "' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+          echo "robolectric=$(grep -m1 -E '^robolectric = "' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
