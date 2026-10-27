@@ -23,7 +23,9 @@ Ready = the run prints `$ ...` command lines followed by `ok`/`FAIL` lines. Noth
 ## Doctor
 
 - `ls packages/visual-regression-manifest/dist/index.mjs packages/visual-regression-viewer/dist/cli.js`: both must be newer than the sources you changed; a stale `dist` tests the old converter.
-- `pnpm --filter @visual-regression/e2e-<tool> exec playwright --version` and `ls ~/.cache/ms-playwright` (macOS: `~/Library/Caches/ms-playwright`): the headless shell for that version must be there.
+- `pnpm --filter @visual-regression/e2e-<tool> exec playwright --version` and `ls ~/.cache/ms-playwright` (macOS: `~/Library/Caches/ms-playwright`): the headless shell for that version must be there (jest-image-snapshot, playwright, vitest-browser).
+- `pnpm --filter @visual-regression/e2e-cypress exec cypress verify` for the Cypress example; `ls ~/.cache/puppeteer/chrome` for BackstopJS (install it with the `install.mjs` of the puppeteer package BackstopJS resolves, as `.github/actions/puppeteer-browser` does).
+- Roborazzi: `java -version`, `gradle --version` (or `GRADLE_BIN`) and `ANDROID_HOME`; without them run it through CI (`e2e-roborazzi`), which uploads the captured fixture as an artifact to commit.
 - `pnpm --filter @visual-regression/e2e-harness e2e tests/harness.test.ts`: the harness's own negative controls; if they fail, nothing else is trustworthy.
 
 ## Drive
@@ -39,7 +41,7 @@ E2E_CAPTURE=1 pnpm --filter @visual-regression/e2e-harness e2e tests/<tool>.test
 pnpm --filter visual-regression-manifest exec vitest run src/convert/<tool>.test.ts
 ```
 
-The capture rewrites `packages/visual-regression-manifest/__tests__/fixtures/<tool>/<mode>/` (files plus `expectations.json`); the unit test reads it. Commit it.
+The capture rewrites `packages/visual-regression-manifest/__tests__/fixtures/<tool>/<mode>/` (files plus `expectations.json`, and the tool's reports with the example folder replaced by `__PROJECT_ROOT__`); the unit test reads it through `realOutput` and `fixtureJson` of `__tests__/helpers.ts`. Commit it.
 
 ## Evidence
 

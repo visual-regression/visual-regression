@@ -54,3 +54,7 @@ examples/**/cypress/snapshots/
 examples/**/cypress/screenshots/
 examples/**/cypress/videos/
 examples/**/cypress/image-snapshot/
+examples/**/backstop_data/
+examples/converters/roborazzi/**/build/
+examples/converters/roborazzi/.gradle/
+examples/converters/roborazzi/.kotlin/

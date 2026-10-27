@@ -27,6 +27,8 @@ jobs:
       e2e-playwright: ${{ steps.e2e.outputs.playwright }}
       e2e-vitest-browser: ${{ steps.e2e.outputs.vitest-browser }}
       e2e-cypress: ${{ steps.e2e.outputs.cypress }}
+      e2e-backstopjs: ${{ steps.e2e.outputs.backstopjs }}
+      e2e-roborazzi: ${{ steps.e2e.outputs.roborazzi }}
     steps:
       # On push the filter diffs commits locally; on pull_request it uses the API.
       - uses: actions/checkout@v7
@@ -69,6 +71,12 @@ jobs:
             cypress:
               - *harness
               - 'examples/converters/cypress/**'
+            backstopjs:
+              - *harness
+              - 'examples/converters/backstopjs/**'
+            roborazzi:
+              - *harness
+              - 'examples/converters/roborazzi/**'
 
   lint:
     name: lint
@@ -217,6 +225,87 @@ jobs:
             examples/converters/cypress/cypress/image-snapshot
             examples/converters/cypress/cypress/e2e/pixsame/__image_snapshots__
             examples/converters/cypress/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
+
+  e2e-backstopjs:
+    name: e2e-backstopjs
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-backstopjs == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-backstopjs...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - uses: ./.github/actions/puppeteer-browser
+        with:
+          package: '@visual-regression/e2e-backstopjs'
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/backstopjs.test.ts
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-backstopjs
+          path: |
+            examples/converters/backstopjs/backstop_data
+            examples/converters/backstopjs/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
+
+  # The only example that is not a JavaScript tool: a Gradle module with a Robolectric
+  # test. Gradle itself and the dependencies come from setup-gradle's caches (keyed by
+  # the build files), Robolectric's android-all jars from a cache keyed by its version.
+  e2e-roborazzi:
+    name: e2e-roborazzi
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-roborazzi == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-roborazzi...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - id: versions
+        run: |
+          toml=examples/converters/roborazzi/gradle/libs.versions.toml
+          echo "gradle=$(grep -E '^gradle = ' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+          echo "robolectric=$(grep -E '^robolectric = ' "$toml" | cut -d'"' -f2)" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ steps.versions.outputs.gradle }}
+          cache-read-only: false
+      - name: Cache Robolectric's android-all jars 🤖 (keyed by the Robolectric version, no fallback)
+        uses: actions/cache@v6
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ runner.os }}-${{ steps.versions.outputs.robolectric }}
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/roborazzi.test.ts
+        env:
+          GRADLE_BIN: gradle
+          E2E_CAPTURE: '1'
+      # the fixture of fromRoborazziResults' unit test is captured here, not on a laptop
+      - uses: actions/upload-artifact@v6
+        if: ${{ always() }}
+        with:
+          name: roborazzi-fixtures
+          path: packages/visual-regression-manifest/__tests__/fixtures/roborazzi
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-roborazzi
+          path: |
+            examples/converters/roborazzi/lib/build/outputs/roborazzi
+            examples/converters/roborazzi/lib/build/test-results
+            examples/converters/roborazzi/lib/build/reports
+            examples/converters/roborazzi/visual-regression-manifest.*.json
             examples/converters/harness/test-results
 
   prepare-release:

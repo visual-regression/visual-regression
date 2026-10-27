@@ -1,0 +1,71 @@
+{
+  "testSuite": "BackstopJS",
+  "tests": [
+    {
+      "pair": {
+        "reference": "../bitmaps_reference/e2e_box-a_0_box-a_0_phone.png",
+        "test": "../bitmaps_test/20261027-182011/e2e_box-a_0_box-a_0_phone.png",
+        "selector": "#box-a",
+        "fileName": "e2e_box-a_0_box-a_0_phone.png",
+        "label": "box-a",
+        "requireSameDimensions": true,
+        "misMatchThreshold": 0,
+        "url": "http://127.0.0.1:49831/pages/box.html?variant=b",
+        "expect": 0,
+        "viewportLabel": "phone",
+        "diff": {
+          "isSameDimensions": true,
+          "dimensionDifference": {
+            "width": 0,
+            "height": 0
+          },
+          "misMatchPercentage": "0.00"
+        }
+      },
+      "status": "pass"
+    },
+    {
+      "pair": {
+        "reference": "../bitmaps_reference/e2e_box-b_0_box-b_0_phone.png",
+        "test": "../bitmaps_test/20261027-182011/e2e_box-b_0_box-b_0_phone.png",
+        "selector": "#box-b",
+        "fileName": "e2e_box-b_0_box-b_0_phone.png",
+        "label": "box-b",
+        "requireSameDimensions": true,
+        "misMatchThreshold": 0,
+        "url": "http://127.0.0.1:49831/pages/box.html?variant=b",
+        "expect": 0,
+        "viewportLabel": "phone",
+        "diff": {
+          "isSameDimensions": true,
+          "dimensionDifference": {
+            "width": 0,
+            "height": 0
+          },
+          "rawMisMatchPercentage": 100,
+          "misMatchPercentage": "100.00",
+          "analysisTime": 3
+        },
+        "diffImage": "../bitmaps_test/20261027-182011/failed_diff_e2e_box-b_0_box-b_0_phone.png"
+      },
+      "status": "fail"
+    },
+    {
+      "pair": {
+        "reference": "../bitmaps_reference/e2e_box-c_0_box-c_0_phone.png",
+        "test": "../bitmaps_test/20261027-182011/e2e_box-c_0_box-c_0_phone.png",
+        "selector": "#box-c",
+        "fileName": "e2e_box-c_0_box-c_0_phone.png",
+        "label": "box-c",
+        "requireSameDimensions": true,
+        "misMatchThreshold": 0,
+        "url": "http://127.0.0.1:49831/pages/box.html?variant=b",
+        "expect": 0,
+        "viewportLabel": "phone",
+        "error": "Reference file not found /Users/jakubfreisler/Projects/Web/visual-regression/examples/converters/backstopjs/backstop_data/bitmaps_reference/e2e_box-c_0_box-c_0_phone.png"
+      },
+      "status": "fail"
+    }
+  ],
+  "id": "e2e"
+}

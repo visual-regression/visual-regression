@@ -161,7 +161,7 @@ export const reportDir = (label: string) =>
  * it copies the images, and a converter that scans the project would find them.
  * Returns the report folder.
  */
-export const viewerReport = (
+export const viewerReport = async (
   manifest: Manifest,
   projectRoot: string,
   label: string,
@@ -173,7 +173,7 @@ export const viewerReport = (
   writeManifestFile(file, manifest);
   const out = reportDir(label);
   fs.rmSync(out, { recursive: true, force: true });
-  sh(
+  await sh(
     'node_modules/.bin/visual-regression-viewer',
     [file, '--no-serve', '-o', out],
     { cwd: harnessDir },

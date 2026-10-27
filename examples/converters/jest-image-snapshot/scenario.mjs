@@ -54,7 +54,7 @@ export async function clean() {
 }
 
 export async function record(ctx) {
-  const run = jest(ctx, ['-u'], 'a');
+  const run = await jest(ctx, ['-u'], 'a');
   if (run.status !== 0) throw new Error(`recording failed:\n${run.output}`);
 }
 
@@ -64,7 +64,7 @@ export async function perturb() {
 
 export async function compare(mode, ctx) {
   // exits 1: box-b fails by design
-  jest(ctx, [mode === 'ci' ? '--ci' : '--ci=false'], 'b');
+  await jest(ctx, [mode === 'ci' ? '--ci' : '--ci=false'], 'b');
 }
 
 export function convert() {
