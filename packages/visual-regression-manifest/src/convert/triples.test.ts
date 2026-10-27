@@ -1,6 +1,13 @@
+import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { tmpDir, writePng } from '../../__tests__/helpers';
+import {
+  expectRealOutput,
+  must,
+  realOutput,
+  tmpDir,
+  writePng,
+} from '../../__tests__/helpers';
 import { isManifest } from '../reader';
 import { fromImageTriples, inferStatus } from './triples';
 
@@ -128,5 +135,59 @@ describe('fromImageTriples', () => {
       status: 'created',
       images: { actual: { path: null }, diff: { path: null } },
     });
+  });
+});
+
+// captured by examples/converters/cypress: pixsame (@pixsame/cypress-plugin-visual-regression-diff
+// 1.0 on Cypress 16) leaves `<title>_#0.png` baselines with `.actual` and `.diff` siblings
+describe.each(
+  realOutput('cypress').filter(({ mode }) => mode.startsWith('pixsame')),
+)('real output of pixsame, $mode', ({ mode, root, expectations }) => {
+  it('converts the triples, `#` in the names included', () => {
+    const dir = path.join(
+      root,
+      'cypress',
+      'e2e',
+      'pixsame',
+      '__image_snapshots__',
+    );
+    const stems = new Set(
+      fs
+        .readdirSync(dir)
+        .filter((file) => file.endsWith('.png'))
+        .map((file) => file.replace(/(\.actual|\.diff)?\.png$/, '')),
+    );
+    const manifest = fromImageTriples({
+      projectRoot: root,
+      ci: null,
+      runner: { name: 'cypress' },
+      triples: [...stems].map((stem) => ({
+        baseline: path.join(dir, `${stem}.png`),
+        testFile: 'cypress/e2e/pixsame/box.cy.js',
+        maxDiffRatio: 0,
+      })),
+    });
+    expectRealOutput(manifest, root, expectations);
+    const failed = must(manifest.entries.find((e) => e.name === 'box-b_#0'));
+    expect(failed).toMatchObject({
+      status: 'failed',
+      test: { filePath: 'cypress/e2e/pixsame/box.cy.js' },
+      images: {
+        baseline: {
+          path: 'cypress/e2e/pixsame/__image_snapshots__/box-b_#0.png',
+        },
+        actual: {
+          path: 'cypress/e2e/pixsame/__image_snapshots__/box-b_#0.actual.png',
+        },
+        diff: {
+          path: 'cypress/e2e/pixsame/__image_snapshots__/box-b_#0.diff.png',
+        },
+      },
+    });
+    const third = must(manifest.entries.find((e) => e.name === 'box-c_#0'));
+    // with createMissingImages off only the actual exists; on, the baseline was written
+    expect(third.status).toBe(
+      mode === 'pixsame' ? 'missing-baseline' : 'passed',
+    );
   });
 });

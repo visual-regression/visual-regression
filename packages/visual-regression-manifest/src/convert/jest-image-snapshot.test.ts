@@ -52,6 +52,51 @@ describe('fromJestImageSnapshots', () => {
     },
   );
 
+  // captured by examples/converters/cypress: @simonsmith/cypress-image-snapshot 11 on
+  // Cypress 16, with requireSnapshots and without
+  describe.each(
+    realOutput('cypress').filter(({ mode }) =>
+      mode.startsWith('image-snapshot'),
+    ),
+  )(
+    'real output of cypress-image-snapshot, $mode',
+    ({ mode, root, expectations }) => {
+      it('reads the per-spec snapshot folders', () => {
+        const manifest = fromJestImageSnapshots({
+          projectRoot: root,
+          ci: null,
+          runner: { name: 'cypress' },
+          snapshotsDir: 'cypress/image-snapshot/snapshots',
+          snapshotPostfix: '.snap',
+          diffPostfix: '.diff',
+          receivedPostfix: '.received',
+          maxDiffPixels: 0,
+        });
+        expectRealOutput(manifest, root, expectations);
+        const failed = must(manifest.entries.find((e) => e.name === 'box-b'));
+        expect(failed).toMatchObject({
+          status: 'failed',
+          test: { filePath: 'image-snapshot/box.cy.js' },
+          images: {
+            baseline: {
+              path: 'cypress/image-snapshot/snapshots/image-snapshot/box.cy.js/box-b.snap.png',
+            },
+            // the fork stores no received image; the composite is what there is
+            actual: { path: null },
+            diff: {
+              path: 'cypress/image-snapshot/snapshots/image-snapshot/box.cy.js/__diff_output__/box-b.diff.png',
+            },
+          },
+        });
+        expect(manifest.entries.map((e) => e.name)).toEqual(
+          mode === 'image-snapshot'
+            ? ['box-a', 'box-b']
+            : ['box-a', 'box-b', 'box-c'],
+        );
+      });
+    },
+  );
+
   it('records no actual image when the received image was not stored', async () => {
     const root = await tmpDir();
     const snaps = path.join(root, '__image_snapshots__');
