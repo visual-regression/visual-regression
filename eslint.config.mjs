@@ -90,6 +90,11 @@ export default [
     languageOptions: { globals: { ...globals.jest } },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
+  // Vitest browser mode runs these in Chromium
+  {
+    files: ['examples/converters/vitest-browser/tests/**'],
+    languageOptions: { globals: { ...globals.browser } },
+  },
   // the viewer is a command line tool: printing is its interface
   {
     files: ['packages/visual-regression-viewer/src/{cli,main}.ts'],

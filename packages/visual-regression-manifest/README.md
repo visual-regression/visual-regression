@@ -363,7 +363,7 @@ Only comparisons that left a trace can be recovered: `failed` (expected, actual 
 
 ### Vitest's `toMatchScreenshot`
 
-Vitest (browser mode) keeps references in `__screenshots__/<test file>/` next to the tests and writes `<name>-actual.png` and `<name>-diff.png` under `.vitest/attachments/<test file>/` for failed comparisons. The converter scans the project for both:
+Vitest (browser mode) keeps references in `__screenshots__/<test file>/` next to the tests and writes `<name>-actual-<browser>-<platform>.png` and `<name>-diff-...png` under `.vitest/attachments/<test file dir>/<test file>/` at the project root for failed comparisons. The converter scans the project for both:
 
 ```ts
 import { fromVitestScreenshots } from 'visual-regression-manifest';
@@ -376,7 +376,7 @@ const manifest = fromVitestScreenshots({
 });
 ```
 
-A reference without attachments passed, attachments without a reference are `missing-baseline`, and the browser and platform are read off the file name (`button-chromium-darwin`).
+A reference without attachments passed, attachments without a reference are `missing-baseline` (on CI Vitest writes no reference but a `<name>-reference-...png` attachment; elsewhere it writes the reference, and the files look like a passed comparison), and the browser and platform are read off the file name (`button-chromium-darwin`).
 
 ### jest-image-snapshot and cypress-image-snapshot
 
