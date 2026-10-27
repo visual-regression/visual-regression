@@ -90,6 +90,18 @@ export default [
     languageOptions: { globals: { ...globals.jest } },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
+  // Cypress specs and support files run inside the Cypress browser
+  {
+    files: ['examples/converters/cypress/cypress/**'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.mocha,
+        cy: 'readonly',
+        Cypress: 'readonly',
+      },
+    },
+  },
   // Vitest browser mode runs these in Chromium
   {
     files: ['examples/converters/vitest-browser/tests/**'],

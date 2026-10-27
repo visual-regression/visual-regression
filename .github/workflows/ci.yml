@@ -26,6 +26,7 @@ jobs:
       e2e-jest-image-snapshot: ${{ steps.e2e.outputs.jest-image-snapshot }}
       e2e-playwright: ${{ steps.e2e.outputs.playwright }}
       e2e-vitest-browser: ${{ steps.e2e.outputs.vitest-browser }}
+      e2e-cypress: ${{ steps.e2e.outputs.cypress }}
     steps:
       # On push the filter diffs commits locally; on pull_request it uses the API.
       - uses: actions/checkout@v7
@@ -65,6 +66,9 @@ jobs:
             vitest-browser:
               - *harness
               - 'examples/converters/vitest-browser/**'
+            cypress:
+              - *harness
+              - 'examples/converters/cypress/**'
 
   lint:
     name: lint
@@ -177,6 +181,42 @@ jobs:
             examples/converters/vitest-browser/tests/__screenshots__
             examples/converters/vitest-browser/.vitest
             examples/converters/vitest-browser/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
+
+  e2e-cypress:
+    name: e2e-cypress
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-cypress == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-cypress...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - id: cypress-version
+        run: echo "version=$(pnpm --filter @visual-regression/e2e-cypress exec cypress --version --component package)" >> "$GITHUB_OUTPUT"
+      - name: Cache the Cypress binary 🌲 (keyed by the exact Cypress version, no fallback)
+        id: cypress-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ steps.cypress-version.outputs.version }}
+      - if: ${{ steps.cypress-cache.outputs.cache-hit != 'true' }}
+        run: pnpm --filter @visual-regression/e2e-cypress exec cypress install
+      - run: pnpm --filter @visual-regression/e2e-cypress exec cypress verify
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/cypress.test.ts
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-cypress
+          path: |
+            examples/converters/cypress/cypress/snapshots
+            examples/converters/cypress/cypress/image-snapshot
+            examples/converters/cypress/cypress/e2e/pixsame/__image_snapshots__
+            examples/converters/cypress/visual-regression-manifest.*.json
             examples/converters/harness/test-results
 
   prepare-release:
