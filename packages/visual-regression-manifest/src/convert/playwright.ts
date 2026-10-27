@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { ManifestBuilder } from '../builder';
+import { ManifestBuilder, actualSiblingOf } from '../builder';
 import type { EnvLike } from '../ci';
 import { entryLimits, type ComparisonLimitOptions } from '../limits';
 import { readPngSize } from '../png';
@@ -105,6 +105,11 @@ type ImageGroup = Partial<Record<AttachmentKind, string>> & {
 
 const DIFF_RATIO_REGEX =
   /(\d+) pixels \(ratio ([\d.]+) of all image pixels\) are different/;
+/** The error of a comparison without a baseline; with `, writing actual` when the baseline was written. */
+const MISSING_SNAPSHOT_REGEX =
+  /A snapshot doesn't exist at (.+?)(, writing actual)?\.(?:\n|$)/g;
+// eslint-disable-next-line no-control-regex
+const ANSI_REGEX = /\x1b\[[0-9;]*m/g;
 
 // mirrors Playwright's `sanitizeForFilePath`: everything but alphanumerics, `_` and `.` becomes `-`
 const sanitizeForFilePath = (s: string) =>
@@ -146,7 +151,7 @@ const resolveSnapshotPath = (
   const relativeTestFile = path.posix.relative(tokens.testDir, tokens.testFile);
   const parsed = path.posix.parse(relativeTestFile);
   const projectSegment = sanitizeForFilePath(tokens.projectName);
-  return template
+  const resolved = template
     .replace(/\{(.)?testDir\}/g, `$1${tokens.testDir}`)
     .replace(/\{(.)?snapshotDir\}/g, `$1${tokens.snapshotDir}`)
     .replace(/\{(.)?snapshotSuffix\}/g, (_, sep = '') =>
@@ -164,14 +169,20 @@ const resolveSnapshotPath = (
     .replace(/\{(.)?ext\}/g, (_, sep = '') =>
       tokens.ext ? `${sep}${tokens.ext}` : '',
     );
+  // an empty `{testFileDir}` leaves a double slash behind
+  return path.posix.normalize(resolved);
 };
 
-const errorMessages = (result: PlaywrightResult) =>
-  [...(result.errors ?? []), ...(result.error ? [result.error] : [])]
-    .map((e) => e.message ?? '')
-    .filter(Boolean);
+// the JSON reporter lists the first error under `error` and all of them under `errors`
+const errorMessages = (result: PlaywrightResult) => [
+  ...new Set(
+    [...(result.errors ?? []), ...(result.error ? [result.error] : [])]
+      .map((e) => (e.message ?? '').replace(ANSI_REGEX, ''))
+      .filter(Boolean),
+  ),
+];
 
-/** The error message about one snapshot: the one naming its actual or baseline file, else the only one there is. */
+/** The error message about one snapshot: the one naming it (`Snapshot: home.png`, or its actual or baseline file), else the only one there is. */
 const messageFor = (
   messages: string[],
   group: ImageGroup,
@@ -180,13 +191,21 @@ const messageFor = (
   const names = [group.actual, baselinePath]
     .filter((p): p is string => !!p)
     .map((p) => path.posix.basename(p));
-  const own = messages.find((m) => names.some((name) => m.includes(name)));
+  const own = messages.find(
+    (m) =>
+      m.includes(`Snapshot: ${group.arg}${group.ext}`) ||
+      names.some((name) => m.includes(name)),
+  );
   return own ?? (messages.length === 1 ? messages[0] : undefined) ?? '';
 };
 
+/**
+ * A freshly written baseline is attached as `-expected` too, so the message
+ * decides first: `, writing actual` means the baseline did not exist.
+ */
 const statusOf = (group: ImageGroup, message: string): ManifestStatus => {
-  if (group.expected) return 'failed';
-  return /writing actual/i.test(message) ? 'created' : 'missing-baseline';
+  if (/writing actual/i.test(message)) return 'created';
+  return group.expected ? 'failed' : 'missing-baseline';
 };
 
 /**
@@ -247,9 +266,15 @@ export const fromPlaywrightReport = (
       const result = test.results?.at(-1);
       if (!result) continue;
       const messages = errorMessages(result);
+      const browser =
+        opts.browsers?.[projectName] ??
+        (projectName ? { name: projectName } : undefined);
+      // baselines the attachments account for: by the configured template and,
+      // in case the template is not the one the run used, by the default naming
+      const recorded = new Set<string>();
       for (const group of groupAttachments(result.attachments ?? [])) {
         if (!group.actual) continue;
-        const baselinePath = resolveSnapshotPath(template, {
+        const tokens = {
           testDir,
           snapshotDir,
           snapshotSuffix,
@@ -258,12 +283,16 @@ export const fromPlaywrightReport = (
           testName: sanitizeForFilePath(titlePath.join(' ')),
           arg: group.arg,
           ext: group.ext,
-        });
+        };
+        const baselinePath = resolveSnapshotPath(template, tokens);
         const message = messageFor(messages, group, baselinePath);
         const status = statusOf(group, message);
-        const browser =
-          opts.browsers?.[projectName] ??
-          (projectName ? { name: projectName } : undefined);
+        recorded.add(baselinePath);
+        recorded.add(
+          path.posix.basename(
+            resolveSnapshotPath(DEFAULT_SNAPSHOT_PATH_TEMPLATE, tokens),
+          ),
+        );
         const ratio = message.match(DIFF_RATIO_REGEX);
         const baselineSize = fs.existsSync(baselinePath)
           ? readPngSize(baselinePath)
@@ -297,6 +326,44 @@ export const fromPlaywrightReport = (
           platform: browser && { osPlatform: snapshotSuffix, browser },
           recordedAt: result.startTime,
         });
+      }
+      // with `updateSnapshots: 'none'` a missing baseline attaches nothing: only
+      // the error names the file that should have been there
+      for (const message of messages) {
+        for (const match of message.matchAll(MISSING_SNAPSHOT_REGEX)) {
+          const baselinePath = path.posix.normalize(posix(match[1]));
+          if (
+            match[2] ||
+            recorded.has(baselinePath) ||
+            recorded.has(path.posix.basename(baselinePath))
+          )
+            continue;
+          recorded.add(baselinePath);
+          const ext = path.posix.extname(baselinePath);
+          builder.record({
+            actualPath: actualSiblingOf(baselinePath), // never written: recorded as `null`
+            baselinePath,
+            diffPath: null,
+            name: path.posix.basename(baselinePath, ext),
+            testFile: testFileAbs,
+            titlePath,
+            retry: result.retry ?? 0,
+            status: 'missing-baseline',
+            diffRatio: 0,
+            ...entryLimits(
+              {
+                maxDiffRatio: opts.maxDiffRatio,
+                maxDiffPixels: opts.maxDiffPixels,
+                colorThreshold: opts.colorThreshold,
+                colorMetric: opts.colorMetric ?? 'yiq',
+              },
+              undefined,
+            ),
+            message: message.split('\n')[0]?.trim() ?? '',
+            platform: browser && { osPlatform: snapshotSuffix, browser },
+            recordedAt: result.startTime,
+          });
+        }
       }
     }
   };
