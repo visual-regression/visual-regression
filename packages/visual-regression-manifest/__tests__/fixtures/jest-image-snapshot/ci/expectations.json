@@ -1,0 +1,11 @@
+{
+  "statuses": {
+    "box-a": "passed",
+    "box-b": "failed",
+    "default-names-test-js-box-a-with-the-default-identifier-1": "passed"
+  },
+  "absent": [
+    "box-c"
+  ],
+  "reportsDiffRatio": false
+}

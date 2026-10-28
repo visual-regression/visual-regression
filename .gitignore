@@ -40,3 +40,10 @@ coverage
 
 # Wrangler
 .wrangler/
+
+# examples/converters: what the real tools write when the harness runs them
+examples/**/test-results/
+examples/**/__image_snapshots__/
+examples/**/__received_output__/
+examples/**/__diff_output__/
+examples/**/visual-regression-manifest*.json

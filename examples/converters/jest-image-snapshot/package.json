@@ -1,0 +1,11 @@
+{
+  "name": "@visual-regression/e2e-jest-image-snapshot",
+  "private": true,
+  "description": "jest-image-snapshot for real: Jest compares element screenshots taken with the Playwright library, fromJestImageSnapshots converts what it leaves behind.",
+  "devDependencies": {
+    "jest": "30.5.2",
+    "jest-image-snapshot": "6.5.2",
+    "playwright": "1.64.1",
+    "visual-regression-manifest": "workspace:*"
+  }
+}

@@ -12,8 +12,9 @@ on:
       - main
 
 env:
-  # The package jobs never need the site or its Nuxt toolchain (billed minutes).
-  PACKAGES_INSTALL_FILTER: --filter '!./apps/**'
+  # The package jobs never need the site or its Nuxt toolchain, nor the converter
+  # examples and the tools they pin (billed minutes, browser downloads).
+  PACKAGES_INSTALL_FILTER: --filter '!./apps/**' --filter '!./examples/**'
 
 jobs:
   changes:
@@ -22,6 +23,7 @@ jobs:
     timeout-minutes: 2
     outputs:
       packages: ${{ steps.filter.outputs.packages }}
+      e2e-jest-image-snapshot: ${{ steps.e2e.outputs.jest-image-snapshot }}
     steps:
       # On push the filter diffs commits locally; on pull_request it uses the API.
       - uses: actions/checkout@v7
@@ -35,6 +37,26 @@ jobs:
               - '**'
               - '!apps/**'
               - '!.github/workflows/site.yml'
+      # One output per converter example (examples/converters/<tool>): its job runs the
+      # real tool, so only changes to the sources of the two packages it exercises
+      # (the manifest package converts, the viewer renders), its example, the harness
+      # or this workflow trigger it. The lockfile is left out on purpose: a
+      # lockfile-only bump would run every tool.
+      - uses: dorny/paths-filter@v3
+        id: e2e
+        with:
+          filters: |
+            harness: &harness
+              - 'examples/converters/harness/**'
+              - 'packages/visual-regression-manifest/src/**'
+              - '!packages/visual-regression-manifest/src/**/*.test.ts'
+              - 'packages/visual-regression-viewer/src/**'
+              - '!packages/visual-regression-viewer/src/**/*.test.ts'
+              - '.github/actions/**'
+              - '.github/workflows/ci.yml'
+            jest-image-snapshot:
+              - *harness
+              - 'examples/converters/jest-image-snapshot/**'
 
   lint:
     name: lint
@@ -65,6 +87,35 @@ jobs:
       - run: pnpm build
       - name: Test integration (with coverage)
         run: pnpm test:integration:ci
+
+  # Converter end-to-end checks: the example runs the real tool in a browser, the
+  # converter turns its output into a manifest, the harness checks it against the
+  # files on disk (see examples/converters/README.md). Skipped jobs count as passing.
+  e2e-jest-image-snapshot:
+    name: e2e-jest-image-snapshot
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-jest-image-snapshot == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-jest-image-snapshot...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          package: '@visual-regression/e2e-jest-image-snapshot'
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/jest-image-snapshot.test.ts
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-jest-image-snapshot
+          path: |
+            examples/converters/jest-image-snapshot/tests/__image_snapshots__
+            examples/converters/jest-image-snapshot/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
 
   prepare-release:
     name: detect changes, bump package versions, generate changelog and commit it to main branch
