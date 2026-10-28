@@ -79,6 +79,73 @@ describe('fromJestImageSnapshots', () => {
     });
   });
 
+  it('reports a diff whose baseline is gone as missing-baseline', async () => {
+    const root = await tmpDir();
+    const snaps = path.join(root, 'src', '__image_snapshots__');
+    // the baseline was deleted to re-record, `jest --ci` wrote nothing, and the
+    // diff of the earlier failure is still there
+    writePng(path.join(snaps, 'about-1-snap.png'), 2, 2, 2);
+    writePng(
+      path.join(snaps, '__diff_output__', 'brand-new-diff.png'),
+      3,
+      3,
+      3,
+    );
+
+    const manifest = fromJestImageSnapshots({ projectRoot: root, ci: null });
+    expect(manifest.entries.map((e) => [e.name, e.status])).toEqual([
+      ['about-1', 'passed'],
+      ['brand-new', 'missing-baseline'],
+    ]);
+    expect(manifest.entries[1].images).toMatchObject({
+      baseline: { path: 'src/__image_snapshots__/brand-new-snap.png' },
+      actual: { path: null },
+      diff: {
+        path: 'src/__image_snapshots__/__diff_output__/brand-new-diff.png',
+      },
+    });
+    expect(manifest.entries[1].images.baseline.width).toBeUndefined();
+  });
+
+  it('keeps a default identifier apart from a custom one of the same bare name', async () => {
+    const root = await tmpDir();
+    const snaps = path.join(root, '__image_snapshots__');
+    writePng(path.join(snaps, 'home-1.png'), 4, 4, 1);
+    writePng(path.join(snaps, 'home-1-snap.png'), 4, 4, 2);
+    writePng(
+      path.join(snaps, '__diff_output__', 'home-1-snap-diff.png'),
+      12,
+      4,
+      3,
+    );
+    writePng(
+      path.join(snaps, '__received_output__', 'home-1-snap-received.png'),
+      4,
+      4,
+      3,
+    );
+
+    const manifest = fromJestImageSnapshots({ projectRoot: root, ci: null });
+    expect(
+      manifest.entries.map((e) => [
+        e.name,
+        e.status,
+        e.images.baseline.path,
+        e.images.actual.path,
+        e.images.diff.path,
+      ]),
+    ).toEqual([
+      ['home-1', 'passed', '__image_snapshots__/home-1.png', null, null],
+      [
+        'home-1-snap',
+        'failed',
+        '__image_snapshots__/home-1-snap.png',
+        '__image_snapshots__/__received_output__/home-1-snap-received.png',
+        '__image_snapshots__/__diff_output__/home-1-snap-diff.png',
+      ],
+    ]);
+  });
+
   it('honors custom folder names and postfixes', async () => {
     const root = await tmpDir();
     const snaps = path.join(root, 'cypress', 'snapshots');

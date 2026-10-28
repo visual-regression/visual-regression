@@ -5,6 +5,7 @@ import type { Manifest } from 'visual-regression-manifest';
 import {
   checkManifest,
   printChecks,
+  reportDir,
   viewerReport,
   type Expectation,
 } from './assert-manifest.js';
@@ -21,7 +22,7 @@ export type Scenario = {
   expectations: Record<string, Expectation>;
   nameOf?: (base: string) => string;
   reportsDiffRatio?: boolean;
-  /** Removes everything a previous run left behind. */
+  /** Removes everything the tool wrote in a previous run (the harness removes what it wrote itself). */
   clean(ctx: Ctx): Promise<void>;
   /** Runs the tool in record mode: box-a, box-b and box-c get baselines. */
   record(ctx: Ctx): Promise<void>;
@@ -40,11 +41,27 @@ export const fixturesDir = path.resolve(
   '../../../../packages/visual-regression-manifest/__tests__/fixtures',
 );
 
+/**
+ * Removes what the harness itself left in a previous run: the manifests
+ * `viewerReport` writes into the example and the review pages under `test-results`.
+ */
+export const cleanHarnessOutput = ({ name, projectRoot, modes }: Scenario) => {
+  for (const file of fs.readdirSync(projectRoot)) {
+    if (/^visual-regression-manifest\..*\.json$/.test(file)) {
+      fs.rmSync(path.join(projectRoot, file));
+    }
+  }
+  for (const mode of modes) {
+    fs.rmSync(reportDir(`${name}-${mode}`), { recursive: true, force: true });
+  }
+};
+
 export const runScenario = (scenario: Scenario) => {
   const ctx: Ctx = { sh };
   const nameOf = scenario.nameOf ?? ((base) => base);
   describe(scenario.name, () => {
     beforeAll(async () => {
+      cleanHarnessOutput(scenario);
       await scenario.clean(ctx);
       await scenario.record(ctx);
       await scenario.perturb(ctx);

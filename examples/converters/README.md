@@ -6,7 +6,7 @@ One project per tool whose output `visual-regression-manifest` converts. Each ru
 
 `harness/` drives every example through the same steps, defined in the example's `scenario.mjs`:
 
-1. `clean` removes everything a previous run left behind.
+1. `clean` removes everything the tool wrote in a previous run (the harness first removes its own manifests and review pages).
 2. `record` runs the tool in record mode: `box-a`, `box-b` and `box-c` get baselines.
 3. `perturb` deletes the baseline of `box-c`.
 4. `compare`, once per mode the tool has (CI mode, update mode, ...), runs the tool with `box-b` recolored. `box-a` passes, `box-b` fails, `box-c` is the missing or created baseline.
@@ -23,6 +23,8 @@ pnpm --filter @visual-regression/e2e-jest-image-snapshot exec playwright install
 pnpm --filter @visual-regression/e2e-harness e2e tests/jest-image-snapshot.test.ts
 ```
 
+`pnpm --filter @visual-regression/e2e-harness typecheck` checks the harness and every `scenario.mjs` against the `Scenario` type (`harness/src/scenario.ts`); it needs the two packages built.
+
 `--reporter=verbose` shows the `ok`/`FAIL` line of every check. `E2E_CAPTURE=1` also copies the tool's output into `packages/visual-regression-manifest/__tests__/fixtures/<tool>/<mode>/`, the fixtures of the converter's unit tests; commit them when the tool's output changed.
 
 `pnpm --filter @visual-regression/e2e-harness e2e tests/harness.test.ts` runs the harness's own checks (they make sure a check can fail).
@@ -35,4 +37,4 @@ pnpm --filter @visual-regression/e2e-harness e2e tests/jest-image-snapshot.test.
 
 ## Adding a tool
 
-Copy the closest example, pin the tool's version exactly (Renovate bumps it, and the bump runs exactly this example's CI job), export the same functions from `scenario.mjs`, add `harness/tests/<tool>.test.ts` and an `e2e-<tool>` job plus path filter in `.github/workflows/ci.yml`. Keep the tool's postinstall download out of `pnpm install` (`allowBuilds` in `pnpm-workspace.yaml`) and fetch it in the job behind a cache keyed by the exact version.
+Copy the closest example, pin the tool's version exactly (Renovate bumps it, and the bump runs exactly this example's CI job), export the same functions from `scenario.mjs` (the `typecheck` script must stay clean), add `harness/tests/<tool>.test.ts` and an `e2e-<tool>` job plus path filter in `.github/workflows/ci.yml`. Keep the tool's postinstall download out of `pnpm install` (`allowBuilds` in `pnpm-workspace.yaml`) and fetch it in the job behind a cache keyed by the exact version.

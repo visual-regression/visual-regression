@@ -38,23 +38,25 @@ jobs:
               - '!apps/**'
               - '!.github/workflows/site.yml'
       # One output per converter example (examples/converters/<tool>): its job runs the
-      # real tool, so only changes to that converter, its example, the harness or this
-      # workflow trigger it. The lockfile is left out on purpose: a lockfile-only bump
-      # would run every tool.
+      # real tool, so only changes to the sources of the two packages it exercises
+      # (the manifest package converts, the viewer renders), its example, the harness
+      # or this workflow trigger it. The lockfile is left out on purpose: a
+      # lockfile-only bump would run every tool.
       - uses: dorny/paths-filter@v3
         id: e2e
         with:
           filters: |
             harness: &harness
               - 'examples/converters/harness/**'
-              - 'packages/visual-regression-manifest/src/builder.ts'
-              - 'packages/visual-regression-manifest/src/convert/walk.ts'
+              - 'packages/visual-regression-manifest/src/**'
+              - '!packages/visual-regression-manifest/src/**/*.test.ts'
+              - 'packages/visual-regression-viewer/src/**'
+              - '!packages/visual-regression-viewer/src/**/*.test.ts'
               - '.github/actions/**'
               - '.github/workflows/ci.yml'
             jest-image-snapshot:
               - *harness
               - 'examples/converters/jest-image-snapshot/**'
-              - 'packages/visual-regression-manifest/src/convert/jest-image-snapshot.ts'
 
   lint:
     name: lint
@@ -104,6 +106,7 @@ jobs:
       - uses: ./.github/actions/playwright-browsers
         with:
           package: '@visual-regression/e2e-jest-image-snapshot'
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
       - run: pnpm --filter @visual-regression/e2e-harness e2e tests/jest-image-snapshot.test.ts
       - uses: actions/upload-artifact@v6
         if: ${{ failure() }}

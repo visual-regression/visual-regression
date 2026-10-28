@@ -20,6 +20,7 @@ const snapshots = path.join(projectRoot, 'tests', '__image_snapshots__');
 export const modes = ['ci', 'local'];
 const defaultNamed =
   'default-names-test-js-box-a-with-the-default-identifier-1';
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   ci: {
     statuses: {
@@ -50,10 +51,6 @@ const jest = (ctx, args, variant) =>
 
 export async function clean() {
   fs.rmSync(snapshots, { recursive: true, force: true });
-  fs.rmSync(path.join(projectRoot, 'test-results'), {
-    recursive: true,
-    force: true,
-  });
 }
 
 export async function record(ctx) {

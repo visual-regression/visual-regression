@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Drives the example projects next to it: runs the real tool, converts what it wrote and checks the manifest.",
   "scripts": {
-    "e2e": "vitest run"
+    "e2e": "vitest run",
+    "typecheck": "tsc -p ."
   },
   "devDependencies": {
     "@types/node": "22.20.5",

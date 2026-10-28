@@ -3,9 +3,9 @@ import path from 'path';
 import { deflateSync } from 'zlib';
 import { dir, setGracefulCleanup } from 'tmp-promise';
 import { expect } from 'vitest';
+// the harness imports the package by name; vitest.config.mts aliases that to src/
+import { checkManifest } from '../../../examples/converters/harness/src/assert-manifest.js';
 import { MANIFEST_SPEC_VERSION } from '../src/constants';
-import { readPngSize } from '../src/png';
-import { validateManifest } from '../src/reader';
 import { summarize } from '../src/summary';
 import type { Manifest, ManifestEntry, ManifestStatus } from '../src/types';
 
@@ -173,7 +173,9 @@ export type RealOutputExpectations = {
 export const realOutput = (tool: string) => {
   const dir = path.join(__dirname, 'fixtures', tool);
   return fs
-    .readdirSync(dir)
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
     .sort()
     .map((mode) => ({
       mode,
@@ -184,44 +186,21 @@ export const realOutput = (tool: string) => {
     }));
 };
 
-/** What every converter must get right about captured output; the same checks the examples' harness runs. */
+/**
+ * What every converter must get right about captured output: the checks the
+ * examples' harness runs on the live output, applied to the fixture.
+ */
 export const expectRealOutput = (
   manifest: Manifest,
   root: string,
   { statuses, absent, reportsDiffRatio }: RealOutputExpectations,
 ) => {
-  expect(validateManifest(manifest)).toEqual([]);
-  const names = manifest.entries.map((e) => e.name);
-  expect(new Set(names).size, 'entry names are unique').toBe(names.length);
-  const byName = Object.fromEntries(
-    manifest.entries.map((e) => [e.name, e.status]),
+  const checks = checkManifest(
+    manifest,
+    { statuses, absent },
+    { projectRoot: root, reportsDiffRatio },
   );
-  expect(byName).toMatchObject(statuses);
-  for (const name of absent) expect(byName).not.toHaveProperty(name);
-  for (const entry of manifest.entries) {
-    for (const role of ['baseline', 'actual', 'diff'] as const) {
-      const image = entry.images[role];
-      if (!image.path) continue;
-      const file = path.join(root, image.path);
-      const label = `${entry.name} ${role} ${image.path}`;
-      const mustBeMissing =
-        role === 'baseline' && entry.status === 'missing-baseline';
-      expect(fs.existsSync(file), `${label} exists`).toBe(!mustBeMissing);
-      if (!mustBeMissing && image.width !== undefined) {
-        expect(readPngSize(file), `${label} size`).toEqual({
-          width: image.width,
-          height: image.height,
-        });
-      }
-    }
-    if (entry.status === 'failed' && reportsDiffRatio) {
-      expect(entry.comparison.diffRatio, entry.name).toBeGreaterThan(0);
-    }
-    if (entry.status === 'passed') {
-      expect([entry.images.actual.path, entry.images.diff.path]).toEqual([
-        null,
-        null,
-      ]);
-    }
-  }
+  expect(
+    checks.filter((c) => c.error).map((c) => `${c.name}: ${c.error}`),
+  ).toEqual([]);
 };

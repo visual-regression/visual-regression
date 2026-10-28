@@ -2,13 +2,26 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { fromImageTriples } from 'visual-regression-manifest';
 import { checkManifest } from '../src/assert-manifest.js';
 import { encodePng, pngSize } from '../src/png.js';
 
+// every temp folder a test made, removed after it
+const tmpDirs: string[] = [];
+const tmpDir = () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-harness-'));
+  tmpDirs.push(dir);
+  return dir;
+};
+afterEach(() => {
+  for (const dir of tmpDirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 const project = () => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-harness-'));
+  const root = tmpDir();
   const write = (rel: string, width: number, height: number, fill: number) => {
     const file = path.join(root, rel);
     fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -113,7 +126,7 @@ describe('checkManifest', () => {
 
 describe('pngSize', () => {
   it('reads the IHDR size and rejects other files', () => {
-    const file = path.join(os.tmpdir(), `e2e-harness-${process.pid}.png`);
+    const file = path.join(tmpDir(), 'size.png');
     fs.writeFileSync(file, encodePng(80, 120));
     expect(pngSize(file)).toEqual({ width: 80, height: 120 });
     fs.writeFileSync(file, 'not a png');

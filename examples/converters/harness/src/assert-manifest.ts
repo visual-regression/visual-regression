@@ -106,8 +106,11 @@ export const checkManifest = (
         }
         if (!fs.existsSync(file)) throw new Error('does not exist');
         const size = pngSize(file);
-        if (image.width !== undefined) equal(size.width, image.width);
-        if (image.height !== undefined) equal(size.height, image.height);
+        // the diff carries no size, the others may
+        if ('width' in image && image.width !== undefined)
+          equal(size.width, image.width);
+        if ('height' in image && image.height !== undefined)
+          equal(size.height, image.height);
       });
     }
     if (entry.status === 'failed' && reportsDiffRatio) {
@@ -143,6 +146,10 @@ export const printChecks = (checks: Check[]) => {
 
 const harnessDir = path.resolve(import.meta.dirname, '..');
 
+/** Where `viewerReport` puts the review page of a labeled run. */
+export const reportDir = (label: string) =>
+  path.join(harnessDir, 'test-results', label);
+
 /**
  * Writes the manifest next to the images (the viewer resolves paths against the
  * manifest's folder) and builds the review page from it with the viewer CLI,
@@ -160,7 +167,7 @@ export const viewerReport = (
     `visual-regression-manifest.${label}.json`,
   );
   writeManifestFile(file, manifest);
-  const out = path.join(harnessDir, 'test-results', label);
+  const out = reportDir(label);
   fs.rmSync(out, { recursive: true, force: true });
   sh(
     'node_modules/.bin/visual-regression-viewer',
