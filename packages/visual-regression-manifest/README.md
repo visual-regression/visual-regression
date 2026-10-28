@@ -150,7 +150,8 @@ Available as JSON Schema at `https://visual-regression.dev/schema/v1.json` or `s
 A comparison has two limits, and the entry records both next to the measured `diffRatio`:
 
 - `comparison.maxDiffRatio`, the largest share of differing pixels the comparison accepts, from 0 to 1. This is the image-level limit: `maxDiffPixelRatio` in Playwright, `allowedMismatchedPixelRatio` in Vitest, `failureThreshold` in jest-image-snapshot, `errorThreshold` in cypress-visual-regression, `misMatchThreshold` in BackstopJS, `changeThreshold` in Roborazzi, `maxDiffThreshold` in `@pixsame/cypress-plugin-visual-regression-diff`. Tools that take a pixel count (`maxDiffPixels`, `allowedMismatchedPixels`, `failureThreshold` with `failureThresholdType: 'pixel'`) are stored as a ratio of the image size and when both kinds are set the stricter one is stored. A ratio is portable across viewports, a count is not.
-- `comparison.colorThreshold`, the per-pixel color tolerance: how far apart two colors may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
+- `comparison.colorThreshold`, the per-pixel color tolerance: how far apart two colors may be before the pixel counts as different (pixelmatch's `threshold`, which is `diffConfig.threshold` in the pixsame plugin). It is only meaningful with `comparison.colorMetric`, which names the scale: `yiq` (pixelmatch's weighted YIQ delta, 0 to 1, the engine of Playwright, Vitest, jest-image-snapshot and the pixsame plugin), `resemble` (Resemble.js's
+  per-channel tolerance, BackstopJS) or `deltaE` (CIEDE2000, looks-same). The value is open: use your own string when none fits. A number on a different scale is not comparable, so a writer that does not know the metric leaves both out.
 
 Both are optional. A missing `maxDiffRatio` means the writer does not know the limit, not that the tolerance is zero. `status` stays the outcome to trust: a ratio computed from a pixel count can disagree with the tool by a rounding error at the boundary.
 
@@ -290,6 +291,8 @@ writer.reset(); // start of a run: forget everything, delete the file
 
 ## Converting to and from other formats
 
+Every converter below is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+
 ### CTRF
 
 [CTRF](https://ctrf.io) is the test results format a growing number of reporters write and CI integrations read (PR summaries, Slack messages, dashboards). A manifest becomes a CTRF report with one test of `type: "visual"` per entry, named after the screenshot, with the baseline, actual and diff images as attachments and everything CTRF has no field for under `extra.visualRegression`:
@@ -322,7 +325,7 @@ const same = fromCtrf(JSON.parse(fs.readFileSync('ctrf-report.json', 'utf8')));
 | `comparison`, `images`, `hashes`, `variant`, `renderer`, `target`, `subject`, `viewport`, ...                   | `test.extra.visualRegression`                                                            |
 | any other `extra` namespace                                                                                     | the same namespace on the CTRF object                                                    |
 
-`fromCtrf` reads reports made by `toCtrf` back without loss (apart from the entry order, which is re-sorted, and the summary, which is recomputed). With `{ lenient: true, projectRoot }` it also converts the visual tests of reports from other reporters, taking the three images from attachments named or tagged `baseline`/`expected`, `actual` and `diff`, and the status from `rawStatus` or from which images exist.
+`fromCtrf` reads reports made by `toCtrf` back without loss (apart from the entry order, which is re-sorted, and the summary, which is recomputed). With `{ lenient: true, projectRoot }` it also converts the visual tests of reports from other reporters, taking the three images from attachments named or tagged `baseline`/`expected`, `actual` and `diff`, and the status from `rawStatus` or from which images exist; absolute paths become relative to `projectRoot`. A test without a baseline attachment has no entry, and a baseline the run just wrote looks like a failed comparison: a plain CTRF report cannot tell them apart.
 
 ### Playwright's `toHaveScreenshot`
 
@@ -342,6 +345,7 @@ import {
 const manifest = fromPlaywrightReport(
   JSON.parse(fs.readFileSync('report.json', 'utf8')),
   {
+    projectRoot: process.cwd(), // the report's rootDir is your testDir, not the project
     maxDiffRatio: 0.01, // your maxDiffPixelRatio; or maxDiffPixels: 100, converted with each image's size
     // colorThreshold: 0.2, // your pixelmatch `threshold` (colorMetric defaults to 'yiq')
     // the report carries none of these, so they come from your config
@@ -355,11 +359,11 @@ writeManifestFile(
 );
 ```
 
-Only comparisons that left files behind can be recovered: `failed` (expected, actual and diff attachments), `missing-baseline` and `created` (actual only). A passing `toHaveScreenshot` leaves no trace in the report, and of a retried test only the last attempt counts. Baseline paths are computed from the snapshot path template because the report only lists the copies in `test-results`; the diff ratio is parsed from the assertion message.
+Only comparisons that left a trace can be recovered: `failed` (expected, actual and diff attachments), `created` (the written baseline and the actual) and `missing-baseline` (with `updateSnapshots: 'none'` nothing is attached, the entry comes from the error naming the file). A passing `toHaveScreenshot` leaves no trace in the report, and of a retried test only the last attempt counts. Baseline paths are computed from the snapshot path template because the report only lists the copies in `test-results`; the diff ratio is parsed from the assertion message.
 
 ### Vitest's `toMatchScreenshot`
 
-Vitest (browser mode) keeps references in `__screenshots__/<test file>/` next to the tests and writes `<name>-actual.png` and `<name>-diff.png` under `.vitest/attachments/<test file>/` for failed comparisons. The converter scans the project for both:
+Vitest (browser mode) keeps references in `__screenshots__/<test file>/` next to the tests and writes `<name>-actual-<browser>-<platform>.png` and `<name>-diff-...png` under `.vitest/attachments/<test file dir>/<test file>/` at the project root for failed comparisons. The converter scans the project for both:
 
 ```ts
 import { fromVitestScreenshots } from 'visual-regression-manifest';
@@ -372,11 +376,11 @@ const manifest = fromVitestScreenshots({
 });
 ```
 
-A reference without attachments passed, attachments without a reference are `missing-baseline`, and the browser and platform are read off the file name (`button-chromium-darwin`).
+A reference without attachments passed, attachments without a reference are `missing-baseline` (on CI Vitest writes no reference but a `<name>-reference-...png` attachment; elsewhere it writes the reference, and the files look like a passed comparison), and the browser and platform are read off the file name (`button-chromium-darwin`).
 
 ### jest-image-snapshot and cypress-image-snapshot
 
-Baselines are `<id>-snap.png` in `__image_snapshots__/`; failures leave `<id>-diff.png` (a baseline | diff | received composite unless `onlyDiff`) in `__image_snapshots__/__diff_output__/`, plus `<id>-received.png` when `storeReceivedOnFailure` is on:
+Baselines are `<id>.png` in `__image_snapshots__/`, where `<id>` is your `customSnapshotIdentifier` or `<test file>-<test name>-<n>-snap`; failures leave `<id>-diff.png` (a baseline | diff | received composite unless `onlyDiff`) in `__image_snapshots__/__diff_output__/`, plus `<id>-received.png` in `__image_snapshots__/__received_output__/` when `storeReceivedOnFailure` is on:
 
 ```ts
 import { fromJestImageSnapshots } from 'visual-regression-manifest';
@@ -390,11 +394,25 @@ const manifest = fromJestImageSnapshots({
 });
 ```
 
-The received image is the entry's `actual` when it exists; the diff composite is the entry's `diff` image either way.
+The received image is the entry's `actual` when it exists; the diff composite is the entry's `diff` image either way. A trailing `-snap` is dropped from the entry name.
+
+cypress-image-snapshot keeps one folder per spec file under `cypress/snapshots/` (next to Cypress's screenshots folder), with `<name>.snap.png` baselines and `__diff_output__/<name>.diff.png` diffs; point the converter at that folder:
+
+```ts
+const manifest = fromJestImageSnapshots({
+  projectRoot: process.cwd(),
+  runner: { name: 'cypress' },
+  snapshotsDir: 'cypress/snapshots',
+  snapshotPostfix: '.snap',
+  diffPostfix: '.diff',
+});
+```
+
+The spec folder becomes the entry's test file.
 
 ### cypress-visual-regression
 
-Reads the `base`, `actual` and `diff` folders (`cypress/snapshots/...` by default), nested by spec file:
+Reads the `base`, `actual` and `diff` folders (`cypress/snapshots/...` by default), nested by spec file; the actual screenshots sit below the spec prefix Cypress adds, which the converter matches to the base images:
 
 ```ts
 import { fromCypressVisualRegression } from 'visual-regression-manifest';

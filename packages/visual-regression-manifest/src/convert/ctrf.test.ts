@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 // the CTRF schema is draft-07, which Ajv's default export speaks
 import Ajv from 'ajv';
 import ctrfSchema from '../../__tests__/ctrf.schema.json';
-import { entry, manifest } from '../../__tests__/helpers';
+import {
+  entry,
+  expectRealOutput,
+  fixtureJson,
+  manifest,
+  must,
+  realOutput,
+} from '../../__tests__/helpers';
 import { validateManifest } from '../reader';
 import {
   CTRF_SPEC_VERSION,
@@ -307,6 +314,59 @@ describe('fromCtrf', () => {
       fromCtrf({ reportFormat: 'CTRF', results: { tests: [] } } as never),
     ).toThrow(/pass `projectRoot`/);
   });
+
+  // captured by examples/converters/playwright: playwright-ctrf-json-reporter's
+  // report of the same runs fromPlaywrightReport is tested with
+  describe.each(
+    realOutput('playwright').filter(({ mode }) => mode.startsWith('ctrf-')),
+  )(
+    'real output of playwright-ctrf-json-reporter, $mode',
+    ({ mode, root, expectations }) => {
+      it('converts the visual tests in lenient mode, with project-relative paths', () => {
+        const run = mode.replace(/^ctrf-/, '');
+        const report = fixtureJson<CtrfReport>(
+          root,
+          `test-results/${run}-reports/ctrf-report.json`,
+        );
+        expect(fromCtrf(report, { projectRoot: root }).entries).toEqual([]);
+        const manifest = fromCtrf(report, { projectRoot: root, lenient: true });
+        expectRealOutput(manifest, root, expectations);
+        expect(manifest.tool).toEqual({
+          name: 'playwright',
+          version: expect.any(String),
+        });
+        const failed = must(manifest.entries.find((e) => e.name === 'box-b'));
+        expect(failed).toMatchObject({
+          status: 'failed',
+          test: {
+            filePath: 'tests/box.spec.mjs',
+            titlePath: ['chromium', 'box.spec.mjs'],
+          },
+          images: {
+            baseline: {
+              path: expect.stringMatching(
+                /^tests\/box\.spec\.mjs-snapshots\/box-b-chromium-[a-z0-9]+\.png$/,
+              ),
+            },
+            actual: {
+              path: `test-results/${run}/box-box-b-chromium/box-b-actual.png`,
+            },
+            diff: {
+              path: `test-results/${run}/box-box-b-chromium/box-b-diff.png`,
+            },
+          },
+          attachments: [
+            {
+              name: 'error-context',
+              contentType: 'text/markdown',
+              path: `test-results/${run}/box-box-b-chromium/error-context.md`,
+            },
+          ],
+          message: expect.stringContaining('toHaveScreenshot(expected) failed'),
+        });
+      });
+    },
+  );
 
   it('skips tests without visual data unless lenient, then reads them from their attachments', () => {
     const report: CtrfReport = {

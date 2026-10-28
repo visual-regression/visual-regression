@@ -1,0 +1,25 @@
+name: Playwright browsers
+description: Restore the Chromium headless shell for the Playwright version a workspace package pins; download it only when that version changed.
+
+inputs:
+  package:
+    description: The workspace package whose Playwright version decides the cache key (it must depend on `playwright` or `@playwright/test`).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: echo "playwright=$(pnpm --filter ${{ inputs.package }} exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+    - name: Cache Playwright browsers 🎭 (keyed by the exact Playwright version, no fallback)
+      id: cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ steps.version.outputs.playwright }}
+    # On a hit nothing is installed, not even the OS packages: a runner image that
+    # drops a library fails the job loudly and the key gets bumped by hand.
+    - if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: pnpm --filter ${{ inputs.package }} exec playwright install chromium --only-shell --with-deps

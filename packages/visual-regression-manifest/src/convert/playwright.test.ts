@@ -1,6 +1,13 @@
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { tmpDir, writePng } from '../../__tests__/helpers';
+import {
+  expectRealOutput,
+  fixtureJson,
+  must,
+  realOutput,
+  tmpDir,
+  writePng,
+} from '../../__tests__/helpers';
 import { isManifest } from '../reader';
 import { fromPlaywrightReport, type PlaywrightJsonReport } from './playwright';
 
@@ -177,6 +184,83 @@ const report = (root: string): PlaywrightJsonReport => {
 };
 
 describe('fromPlaywrightReport', () => {
+  // captured by examples/converters/playwright: one project, element screenshots,
+  // run with updateSnapshots 'none' and with the default
+  describe.each(
+    realOutput('playwright').filter(({ mode }) => !mode.startsWith('ctrf-')),
+  )(
+    'real output of an updateSnapshots $mode run',
+    ({ mode, root, expectations }) => {
+      it('converts the JSON report', () => {
+        const { platform } = fixtureJson<{ platform: string }>(
+          root,
+          'meta.json',
+        );
+        const manifest = fromPlaywrightReport(
+          fixtureJson<PlaywrightJsonReport>(
+            root,
+            `test-results/${mode}-reports/report.json`,
+          ),
+          { projectRoot: root, platform, maxDiffPixels: 0, ci: null },
+        );
+        expectRealOutput(manifest, root, expectations);
+        expect(manifest.runner).toMatchObject({
+          name: 'playwright',
+          projects: ['chromium'],
+        });
+        const failed = must(
+          manifest.entries.find((e) => e.name === `box-b-chromium-${platform}`),
+        );
+        expect(failed).toMatchObject({
+          status: 'failed',
+          test: { filePath: 'tests/box.spec.mjs', titlePath: ['box-b'] },
+          comparison: { diffRatio: 1, maxDiffRatio: expect.any(Number) },
+          images: {
+            baseline: {
+              path: `tests/box.spec.mjs-snapshots/box-b-chromium-${platform}.png`,
+              width: 80,
+              height: 120,
+            },
+            actual: {
+              path: `test-results/${mode}/box-box-b-chromium/box-b-actual.png`,
+            },
+            diff: {
+              path: `test-results/${mode}/box-box-b-chromium/box-b-diff.png`,
+            },
+          },
+          platform: { osPlatform: platform, browser: { name: 'chromium' } },
+          message: 'Error: expect(locator).toHaveScreenshot(expected) failed',
+        });
+        const missing = must(
+          manifest.entries.find((e) => e.name === `box-c-chromium-${platform}`),
+        );
+        if (mode === 'none') {
+          // nothing attached: the entry comes from the error message alone
+          expect(missing).toMatchObject({
+            status: 'missing-baseline',
+            images: { actual: { path: null }, diff: { path: null } },
+            message: expect.stringMatching(
+              /^Error: A snapshot doesn't exist at .*box-c-chromium-[a-z0-9]+\.png\.$/,
+            ),
+          });
+        } else {
+          // the written baseline is attached as `-expected` too
+          expect(missing).toMatchObject({
+            status: 'created',
+            baselineWritten: true,
+            images: {
+              baseline: { width: 80, height: 120 },
+              actual: {
+                path: `test-results/${mode}/box-box-c-chromium/box-c-actual.png`,
+              },
+              diff: { path: null },
+            },
+          });
+        }
+      });
+    },
+  );
+
   it('converts the last attempt of every test that left images behind', async () => {
     const root = (await tmpDir()).replace(/\\/g, '/');
     const results = path.join(root, 'test-results');
@@ -345,7 +429,7 @@ describe('fromPlaywrightReport', () => {
       snapshotDir: '__screenshots__',
       snapshotPathTemplate:
         '{snapshotDir}/{platform}/{projectName}/{testFilePath}/{testName}/{arg}{ext}',
-      platform: 'darwin',
+      platform: 'linux',
       ci: null,
     });
     expect(
@@ -357,17 +441,17 @@ describe('fromPlaywrightReport', () => {
     ).toEqual([
       [
         'footer',
-        '../__screenshots__/darwin/chromium/home.spec.ts/header-renders/footer.png',
+        '../__screenshots__/linux/chromium/home.spec.ts/header-renders/footer.png',
         'home.spec.ts',
       ],
       [
         'header',
-        '../__screenshots__/darwin/chromium/home.spec.ts/header-renders/header.png',
+        '../__screenshots__/linux/chromium/home.spec.ts/header-renders/header.png',
         'home.spec.ts',
       ],
       [
         'header',
-        '../__screenshots__/darwin/webkit/home.spec.ts/header-renders/header.png',
+        '../__screenshots__/linux/webkit/home.spec.ts/header-renders/header.png',
         'home.spec.ts',
       ],
     ]);

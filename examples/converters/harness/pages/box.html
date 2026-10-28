@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>boxes</title>
+    <style>
+      /* solid rectangles only: no text, no fonts, nothing a browser renders differently between runs */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #fff;
+      }
+      body {
+        width: 320px;
+        height: 200px;
+      }
+      .box {
+        position: absolute;
+        top: 40px;
+        width: 80px;
+        height: 120px;
+      }
+      #box-a {
+        left: 20px;
+        background: #1f6feb;
+      }
+      #box-b {
+        left: 120px;
+        background: #2da44e;
+      }
+      #box-c {
+        left: 220px;
+        background: #cf222e;
+      }
+      /* ?variant=b recolors box-b: the one comparison of a run that must fail */
+      body[data-variant='b'] #box-b {
+        background: #bf8700;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box" id="box-a"></div>
+    <div class="box" id="box-b"></div>
+    <div class="box" id="box-c"></div>
+    <script>
+      const variant = new URLSearchParams(location.search).get('variant');
+      if (variant) document.body.dataset.variant = variant;
+    </script>
+  </body>
+</html>

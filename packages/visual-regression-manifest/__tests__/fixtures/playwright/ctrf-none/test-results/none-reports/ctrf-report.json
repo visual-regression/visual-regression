@@ -1,0 +1,137 @@
+{
+  "reportFormat": "CTRF",
+  "specVersion": "0.2.0",
+  "reportId": "f1452975-5aa3-48e6-bb1e-58444b0aa9d1",
+  "timestamp": "2026-10-27T16:51:09.160Z",
+  "generatedBy": "playwright-ctrf-json-reporter",
+  "results": {
+    "tool": {
+      "name": "playwright",
+      "version": "1.64.1"
+    },
+    "summary": {
+      "tests": 3,
+      "passed": 1,
+      "failed": 2,
+      "pending": 0,
+      "skipped": 0,
+      "other": 0,
+      "start": 1793119869175,
+      "stop": 1793119870848,
+      "duration": 1673,
+      "suites": 2
+    },
+    "tests": [
+      {
+        "testId": "aea8beda5bce5a47d6dc-bde9f5235400ce51223d",
+        "executionId": "d1a69bc1-3a96-44b4-8142-03df8f396ba3",
+        "attemptId": "0fd6f995-ced7-4b97-81be-5712365b4876",
+        "name": "box-a",
+        "status": "passed",
+        "duration": 145,
+        "start": 1793119869593,
+        "stop": 1793119869738,
+        "rawStatus": "passed",
+        "tags": [],
+        "type": "e2e",
+        "filePath": "__PROJECT_ROOT__/tests/box.spec.mjs",
+        "retries": 0,
+        "flaky": false,
+        "steps": [],
+        "suite": [
+          "chromium",
+          "box.spec.mjs"
+        ],
+        "attachments": [],
+        "stdout": [],
+        "stderr": []
+      },
+      {
+        "testId": "aea8beda5bce5a47d6dc-daf98066a08fe943a518",
+        "executionId": "b23d3ab9-f879-465e-a8fa-b4d97c6c9262",
+        "attemptId": "75eed8f6-5821-41cb-abd6-e77ca0e5bd24",
+        "name": "box-b",
+        "status": "failed",
+        "duration": 307,
+        "start": 1793119869841,
+        "stop": 1793119870148,
+        "message": "Error: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n",
+        "trace": "Error: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46",
+        "snippet": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |",
+        "rawStatus": "failed",
+        "tags": [],
+        "type": "e2e",
+        "filePath": "__PROJECT_ROOT__/tests/box.spec.mjs",
+        "retries": 0,
+        "flaky": false,
+        "steps": [],
+        "suite": [
+          "chromium",
+          "box.spec.mjs"
+        ],
+        "attachments": [
+          {
+            "attachmentId": "f1a2cfaa-9c99-4284-9f80-91cbc3cbcac9",
+            "name": "box-b-expected.png",
+            "contentType": "image/png",
+            "path": "__PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-b-chromium-darwin.png"
+          },
+          {
+            "attachmentId": "5925e1f9-a304-41ec-a97f-af5677c8c437",
+            "name": "box-b-actual.png",
+            "contentType": "image/png",
+            "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/box-b-actual.png"
+          },
+          {
+            "attachmentId": "6776e6d0-69d4-4ef8-bc00-68af62f027ac",
+            "name": "box-b-diff.png",
+            "contentType": "image/png",
+            "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/box-b-diff.png"
+          },
+          {
+            "attachmentId": "328393c0-040b-40f5-b0e8-94cdb358dace",
+            "name": "error-context",
+            "contentType": "text/markdown",
+            "path": "__PROJECT_ROOT__/test-results/none/box-box-b-chromium/error-context.md"
+          }
+        ],
+        "stdout": [],
+        "stderr": []
+      },
+      {
+        "testId": "aea8beda5bce5a47d6dc-1f5e4f912bbed5f9197e",
+        "executionId": "4e63f325-ff23-4464-bffa-9e5aa03a1caf",
+        "attemptId": "575b1577-d723-4253-a9e9-f32582cee261",
+        "name": "box-c",
+        "status": "failed",
+        "duration": 89,
+        "start": 1793119870619,
+        "stop": 1793119870708,
+        "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.",
+        "trace": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46",
+        "snippet": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |",
+        "rawStatus": "failed",
+        "tags": [],
+        "type": "e2e",
+        "filePath": "__PROJECT_ROOT__/tests/box.spec.mjs",
+        "retries": 0,
+        "flaky": false,
+        "steps": [],
+        "suite": [
+          "chromium",
+          "box.spec.mjs"
+        ],
+        "attachments": [
+          {
+            "attachmentId": "dd07a64a-86ad-403b-a24d-93e86ce093b9",
+            "name": "error-context",
+            "contentType": "text/markdown",
+            "path": "__PROJECT_ROOT__/test-results/none/box-box-c-chromium/error-context.md"
+          }
+        ],
+        "stdout": [],
+        "stderr": []
+      }
+    ]
+  }
+}
