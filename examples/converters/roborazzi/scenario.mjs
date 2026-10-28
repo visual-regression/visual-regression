@@ -40,6 +40,7 @@ const summaryFile = () => {
  * run overwrites every image, and Roborazzi reports all of them as recorded.
  */
 export const modes = ['compare', 'record'];
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   compare: {
     statuses: {

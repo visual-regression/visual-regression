@@ -25,6 +25,7 @@ const results = path.join(projectRoot, 'test-results');
  */
 export const modes = ['none', 'ctrf-none', 'default', 'ctrf-default'];
 const ctrf = { reportsDiffRatio: false, nameOf: (base) => base };
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   none: {
     statuses: { 'box-b': 'failed', 'box-c': 'missing-baseline' },

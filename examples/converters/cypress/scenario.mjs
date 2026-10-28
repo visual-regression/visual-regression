@@ -41,6 +41,7 @@ export const modes = [
   'pixsame-create',
 ];
 const pixsameName = (base) => `${base}_#0`;
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   cvr: {
     statuses: {

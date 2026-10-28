@@ -20,6 +20,7 @@ const attachments = path.join(projectRoot, '.vitest');
  * looks like a passed comparison. `ci` runs first: `local` writes the reference.
  */
 export const modes = ['ci', 'local'];
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   ci: {
     statuses: {
