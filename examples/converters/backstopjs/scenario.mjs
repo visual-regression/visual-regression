@@ -16,6 +16,7 @@ const harness = path.resolve(projectRoot, '..', 'harness');
 
 /** One compare run: the mismatch percentage is in the report, a missing reference is an error. */
 export const modes = ['test'];
+/** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   test: {
     statuses: {
