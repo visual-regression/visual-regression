@@ -1,6 +1,6 @@
 // node --test scripts/fetch-pricing.test.mjs
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -394,4 +394,29 @@ test('pageSection narrows the hashed text and survives a rewrite', async () => {
     0,
   );
   assert.match(missing.lines[0], /could not read .*marker "Pro" not found/);
+});
+
+test('every non-free tool has a pricing file', async () => {
+  const dir = (name) => new URL(`../data/${name}/`, import.meta.url);
+  const stems = async (name) =>
+    (await readdir(dir(name)))
+      .filter((f) => f.endsWith('.yml'))
+      .map((f) => f.slice(0, -'.yml'.length));
+  const priced = new Set(await stems('pricing'));
+  // pixsame's hosted renderer is in preparation; the calculator says so.
+  const exempt = new Set(['pixsame']);
+  const missing = [];
+  for (const stem of await stems('tools')) {
+    const tool = YAML.parse(
+      await readFile(new URL(`${stem}.yml`, dir('tools')), 'utf8'),
+    );
+    if (
+      tool.pricingModel !== 'free' &&
+      !exempt.has(stem) &&
+      !priced.has(stem)
+    ) {
+      missing.push(stem);
+    }
+  }
+  assert.deepEqual(missing, []);
 });
