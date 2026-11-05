@@ -3,8 +3,8 @@ import { fadedGray, now, toPng, type Engine } from './shared';
 
 // Perceptual hash of the blockhash family (Yang, Weng, Lee 2006): the image is
 // cut into bits×bits blocks, every block's summed brightness becomes one bit
-// by comparing it against the median of its band of four rows. Two hashes are
-// compared with their Hamming distance.
+// by comparing it against the median of its quarter of the grid (four
+// horizontal bands). Two hashes are compared with their Hamming distance.
 export const info: EngineInfo = {
   id: 'blockhash',
   name: 'Perceptual hash (blockhash)',
@@ -36,32 +36,81 @@ const median = (values: number[]) => {
     : (sorted[mid - 1] + sorted[mid]) / 2;
 };
 
+// Port of the bmvbhash routine of blockhash-core (blockhash.io), including its
+// weighted partial blocks for sizes that bits does not divide and its
+// tie rule for images dominated by black or white.
 export const blockhash = (image: ImageData, bits: number): Uint8Array => {
   const { width, height, data } = image;
-  const blocks = new Float64Array(bits * bits);
+  const evenX = width % bits === 0;
+  const evenY = height % bits === 0;
   const blockWidth = width / bits;
   const blockHeight = height / bits;
+  const blocks = new Float64Array(bits * bits);
+  const add = (row: number, col: number, value: number) => {
+    blocks[row * bits + col] += value;
+  };
+
   for (let y = 0; y < height; y++) {
-    const by = Math.min(bits - 1, Math.floor(y / blockHeight));
+    let top: number, bottom: number, weightTop: number, weightBottom: number;
+    if (evenY) {
+      top = bottom = Math.floor(y / blockHeight);
+      weightTop = 1;
+      weightBottom = 0;
+    } else {
+      const yMod = (y + 1) % blockHeight;
+      const yFrac = yMod - Math.floor(yMod);
+      weightTop = 1 - yFrac;
+      weightBottom = yFrac;
+      // yInt is 0 on block boundaries and on the last row
+      if (yMod - yFrac > 0 || y + 1 === height) {
+        top = bottom = Math.floor(y / blockHeight);
+      } else {
+        top = Math.floor(y / blockHeight);
+        bottom = Math.ceil(y / blockHeight);
+      }
+    }
     for (let x = 0; x < width; x++) {
-      const bx = Math.min(bits - 1, Math.floor(x / blockWidth));
       const i = (y * width + x) * 4;
       // transparent pixels count as white, like the reference implementation
       const value =
         data[i + 3] === 0 ? 765 : data[i] + data[i + 1] + data[i + 2];
-      blocks[by * bits + bx] += value;
+      let left: number, right: number, weightLeft: number, weightRight: number;
+      if (evenX) {
+        left = right = Math.floor(x / blockWidth);
+        weightLeft = 1;
+        weightRight = 0;
+      } else {
+        const xMod = (x + 1) % blockWidth;
+        const xFrac = xMod - Math.floor(xMod);
+        weightLeft = 1 - xFrac;
+        weightRight = xFrac;
+        if (xMod - xFrac > 0 || x + 1 === width) {
+          left = right = Math.floor(x / blockWidth);
+        } else {
+          left = Math.floor(x / blockWidth);
+          right = Math.ceil(x / blockWidth);
+        }
+      }
+      add(top, left, value * weightTop * weightLeft);
+      add(top, right, value * weightTop * weightRight);
+      add(bottom, left, value * weightBottom * weightLeft);
+      add(bottom, right, value * weightBottom * weightRight);
     }
   }
+
+  // the reference compares each of four horizontal bands against its median
+  const half = (blockWidth * blockHeight * 256 * 3) / 2;
   const hash = new Uint8Array(bits * bits);
-  const bandRows = 4;
-  for (let band = 0; band < bits; band += bandRows) {
-    const rows = Math.min(bandRows, bits - band);
+  const bandSize = blocks.length / 4;
+  for (let band = 0; band < 4; band++) {
     const values = Array.from(
-      blocks.subarray(band * bits, (band + rows) * bits),
+      blocks.subarray(band * bandSize, (band + 1) * bandSize),
     );
     const m = median(values);
-    for (let k = 0; k < values.length; k++) {
-      hash[band * bits + k] = values[k] > m ? 1 : 0;
+    for (let k = 0; k < bandSize; k++) {
+      const v = values[k];
+      hash[band * bandSize + k] =
+        v > m || (Math.abs(v - m) < 1 && m > half) ? 1 : 0;
     }
   }
   return hash;
