@@ -426,6 +426,28 @@ const manifest = fromCypressVisualRegression({
 
 Cypress writes an actual image for every comparison, so a diff image is what marks a failure (`visualRegressionGenerateDiff: 'fail'`, the default); pass `generateDiff` when the run used another mode.
 
+### cypress-image-diff-js
+
+The plugin keeps `baseline/`, `comparison/` and `diff/` folders under `<ROOT_DIR>/cypress-image-diff-screenshots/` and, with `JSON_REPORT` in its config (on by default), writes a JSON report per run into `<ROOT_DIR>/cypress-image-diff-html-report/` (`report_<date>.json`, or `<FILENAME>.json`):
+
+```ts
+import fs from 'fs';
+import { fromCypressImageDiff } from 'visual-regression-manifest';
+
+const manifest = fromCypressImageDiff(
+  JSON.parse(
+    fs.readFileSync('cypress-image-diff-html-report/report.json', 'utf8'),
+  ),
+  {
+    projectRoot: process.cwd(), // the report's paths are relative to the Cypress working directory
+    // colorThreshold: 0.1, // your COMPARISON_OPTIONS.threshold (pixelmatch; the plugin's default)
+    // reportDir, screenshotsDir: when the report was moved or ROOT_DIR is set
+  },
+);
+```
+
+One entry per `compareSnapshot`, named after the screenshot (`<spec name>-<name>` unless `exactName` or a `nameTemplate` was used), in the spec that took it; the report's browser becomes the entry's `platform.browser` and its Cypress version the `runner` version. The plugin's "percentage" is the square root of the share of differing pixels, and so is its `testThreshold`; the converter squares both back into `diffRatio` and `maxDiffRatio` and keeps the plugin's own numbers under `extra.cypressImageDiff`. The report leaves a path empty when the file did not exist, so the converter derives it from the folder layout. A failed test without a baseline is `missing-baseline` (`FAIL_ON_MISSING_BASELINE`); by default the plugin copies the comparison to the baseline instead and the test passes.
+
 ### BackstopJS
 
 With `"report": ["json"]` BackstopJS writes `backstop_data/json_report/jsonReport.json`. Its paths are relative to that directory:

@@ -1,0 +1,9 @@
+{
+  "statuses": {
+    "box.cy-box-a": "passed",
+    "box.cy-box-b": "failed",
+    "box.cy-box-c": "passed"
+  },
+  "absent": [],
+  "reportsDiffRatio": true
+}
