@@ -1,0 +1,11 @@
+// Cloudflare Pages config for the image diff tool: the `vite build` output is
+// uploaded as-is by `wrangler pages deploy` from
+// `.github/workflows/image-diff.yml` on every push to `main`. The Pages
+// project (`name`) and its custom domain, diff.visual-regression.dev, are set
+// up in the Cloudflare dashboard.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "visual-regression-image-diff",
+  "compatibility_date": "2026-10-01",
+  "pages_build_output_dir": "dist",
+}
