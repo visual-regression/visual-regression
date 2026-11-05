@@ -2,7 +2,8 @@ name: CI
 # Always triggered, because the required status checks (lint, test-integration-coverage) must
 # report on every PR: a workflow skipped by `paths-ignore` leaves them pending and blocks the merge.
 # The `changes` job decides instead, and a job skipped by `if` counts as passing.
-# The site has its own workflow (site.yml) with the opposite path filter.
+# The site and the image diff app have their own workflows (site.yml, image-diff.yml) with the
+# opposite path filters.
 on:
   pull_request:
     branches:
@@ -44,6 +45,7 @@ jobs:
               - '**'
               - '!apps/**'
               - '!.github/workflows/site.yml'
+              - '!.github/workflows/image-diff.yml'
       # One output per converter example (examples/converters/<tool>): its job runs the
       # real tool, so only changes to the sources of the two packages it exercises
       # (the manifest package converts, the viewer renders), its example, the harness

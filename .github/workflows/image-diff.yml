@@ -1,0 +1,63 @@
+name: Image diff
+# Always triggered so the required `image-diff` check reports on every PR (a workflow skipped by
+# `on.paths` leaves it pending and blocks the merge). The `changes` job decides whether the app
+# is built; a job skipped by `if` counts as passing. Other changes cost one tiny job.
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+# A newer push to the same PR cancels the running check; a deploy from main is never canceled.
+concurrency:
+  group: image-diff-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      image-diff: ${{ steps.filter.outputs.image-diff }}
+    steps:
+      # On push the filter diffs commits locally; on pull_request it uses the API.
+      - uses: actions/checkout@v7
+        if: github.event_name != 'pull_request'
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            image-diff:
+              - 'apps/image-diff/**'
+              - '.github/workflows/image-diff.yml'
+              - 'pnpm-lock.yaml'
+
+  image-diff:
+    name: image-diff
+    needs: [changes]
+    if: ${{ needs.changes.outputs.image-diff == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          # only the app and its workspace dependencies, not the packages' toolchains
+          install-filter: --filter . --filter @visual-regression/image-diff...
+      - name: Lint and formatting (cheapest first)
+        run: pnpm lint
+      - name: Build
+        run: pnpm --filter @visual-regression/image-diff build
+      # Same job as the build, so the deployed output is exactly what was built
+      # (no second runner, no second install: billed minutes). Project name and
+      # output directory come from `apps/image-diff/wrangler.jsonc`. Local
+      # deploys read the same two secrets from `apps/image-diff/.env`.
+      - name: Deploy to Cloudflare Pages
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        run: pnpm --filter @visual-regression/image-diff exec wrangler pages deploy --branch main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
