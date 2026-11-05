@@ -14,9 +14,9 @@ reviewSurface:
 baselineStorage: repo
 pricingModel: free
 machineReadableResults: images-only
-manifestSupport: generic
+manifestSupport: converter
 notes:
-  - Writes .loki/reference, .loki/current and .loki/difference folders; no machine-readable summary was found.
-lastVerified: '2026-10-13'
+  - Writes .loki/reference, .loki/current and .loki/difference folders; no machine-readable summary was found. fromLoki in visual-regression-manifest reads the folders (not checked against a real run).
+lastVerified: '2026-11-05'
 sources:
   - https://github.com/oblador/loki
