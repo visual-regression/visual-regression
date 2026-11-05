@@ -511,6 +511,24 @@ const manifest = fromRegCli(JSON.parse(fs.readFileSync('reg.json', 'utf8')), {
 
 The report's folders are relative to the report file. `failedItems` are `failed` with the diff image from the diff folder, `newItems` (an actual image with no expected one) are `missing-baseline`, `passedItems` are `passed`; after a `-U` run, which copies the failed and new actuals over the expected images, pass `update: true` to get `updated` and `created` instead. `deletedItems`, expected images with no actual, have no entry, as the manifest has no status for a baseline nothing was compared against; they are listed under `extra.regCli.deletedItems` on the manifest. Entries are named by the item path without its extension, so nested folders stay apart.
 
+### Lost Pixel
+
+In its `generateOnly` mode Lost Pixel keeps `.lostpixel/baseline/`, `.lostpixel/current/` (emptied and rewritten on every run) and `.lostpixel/difference/` (one image per shot over its threshold). Run it with `LOST_PIXEL_GENERATE_META=true` to also get `.lostpixel/current/meta.json`, every comparison's pixel difference and verdict:
+
+```ts
+import { fromLostPixel } from 'visual-regression-manifest';
+
+const manifest = fromLostPixel({
+  projectRoot: process.cwd(),
+  threshold: 0, // your `threshold`: a 0..1 share of the pixels, or a pixel count from 1 up
+  // update: true, // the run was `lost-pixel update`
+  // baselineDir, currentDir, differenceDir: your imagePathBaseline/Current/Difference, when changed
+  // meta: 'path/to/meta.json' or false: when it was moved, or to ignore one
+});
+```
+
+A current image without a baseline is `missing-baseline`; with a baseline, `meta.json` decides between `passed` and `failed` (and carries the `diffRatio`), or without it the difference image does. After `lost-pixel update`, which writes the baselines of changed and new shots, pass `update: true`: a changed shot is `updated` and a shot missing from `meta.json` (it had no baseline to compare against) is `created`; without the meta file a created baseline looks like a passed shot. A baseline with no current image was not shot in this run and gets no entry (listed under `extra.lostPixel.baselinesWithoutShot`). The breakpoint and browser labels Lost Pixel puts in file names (`home__[w320px|chromium]`) become the entry's `variant` and `platform.browser`.
+
 ### Plain image files
 
 For any tool that leaves a baseline and, on failure, an actual and a diff image next to it:

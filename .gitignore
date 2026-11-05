@@ -63,3 +63,4 @@ examples/converters/reg-cli/actual/
 examples/converters/reg-cli/expected/
 examples/converters/reg-cli/diff/
 examples/converters/reg-cli/reg.json
+examples/converters/lost-pixel/.lostpixel/

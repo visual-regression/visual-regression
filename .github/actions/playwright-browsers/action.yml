@@ -3,15 +3,19 @@ description: Restore the Chromium headless shell for the Playwright version a wo
 
 inputs:
   package:
-    description: The workspace package whose Playwright version decides the cache key (it must depend on `playwright` or `@playwright/test`).
+    description: The workspace package whose Playwright version decides the cache key (it must depend on `playwright`, `@playwright/test` or, with `cli` set, `playwright-core`).
     required: true
+  cli:
+    description: The Playwright CLI that package exposes; `playwright-core` for a tool that depends on playwright-core alone.
+    required: false
+    default: playwright
 
 runs:
   using: composite
   steps:
     - id: version
       shell: bash
-      run: echo "playwright=$(pnpm --filter ${{ inputs.package }} exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+      run: echo "playwright=$(pnpm --filter ${{ inputs.package }} exec ${{ inputs.cli }} --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
     - name: Cache Playwright browsers 🎭 (keyed by the exact Playwright version, no fallback)
       id: cache
       uses: actions/cache@v6
@@ -22,4 +26,4 @@ runs:
     # drops a library fails the job loudly and the key gets bumped by hand.
     - if: ${{ steps.cache.outputs.cache-hit != 'true' }}
       shell: bash
-      run: pnpm --filter ${{ inputs.package }} exec playwright install chromium --only-shell --with-deps
+      run: pnpm --filter ${{ inputs.package }} exec ${{ inputs.cli }} install chromium --only-shell --with-deps
