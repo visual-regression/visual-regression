@@ -465,6 +465,30 @@ const manifest = fromRoborazziResults(
 
 `changed` is `failed` (with `diff_percentage` as the ratio and the `_compare` composite as the diff image), `added` is `missing-baseline`, `unchanged` is `passed` and `recorded` is `updated`. Entries carry an emulated Android `target` and a `robolectric` renderer; `context_data` lands under `extra.roborazzi`.
 
+### reg-cli and reg-suit
+
+reg-cli compares a folder of actual images with a folder of expected ones and writes a JSON report (`-J`, `reg.json` by default) listing the items by file name; reg-suit runs it under the hood:
+
+```bash
+npx reg-cli actual expected diff -J reg.json
+```
+
+```ts
+import fs from 'fs';
+import { fromRegCli } from 'visual-regression-manifest';
+
+const manifest = fromRegCli(JSON.parse(fs.readFileSync('reg.json', 'utf8')), {
+  projectRoot: process.cwd(),
+  // the report carries no ratios and no thresholds, so they come from your options
+  maxDiffRatio: 0.01, // your --thresholdRate; or maxDiffPixels for --thresholdPixel
+  // colorThreshold: 0.1, // your --matchingThreshold (pixelmatch)
+  // reportDir: when reg.json was moved; actualDir, expectedDir, diffDir: when the report names URLs (--urlPrefix)
+  // update: true, // the run was -U
+});
+```
+
+The report's folders are relative to the report file. `failedItems` are `failed` with the diff image from the diff folder, `newItems` (an actual image with no expected one) are `missing-baseline`, `passedItems` are `passed`; after a `-U` run, which copies the failed and new actuals over the expected images, pass `update: true` to get `updated` and `created` instead. `deletedItems`, expected images with no actual, have no entry, as the manifest has no status for a baseline nothing was compared against; they are listed under `extra.regCli.deletedItems` on the manifest. Entries are named by the item path without its extension, so nested folders stay apart.
+
 ### Plain image files
 
 For any tool that leaves a baseline and, on failure, an actual and a diff image next to it:
