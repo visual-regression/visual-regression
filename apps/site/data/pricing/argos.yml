@@ -1,0 +1,34 @@
+tool: argos
+pricingPage: https://argos-ci.com/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: b7e60bbb34c460817e1a15b599f002b2929d73b3a27a638bdd701b5025a3ed15
+unit: screenshot
+plans:
+  - name: Hobby
+    monthly: 0
+    included:
+      snapshots: 5000
+      seats: 1
+    overage: null
+    notes:
+      - Meant for one developer; uploads pause at the limit until the billing period renews.
+  - name: Pro
+    monthly: 100
+    included:
+      snapshots: 35000
+      seats: null
+    overage:
+      per: 1
+      price: 0.004
+    notes:
+      - Storybook screenshots cost $0.0015 each beyond the included amount.
+      - Unlimited team members and projects; 14-day free trial.
+      - GitHub single sign-on is a $50/month add-on, SAML SSO with SCIM $200/month.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - Custom screenshot volume, 99.99% uptime SLA, dedicated support, invoicing.
+confidence: high
+notes:
+  - A build counts once its upload completes, including builds whose tests failed.
