@@ -1,0 +1,48 @@
+name: Pricing refresh
+# Re-reads the vendors' pricing pages behind the cost calculator on /compare
+# (apps/site/data/pricing/*.yml) once a month, or on demand, and opens a pull
+# request with the plans Claude extracted from the pages that changed. Needs the
+# ANTHROPIC_API_KEY repository secret; see apps/site/scripts/fetch-pricing.mjs.
+on:
+  schedule:
+    - cron: '17 6 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pricing-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter . --filter @visual-regression/site...
+      - name: Fetch the pricing pages and extract the plans that changed
+        run: pnpm --filter @visual-regression/site pricing:fetch
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Format the rewritten files
+        run: pnpm exec prettier --write apps/site/data/pricing
+      - name: Build the site against the new data
+        run: pnpm --filter @visual-regression/site build
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          branch: chore/pricing-refresh
+          title: 'chore(site): refresh tool pricing data'
+          commit-message: 'chore(site): refresh tool pricing data'
+          body: |
+            `scripts/fetch-pricing.mjs` found pricing pages whose text changed and extracted their plans again. Check every changed number against the vendor's page before merging; the extraction is only as good as the page text.
+
+            Opened by the Pricing refresh workflow.
+          labels: site
+          add-paths: apps/site/data/pricing
+          delete-branch: true
