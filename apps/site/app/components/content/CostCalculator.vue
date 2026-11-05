@@ -22,6 +22,18 @@ const GITHUB_LINUX_PER_MINUTE = 0.006;
 const GITHUB_PRICING_URL =
   'https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions';
 
+// Reference date for the staleness badge. useState puts it in the payload, so
+// the client hydrates with the build-time value instead of its own clock.
+const STALE_AFTER_DAYS = 90;
+const referenceTime = useState('pricing-reference-time', () => Date.now());
+const isStale = (fetchedAt: string) => {
+  const fetched = Date.parse(fetchedAt);
+  return (
+    Number.isFinite(fetched) &&
+    referenceTime.value - fetched > STALE_AFTER_DAYS * 86_400_000
+  );
+};
+
 const countMode = ref<'factors' | 'direct'>('factors');
 const tests = ref(50);
 const viewports = ref(2);
@@ -35,6 +47,9 @@ const secondsPerScreenshot = ref(2);
 
 const num = (value: unknown) =>
   Number.isFinite(Number(value)) ? Math.max(0, Number(value)) : 0;
+
+// Clearing the field gives null; a team has at least one reviewer.
+const seatCount = computed(() => Math.max(1, Math.round(num(seats.value))));
 
 const perRun = computed(() =>
   countMode.value === 'direct'
@@ -61,6 +76,7 @@ type Estimate =
   | { kind: 'from'; plan: Plan; cost: number; billedYearly: boolean }
   | { kind: 'custom'; reason: string }
   | { kind: 'free' }
+  | { kind: 'missing' }
   | { kind: 'pixsame' };
 
 type Row = { tool: Tool; pricing?: Pricing; estimate: Estimate };
@@ -144,13 +160,15 @@ const rows = computed<Row[]>(() => {
     const id = stem(tool);
     if (id === 'pixsame') return { tool, estimate: { kind: 'pixsame' } };
     const p = byTool.get(id);
-    if (tool.pricingModel === 'free' || !p) {
+    if (tool.pricingModel === 'free') {
       return { tool, estimate: { kind: 'free' } };
     }
-    return { tool, pricing: p, estimate: fit(p, volume.value, num(seats.value)) };
+    // A paid tool without a pricing file is unpriced, never free.
+    if (!p) return { tool, estimate: { kind: 'missing' } };
+    return { tool, pricing: p, estimate: fit(p, volume.value, seatCount.value) };
   });
   const group = (e: Estimate) =>
-    e.kind === 'plan' || e.kind === 'from' ? 0 : e.kind === 'custom' ? 1 : 2;
+    e.kind === 'plan' || e.kind === 'from' ? 0 : e.kind === 'custom' ? 1 : e.kind === 'missing' ? 3 : 2;
   const cost = (e: Estimate) =>
     e.kind === 'plan' || e.kind === 'from' ? e.cost : 0;
   return all.sort(
@@ -253,7 +271,7 @@ const confidenceColor = (value: Pricing['confidence']) =>
               <td class="px-3 py-2">
                 {{ estimate.plan.name }}
                 <div class="text-xs text-muted">
-                  <template v-if="p!.unit === 'seat'">{{ money(priceOf(estimate.plan)!) }} per seat × {{ count(num(seats)) }}</template>
+                  <template v-if="p!.unit === 'seat'">{{ money(priceOf(estimate.plan)!) }} per seat × {{ count(seatCount) }}</template>
                   <template v-else-if="estimate.plan.included?.snapshots != null">{{ count(estimate.plan.included.snapshots) }} {{ p!.unit }}s included</template>
                   <template v-if="estimate.billedYearly"> · billed yearly</template>
                   <template v-else-if="estimate.plan.annualMonthly != null"> · {{ money(estimate.plan.annualMonthly) }} when billed yearly</template>
@@ -294,6 +312,13 @@ const confidenceColor = (value: Pricing['confidence']) =>
                 <div class="text-xs text-muted">about {{ money(ciCost) }} for {{ count(ciMinutes) }} CI minutes</div>
               </td>
             </template>
+            <template v-else-if="estimate.kind === 'missing'">
+              <td class="px-3 py-2 text-muted">—</td>
+              <td class="px-3 py-2">
+                <span class="font-medium">no pricing data</span>
+                <div class="text-xs text-muted">this tool is not free, but no pricing file lists its plans yet</div>
+              </td>
+            </template>
             <template v-else>
               <td class="px-3 py-2 text-muted">—</td>
               <td class="px-3 py-2">
@@ -304,6 +329,7 @@ const confidenceColor = (value: Pricing['confidence']) =>
             <td class="px-3 py-2 text-xs text-muted">
               <template v-if="p">
                 {{ p.fetchedAt }}
+                <UBadge v-if="isStale(p.fetchedAt)" color="warning" variant="subtle" size="sm" class="ml-1">may be outdated</UBadge>
                 <UBadge :color="confidenceColor(p.confidence)" variant="subtle" size="sm" class="ml-1">{{ p.confidence }}</UBadge>
                 <div>
                   <a :href="p.pricingPage" target="_blank" rel="noopener" class="underline">pricing page</a>
