@@ -2,7 +2,8 @@
 // page stays responsive. Messages: see ToWorker / FromWorker in types.ts.
 import { engines, resemble } from './engines';
 import { context2d, type Images } from './engines/shared';
-import type { FromWorker, Padding, ToWorker } from './types';
+import { pad } from './lib/pad';
+import type { FromWorker, ToWorker } from './types';
 
 const post = (message: FromWorker) => postMessage(message);
 
@@ -16,23 +17,6 @@ const decode = async (blob: Blob): Promise<ImageData> => {
   context.drawImage(bitmap, 0, 0);
   bitmap.close();
   return context.getImageData(0, 0, canvas.width, canvas.height);
-};
-
-const pad = (
-  image: ImageData,
-  width: number,
-  height: number,
-  padding: Padding,
-): ImageData => {
-  if (image.width === width && image.height === height) return image;
-  const canvas = new OffscreenCanvas(width, height);
-  const context = context2d(canvas);
-  if (padding === 'magenta') {
-    context.fillStyle = '#ff00ff';
-    context.fillRect(0, 0, width, height);
-  }
-  context.putImageData(image, 0, 0);
-  return context.getImageData(0, 0, width, height);
 };
 
 const encode = (image: ImageData) => {

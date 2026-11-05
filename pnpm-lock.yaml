@@ -242,6 +242,9 @@ importers:
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@types/node@22.20.5)(@vitest/coverage-v8@4.1.11)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
       vue-tsc:
         specifier: 3.3.14
         version: 3.3.14(typescript@6.0.3)
@@ -14604,7 +14607,7 @@ snapshots:
       obug: 2.2.1
       std-env: 4.3.0
       tinyrainbow: 3.2.0
-      vitest: 4.1.11(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.4(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
+      vitest: 4.1.11(@types/node@22.20.5)(@vitest/coverage-v8@4.1.11)(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
 
   '@vitest/expect@4.1.11':
     dependencies:
