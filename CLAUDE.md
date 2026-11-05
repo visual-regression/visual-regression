@@ -15,7 +15,7 @@ Details for each part live in project skills (`.claude/skills/`). **Load the mat
 | `apps/site`                           | `site`              | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs    |
 | `examples/converters`                 | `verify-converters` | One example project per converter: runs the real tool in a browser, converts its output, checks it |
 
-Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`, and `verify-converters` for anything under `src/convert/`. `verify-manifest` owns the sample-run generator the other two reuse.
+Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`, and `verify-converters` for anything under `src/convert/`. `verify-manifest` owns the sample-run generator the other two reuse. `refresh-pricing` is the maintainer-only procedure for the pricing data behind the site's cost calculator (run locally, never in CI).
 
 Cross-part facts worth knowing up front: the viewer depends on the manifest package; the site's `/manifest/*` and `/viewer/*` pages are generated from the two package READMEs (edit the README, never the generated files).
 
