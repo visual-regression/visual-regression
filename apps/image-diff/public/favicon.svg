@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="visual-regression.dev">
+  <!-- Colors follow the viewer's color scheme: used as the favicon and in
+       READMEs on GitHub, where the dark "actual" square would otherwise vanish
+       on a dark background. Same shapes as app/components/content/BrandMark.vue. -->
+  <style>
+    .baseline { fill: #a1a1aa; }
+    .actual { fill: #18181b; }
+    .overlap { fill: #10b981; }
+    @media (prefers-color-scheme: dark) {
+      .baseline { fill: #71717a; }
+      .actual { fill: #fafafa; }
+      .overlap { fill: #34d399; }
+    }
+  </style>
+  <!-- baseline: the reference image -->
+  <rect class="baseline" x="6" y="6" width="36" height="36" rx="9"/>
+  <!-- actual: the new screenshot, laid over the baseline -->
+  <rect class="actual" x="22" y="22" width="36" height="36" rx="9"/>
+  <!-- where the two agree -->
+  <path class="overlap" d="M22 22h20v11a9 9 0 0 1-9 9H22z"/>
+</svg>

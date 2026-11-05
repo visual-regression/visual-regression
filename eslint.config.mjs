@@ -65,6 +65,7 @@ export default [
       'packages/*/scripts/**',
       'scripts/**',
       'apps/site/scripts/**',
+      'apps/image-diff/scripts/**',
       '.claude/skills/*/scripts/**',
     ],
     languageOptions: {
@@ -75,12 +76,12 @@ export default [
     },
   },
   {
-    files: ['packages/*/app/**'],
+    files: ['packages/*/app/**', 'apps/image-diff/src/**'],
     languageOptions: { globals: { ...globals.browser } },
   },
-  // verification scripts report through stdout
+  // verification and generator scripts report through stdout
   {
-    files: ['.claude/skills/*/scripts/**'],
+    files: ['.claude/skills/*/scripts/**', 'apps/image-diff/scripts/**'],
     rules: { 'no-console': 'off' },
   },
   // the viewer is a command line tool: printing is its interface
