@@ -18,7 +18,7 @@ import type {
   ManifestTool,
 } from '../types';
 import { inferStatus } from './triples';
-import { toProjectRelative } from '../paths';
+import { isSafeRelativePath, toProjectRelative } from '../paths';
 
 /**
  * CTRF (Common Test Report Format, https://ctrf.io): the subset of the schema
@@ -349,6 +349,13 @@ export type FromCtrfOptions = {
    * images exist. Off by default: a plain CTRF report has no comparisons.
    */
   lenient?: boolean;
+  /**
+   * Called for what a manifest cannot hold: an absolute path outside
+   * `projectRoot` has no safe relative form, so that image, attachment or file
+   * path is left out (a test whose baseline is outside is skipped). Defaults
+   * to `process.emitWarning`.
+   */
+  onWarning?: (message: string) => void;
 };
 
 type VisualExtra = Partial<
@@ -391,11 +398,20 @@ const fromCtrfTest = (
   fallbackTime: string,
   lenient: boolean,
   projectRoot: string,
+  warn: (message: string) => void,
 ): ManifestEntry | undefined => {
   const visual = visualOf(test.extra) as VisualExtra | undefined;
   // reporters of other tools write absolute paths; a manifest's are project-relative
-  const relative = (p: string) =>
-    path.isAbsolute(p) ? toProjectRelative(projectRoot, p) : p;
+  // and never leave the project, so a path outside it (`../x`) has no form here
+  const relative = (p: string): string | null => {
+    if (!path.isAbsolute(p)) return p;
+    const rel = toProjectRelative(projectRoot, p);
+    if (isSafeRelativePath(rel)) return rel;
+    warn(
+      `CTRF test "${test.name}": "${p}" is outside the project root "${projectRoot}" and was left out`,
+    );
+    return null;
+  };
   const byRole: Partial<Record<ImageRole, CtrfAttachment>> = {};
   const others: ManifestAttachment[] = [];
   for (const attachment of test.attachments ?? []) {
@@ -403,11 +419,13 @@ const fromCtrfTest = (
     if (role && !byRole[role]) byRole[role] = attachment;
     else {
       const extra = withoutNamespace(attachment.extra);
+      const attachmentPath = relative(attachment.path);
+      if (attachmentPath === null) continue;
       others.push(
         compact({
           name: attachment.name,
           contentType: attachment.contentType,
-          path: relative(attachment.path),
+          path: attachmentPath,
           attachmentId: attachment.attachmentId,
           extra: Object.keys(extra).length > 0 ? extra : undefined,
         }),
@@ -425,9 +443,16 @@ const fromCtrfTest = (
         height: typeof v?.height === 'number' ? v.height : undefined,
       });
     };
+    const baselinePath = relative(byRole.baseline.path);
+    if (baselinePath === null) {
+      warn(
+        `CTRF test "${test.name}" was skipped: its baseline is not in the project`,
+      );
+      return undefined;
+    }
     images = {
       baseline: {
-        path: relative(byRole.baseline.path),
+        path: baselinePath,
         ...dimensions(byRole.baseline),
       },
       actual: {
@@ -456,7 +481,7 @@ const fromCtrfTest = (
   return compact({
     name: test.name,
     test: visual?.test ?? {
-      filePath: test.filePath ? relative(test.filePath) : '',
+      filePath: (test.filePath && relative(test.filePath)) || '',
       titlePath: test.suite ?? [],
       retry: test.retries ?? 0,
     },
@@ -551,9 +576,11 @@ export const fromCtrf = (
   const { start, stop } = results.summary ?? {};
   const updatedAt = iso(stop, report.timestamp ?? now());
   const createdAt = iso(start, updatedAt);
+  const warn =
+    opts.onWarning ?? ((message: string) => process.emitWarning(message));
   const entries = results.tests
     .map((test) =>
-      fromCtrfTest(test, updatedAt, opts.lenient ?? false, projectRoot),
+      fromCtrfTest(test, updatedAt, opts.lenient ?? false, projectRoot, warn),
     )
     .filter((entry): entry is ManifestEntry => entry !== undefined)
     .sort(compareEntries);

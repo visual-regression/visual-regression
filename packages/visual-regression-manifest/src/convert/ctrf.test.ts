@@ -368,6 +368,68 @@ describe('fromCtrf', () => {
     },
   );
 
+  it('leaves out absolute paths outside projectRoot instead of emitting `..` paths', () => {
+    const png = (name: string, path: string, role?: string) => ({
+      name,
+      contentType: 'image/png',
+      path,
+      ...(role ? { extra: { visualRegression: { role } } } : {}),
+    });
+    const report: CtrfReport = {
+      reportFormat: 'CTRF',
+      specVersion: '0.2.0',
+      results: {
+        tool: { name: 'some-reporter' },
+        summary: {
+          tests: 2,
+          passed: 0,
+          failed: 2,
+          skipped: 0,
+          pending: 0,
+          other: 0,
+          start: 1,
+          stop: 2,
+        },
+        tests: [
+          {
+            name: 'outside baseline',
+            status: 'failed',
+            duration: 1,
+            filePath: '/repo/other/a.spec.ts',
+            attachments: [png('b', '/repo/shots/base.png', 'baseline')],
+          },
+          {
+            name: 'outside actual',
+            status: 'failed',
+            duration: 1,
+            filePath: '/repo/other/b.spec.ts',
+            attachments: [
+              png('b', '/repo/app/shots/base.png', 'baseline'),
+              png('a', '/repo/shots/actual.png', 'actual'),
+              { ...png('trace', '/repo/shots/trace.zip'), contentType: 'x/y' },
+            ],
+          },
+        ],
+      },
+    };
+    const warnings: string[] = [];
+    const converted = fromCtrf(report, {
+      projectRoot: '/repo/app',
+      lenient: true,
+      onWarning: (message) => warnings.push(message),
+    });
+    expect(converted.entries.map((e) => e.name)).toEqual(['outside actual']);
+    const [kept] = converted.entries;
+    expect(kept.images.baseline.path).toBe('shots/base.png');
+    expect(kept.images.actual.path).toBeNull();
+    expect(kept.attachments).toBeUndefined();
+    expect(kept.test.filePath).toBe('');
+    expect(JSON.stringify(converted)).not.toContain('..');
+    expect(warnings).toHaveLength(5);
+    expect(warnings.join('\n')).toMatch(/outside the project root/);
+    expect(warnings.join('\n')).toMatch(/baseline is not in the project/);
+  });
+
   it('skips tests without visual data unless lenient, then reads them from their attachments', () => {
     const report: CtrfReport = {
       reportFormat: 'CTRF',
