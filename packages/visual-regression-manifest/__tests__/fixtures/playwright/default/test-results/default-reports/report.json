@@ -1,8 +1,8 @@
 {
   "config": {
     "argv": [
-      "/Users/jakubfreisler/.nvm/versions/node/v22.14.0/bin/node",
-      "/Users/jakubfreisler/Projects/Web/visual-regression/node_modules/.pnpm/@playwright+test@1.64.1/node_modules/@playwright/test/cli.js",
+      "node",
+      "__REPO_ROOT__/node_modules/.pnpm/@playwright+test@1.64.1/node_modules/@playwright/test/cli.js",
       "test"
     ],
     "configFile": "__PROJECT_ROOT__/playwright.config.mjs",
@@ -76,7 +76,7 @@
         }
       ],
       [
-        "/Users/jakubfreisler/Projects/Web/visual-regression/node_modules/.pnpm/playwright-ctrf-json-reporter@0.2.0/node_modules/playwright-ctrf-json-reporter/dist/index.cjs",
+        "__REPO_ROOT__/node_modules/.pnpm/playwright-ctrf-json-reporter@0.2.0/node_modules/playwright-ctrf-json-reporter/dist/index.cjs",
         {
           "outputDir": "test-results/default-reports",
           "outputFile": "ctrf-report.json"
@@ -118,12 +118,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 157,
+                  "duration": 146,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T16:51:12.241Z",
+                  "startTime": "2026-11-05T23:52:45.979Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -152,7 +152,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "failed",
-                  "duration": 294,
+                  "duration": 277,
                   "error": {
                     "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n",
                     "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveScreenshot\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n\u001b[2m  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\u001b[22m\n\u001b[2m    - verifying given screenshot expectation\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\u001b[2m  - waiting 100ms before taking screenshot\u001b[22m\n\u001b[2m  - waiting for locator('#box-b')\u001b[22m\n\u001b[2m    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\u001b[22m\n\u001b[2m  - taking element screenshot\u001b[22m\n\u001b[2m    - disabled all CSS animations\u001b[22m\n\u001b[2m  - waiting for fonts to load...\u001b[22m\n\u001b[2m  - fonts loaded\u001b[22m\n\u001b[2m  - attempting scroll into view action\u001b[22m\n\u001b[2m    - waiting for element to be stable\u001b[22m\n\u001b[2m  - captured a stable screenshot\u001b[22m\n\u001b[2m  - 9600 pixels (ratio 1.00 of all image pixels) are different.\u001b[22m\n\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46",
@@ -176,7 +176,7 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T16:51:12.510Z",
+                  "startTime": "2026-11-05T23:52:46.244Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -231,7 +231,7 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "failed",
-                  "duration": 293,
+                  "duration": 310,
                   "error": {
                     "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png, writing actual.",
                     "stack": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png, writing actual.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:5",
@@ -255,7 +255,7 @@
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-27T16:51:13.265Z",
+                  "startTime": "2026-11-05T23:52:46.959Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -294,8 +294,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-27T16:51:11.807Z",
-    "duration": 1878.521,
+    "startTime": "2026-11-05T23:52:45.550Z",
+    "duration": 1864.893,
     "expected": 1,
     "skipped": 0,
     "unexpected": 2,

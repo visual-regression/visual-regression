@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Manifest } from 'visual-regression-manifest';
@@ -11,6 +12,40 @@ import {
 } from './assert-manifest.js';
 import { serveStatic } from './serve.js';
 import { sh } from './shell.js';
+
+const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..', '..');
+
+/**
+ * Replaces the machine's paths in every text file of a captured fixture: the
+ * example folder first (`__PROJECT_ROOT__`, which the unit tests resolve), then
+ * the Node binary (a bare `node`), the repo checkout and the home folder.
+ */
+export const scrubFixture = (dir: string, projectRoot: string): void => {
+  const replacements: [string, string][] = [
+    [projectRoot, '__PROJECT_ROOT__'],
+    [process.execPath, 'node'],
+    [repoRoot, '__REPO_ROOT__'],
+    [os.homedir(), '__HOME__'],
+  ];
+  const walk = (current: string): void => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const file = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        walk(file);
+        continue;
+      }
+      const buffer = fs.readFileSync(file);
+      if (buffer.includes(0)) continue; // binary (PNG, ...)
+      const text = buffer.toString('utf8');
+      const scrubbed = replacements.reduce(
+        (acc, [from, to]) => acc.replaceAll(from, to),
+        text,
+      );
+      if (scrubbed !== text) fs.writeFileSync(file, scrubbed);
+    }
+  };
+  walk(dir);
+};
 
 export type Ctx = { sh: typeof sh; serveStatic: typeof serveStatic };
 
@@ -106,6 +141,7 @@ export const runScenario = (scenario: Scenario) => {
           fs.rmSync(dir, { recursive: true, force: true });
           fs.mkdirSync(dir, { recursive: true });
           await scenario.capture(dir, mode);
+          scrubFixture(dir, scenario.projectRoot);
           const resolved = {
             statuses: Object.fromEntries(
               Object.entries(expectation.statuses).map(([base, status]) => [

@@ -12,7 +12,7 @@
 # Error details
 
 ```
-Error: A snapshot doesn't exist at /Users/jakubfreisler/Projects/Web/visual-regression/examples/converters/playwright/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.
+Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.
 ```
 
 # Test source
@@ -28,7 +28,7 @@ Error: A snapshot doesn't exist at /Users/jakubfreisler/Projects/Web/visual-regr
   8  |   test(`box-${box}`, async ({ page: tab }) => {
   9  |     await tab.goto(page.href);
 > 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);
-     |                                              ^ Error: A snapshot doesn't exist at /Users/jakubfreisler/Projects/Web/visual-regression/examples/converters/playwright/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.
+     |                                              ^ Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.
   11 |   });
   12 | }
   13 | 
