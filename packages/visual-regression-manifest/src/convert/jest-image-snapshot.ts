@@ -21,9 +21,11 @@ export type FromJestImageSnapshotOptions = Omit<ManifestHeaderInput, 'runner'> &
     receivedDirName?: string;
     /**
      * The postfix of default snapshot identifiers (`<test file>-<test name>-<n>-snap`),
-     * dropped from the entry name when present. A custom identifier keeps its name
-     * even when it ends the same way; a default identifier next to a custom one of
-     * the same bare name (`home-1-snap.png` and `home-1.png`) keeps its postfix.
+     * dropped from the entry name. The converter cannot tell a default identifier
+     * from a custom one that happens to end the same way, so any baseline ending
+     * in the postfix is named without it (`x-snap.png` becomes `x`), unless a file
+     * of that bare name exists next to it (`home-1-snap.png` and `home-1.png`):
+     * then the postfixed one keeps its full name.
      */
     snapshotPostfix?: string;
     /** The postfix of diff images. */

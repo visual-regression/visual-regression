@@ -146,6 +146,18 @@ describe('fromJestImageSnapshots', () => {
     ]);
   });
 
+  it('strips -snap from a lone baseline, custom identifier or not', async () => {
+    const root = await tmpDir();
+    const snaps = path.join(root, '__image_snapshots__');
+    // no `x.png` beside it, so the file is read as default-named
+    writePng(path.join(snaps, 'x-snap.png'), 4, 4, 1);
+
+    const manifest = fromJestImageSnapshots({ projectRoot: root, ci: null });
+    expect(
+      manifest.entries.map((e) => [e.name, e.images.baseline.path]),
+    ).toEqual([['x', '__image_snapshots__/x-snap.png']]);
+  });
+
   it('honors custom folder names and postfixes', async () => {
     const root = await tmpDir();
     const snaps = path.join(root, 'cypress', 'snapshots');
