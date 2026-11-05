@@ -150,7 +150,7 @@ const runAll = async () => {
 
 const compare = async () => {
   if (!a.blob || !b.blob) return;
-  generation++;
+  const gen = ++generation;
   loading.value = true;
   loadError.value = null;
   for (const state of Object.values(engines)) {
@@ -165,6 +165,7 @@ const compare = async () => {
   }
   try {
     const loaded = await worker.load(a.blob, b.blob, padding.value);
+    if (gen !== generation) return;
     a.dims = loaded.a;
     b.dims = loaded.b;
     padded.value = loaded.padded
@@ -178,6 +179,8 @@ const compare = async () => {
     loading.value = false;
     await runAll();
   } catch (error) {
+    // a newer compare started: its state is not ours to touch
+    if (gen !== generation) return;
     loading.value = false;
     loadError.value = error instanceof Error ? error.message : String(error);
     for (const state of Object.values(engines)) state.status = 'idle';
