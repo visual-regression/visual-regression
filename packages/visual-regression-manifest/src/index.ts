@@ -115,6 +115,11 @@ export {
   type RoborazziResults,
 } from './convert/roborazzi';
 export {
+  fromRegCli,
+  type FromRegCliOptions,
+  type RegCliReport,
+} from './convert/reg-cli';
+export {
   fromCtrf,
   toCtrf,
   toCtrfStatus,

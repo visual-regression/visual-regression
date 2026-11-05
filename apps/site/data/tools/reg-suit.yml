@@ -18,11 +18,11 @@ reviewSurface:
 baselineStorage: service
 pricingModel: free
 machineReadableResults: json-report
-manifestSupport: generic
+manifestSupport: converter
 notes:
-  - reg.json lists failed, new, deleted and passed items by file name, without ratios.
+  - reg.json (reg-cli -J) lists failed, new, deleted and passed items by file name, without ratios; fromRegCli in visual-regression-manifest converts it, deleted items have no manifest status.
   - Self-hosted on your own object storage; the notifier plugins post to GitHub, GitLab, Slack and Chatwork.
-lastVerified: '2026-10-13'
+lastVerified: '2026-11-05'
 sources:
   - https://github.com/reg-viz/reg-suit
   - https://github.com/reg-viz/reg-cli
