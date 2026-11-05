@@ -1,0 +1,44 @@
+tool: lost-pixel
+pricingPage: https://www.lost-pixel.com/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: f5ec01a5ff7823c62e8efdab92183a7d23435f37c42bd0d4d57203cad02b9e20
+unit: screenshot
+plans:
+  - name: Free
+    monthly: 0
+    included:
+      snapshots: 7000
+      seats: null
+    overage: null
+    notes:
+      - For open source and small projects; unlimited collaborators.
+  - name: Startup
+    monthly: 100
+    included:
+      snapshots: 40000
+      seats: null
+    overage:
+      per: 1
+      price: 0.006
+  - name: Business
+    monthly: 250
+    included:
+      snapshots: 100000
+      seats: null
+    overage:
+      per: 1
+      price: 0.005
+  - name: Scale
+    monthly: 670
+    included:
+      snapshots: 300000
+      seats: null
+    overage:
+      per: 1
+      price: 0.004
+confidence: low
+notes:
+  - The page shows the paid prices without a billing period; only the Free plan's allowance is stated per month, and the page's own calculator starts at $100.00, so the prices are read as monthly.
+  - The page carries the banner "Lost Pixel is joining Figma. We are sunsetting the product and building what's next."
+  - The open-source engine diffs locally for free; these plans are for the hosted platform.

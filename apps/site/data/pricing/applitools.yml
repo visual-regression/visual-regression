@@ -1,0 +1,28 @@
+tool: applitools
+pricingPage: https://applitools.com/platform-pricing/
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: null
+unit: custom
+plans:
+  - name: Starter
+    monthly: null
+    annualMonthly: 667
+    included:
+      snapshots: null
+      seats: null
+    overage: null
+    notes:
+      - '100,000 component checkpoints or 1,000 page checkpoints; unlimited users; 14-day free trial.'
+  - name: Professional
+    monthly: null
+    notes:
+      - 'Starts at 150 active pages / 1,500 components with unlimited executions; "discuss options".'
+  - name: Enterprise
+    monthly: null
+    notes:
+      - 'Starts at 350 active pages / 1,500 components; dedicated cloud, SSO and custom SLAs included.'
+confidence: medium
+notes:
+  - Applitools meters checkpoints (per component or per page) rather than screenshots per run, so the calculator shows the entry price only.
+  - The pricing page sits behind a bot check that a script cannot pass, so the numbers were read in a browser; `pageHash` stays null.

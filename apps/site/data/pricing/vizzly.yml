@@ -1,0 +1,38 @@
+tool: vizzly
+pricingPage: https://vizzly.dev/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: 2c82116c5b7c169a42c0eebde2609cc8da49effa3029f44f45d2e51ba4c79074
+unit: seat
+plans:
+  - name: Free
+    monthly: 0
+    included:
+      snapshots: null
+      seats: 3
+    overage: null
+    notes:
+      - One private project, 10 GB storage, 30-day retention, one concurrent worker; public projects uncapped.
+  - name: Starter
+    monthly: 12
+    included:
+      snapshots: null
+      seats: 10
+    overage: null
+    notes:
+      - Per user per month; 75 GB storage, 90-day retention, six concurrent workers.
+  - name: Team
+    monthly: 21
+    included:
+      snapshots: null
+      seats: 50
+    overage: null
+    notes:
+      - Per user per month; 250 GB storage, one year of retention, twelve concurrent workers.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - Custom limits, SSO domain auto-join, custom contract.
+confidence: high
+notes:
+  - Priced per team member; the page says there are no per-screenshot fees. Open-source projects are free.

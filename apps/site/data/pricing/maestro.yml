@@ -1,0 +1,27 @@
+tool: maestro
+pricingPage: https://maestro.dev/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: 42eef23e869c5b5cf61569bc7a46686a91d332971916f0057e8a9c89f0225c5e
+unit: custom
+plans:
+  - name: Local
+    monthly: 0
+    notes:
+      - Open source; run on your own devices with Maestro Studio or the CLI.
+  - name: Cloud
+    monthly: 250
+    included:
+      snapshots: null
+      seats: null
+    overage: null
+    notes:
+      - $250 per device per month, by maximum concurrent executions; unlimited hosted test runs.
+      - Web/Chromium devices are priced on request.
+  - name: Enterprise Cloud
+    monthly: null
+    notes:
+      - Custom pricing; SSO, dedicated support, custom contracts.
+confidence: high
+notes:
+  - Maestro Cloud bills per hosted device, not per screenshot, so the calculator shows the per-device price only.
