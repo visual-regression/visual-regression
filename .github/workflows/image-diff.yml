@@ -49,6 +49,8 @@ jobs:
           install-filter: --filter . --filter @visual-regression/image-diff...
       - name: Lint and formatting (cheapest first)
         run: pnpm lint
+      - name: Unit tests
+        run: pnpm --filter @visual-regression/image-diff test
       - name: Build
         run: pnpm --filter @visual-regression/image-diff build
       # Same job as the build, so the deployed output is exactly what was built
