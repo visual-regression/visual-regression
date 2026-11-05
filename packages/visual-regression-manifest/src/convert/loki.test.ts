@@ -44,7 +44,7 @@ describe('fromLoki', () => {
       path.join(loki, 'reference', 'chrome_laptop_Button_Secondary.png'),
     );
     writePng(path.join(loki, 'current', 'chrome_laptop_Button_Secondary.png'));
-    // never compared since `loki update`: only the reference
+    // not shot in this run: only the reference
     writePng(path.join(loki, 'reference', 'chrome_iphone7_Button_Primary.png'));
     // not recorded: only the current image
     writePng(path.join(loki, 'current', 'chrome_laptop_Button_Link.png'));
@@ -66,14 +66,6 @@ describe('fromLoki', () => {
         e.images.diff.path,
       ]),
     ).toEqual([
-      [
-        'chrome_iphone7_Button_Primary',
-        'passed',
-        'chrome.iphone7',
-        '.loki/reference/chrome_iphone7_Button_Primary.png',
-        null,
-        null,
-      ],
       [
         'chrome_laptop_Button_Link',
         'missing-baseline',
@@ -99,7 +91,12 @@ describe('fromLoki', () => {
         null,
       ],
     ]);
-    expect(manifest.entries[2]).toMatchObject({
+    expect(manifest.extra).toEqual({
+      loki: {
+        referencesWithoutShot: ['chrome_iphone7_Button_Primary.png'],
+      },
+    });
+    expect(manifest.entries[1]).toMatchObject({
       comparison: {
         diffRatio: 0,
         maxDiffRatio: 0,

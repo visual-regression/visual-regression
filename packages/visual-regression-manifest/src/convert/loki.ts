@@ -32,7 +32,13 @@ export type FromLokiOptions = Omit<ManifestHeaderInput, 'runner'> & {
   tolerance?: number;
 };
 
-/** What loki's default `fileNameFormatter` makes of a name: non-alphanumerics become `_`. */
+/**
+ * What loki's default `fileNameFormatter` makes of a name: it slugifies with
+ * `transliteration` (`separator: '_'`, `allowedChars: 'a-zA-Z0-9'`), so a run
+ * of other characters becomes one `_` and leading and trailing ones are
+ * dropped. Non-ASCII letters are transliterated by loki (`é` to `e`), which
+ * is not reproduced here.
+ */
 export const lokiSlug = (text: string) =>
   text.replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 
@@ -42,9 +48,11 @@ export const lokiSlug = (text: string) =>
  * `<configuration>_<kind>_<story>.png` per story and configuration. `loki
  * test` writes every story's current image and, where it differs from the
  * reference, its difference image; a current image with no reference is a
- * story that was not recorded (`requireReference`, the default on CI). Loki
- * writes no report, so entries are named after the files; a configuration
- * from `configurations` is split off as the `variant`.
+ * story that was not recorded (`requireReference`, the default on CI). A
+ * reference with no current image was not shot in this run and gets no entry;
+ * those are listed under `extra.loki.referencesWithoutShot`. Loki writes no
+ * report, so entries are named after the files; a configuration from
+ * `configurations` is split off as the `variant`.
  */
 export const fromLoki = ({
   referenceDir = '.loki/reference',
@@ -54,6 +62,7 @@ export const fromLoki = ({
   diffingEngine = 'pixelmatch',
   tolerance,
   runner,
+  extra,
   ...header
 }: FromLokiOptions): Manifest => {
   const projectRoot = header.projectRoot;
@@ -64,17 +73,18 @@ export const fromLoki = ({
     listFiles(dir)
       .filter(isImage)
       .map((file) => toPosix(path.relative(dir, file)));
-  const files = new Set([
-    ...relativeImages(references),
-    ...relativeImages(currents),
-  ]);
+  const currentFiles = relativeImages(currents);
+  const current = new Set(currentFiles);
+  const referencesWithoutShot = relativeImages(references).filter(
+    (rel) => !current.has(rel),
+  );
   const slugs = configurations
     .map((name) => [name, lokiSlug(name)] as const)
     .sort(([, a], [, b]) => b.length - a.length);
   const variantOf = (stem: string) =>
     slugs.find(([, slug]) => stem.startsWith(`${slug}_`))?.[0];
 
-  const triples: ImageTriple[] = [...files].map((rel) => {
+  const triples: ImageTriple[] = currentFiles.map((rel) => {
     const stem = rel.replace(/\.[^./]+$/, '');
     const reference = path.join(references, rel);
     const current = path.join(currents, rel);
@@ -103,6 +113,10 @@ export const fromLoki = ({
   return fromImageTriples({
     ...header,
     runner: runner ?? { name: 'loki' },
+    extra:
+      referencesWithoutShot.length > 0
+        ? { ...extra, loki: { ...extra?.loki, referencesWithoutShot } }
+        : extra,
     triples,
   });
 };
