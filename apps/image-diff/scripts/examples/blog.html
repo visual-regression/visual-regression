@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>The Lumen Journal · Why dashboards lie</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 640px;
+        height: 420px;
+        overflow: hidden;
+      }
+      body {
+        font:
+          13px/1.5 Georgia,
+          'Times New Roman',
+          serif;
+        color: #1f2937;
+        background: #fffdf8;
+      }
+      header {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        border-bottom: 1px solid #e7e2d6;
+        font:
+          500 13px -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+      }
+      header b {
+        font-size: 15px;
+        letter-spacing: 0.02em;
+      }
+      header nav span {
+        margin-left: 22px;
+        color: #6b7280;
+      }
+      .page {
+        display: grid;
+        grid-template-columns: 1fr 210px;
+        gap: 28px;
+        padding: 18px 32px;
+      }
+      .kicker {
+        font:
+          600 11.5px -apple-system,
+          'Segoe UI',
+          Roboto,
+          Arial,
+          sans-serif;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #b45309;
+        margin-bottom: 8px;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.15;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-bottom: 10px;
+      }
+      .by {
+        font:
+          13px -apple-system,
+          'Segoe UI',
+          Roboto,
+          Arial,
+          sans-serif;
+        color: #6b7280;
+        margin-bottom: 18px;
+      }
+      p {
+        margin-bottom: 14px;
+      }
+      .drop::first-letter {
+        font-size: 38px;
+        float: left;
+        line-height: 0.85;
+        padding: 4px 6px 0 0;
+      }
+      blockquote {
+        border-left: 3px solid #b45309;
+        padding: 2px 16px;
+        font-style: italic;
+        color: #4b5563;
+        margin: 4px 0 14px;
+      }
+      .hero {
+        height: 140px;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(160deg, #0f172a, #1e3a8a 55%, #0ea5e9);
+        margin-bottom: 14px;
+      }
+      .hero i {
+        position: absolute;
+        border-radius: 50%;
+      }
+      .hero .sun {
+        width: 62px;
+        height: 62px;
+        right: 22px;
+        top: 16px;
+        background: radial-gradient(
+          circle at 40% 40%,
+          #fde68a,
+          #f59e0b 60%,
+          #d97706
+        );
+        box-shadow: 0 0 24px #f59e0b66;
+      }
+      .hero .hill {
+        width: 320px;
+        height: 320px;
+        left: -90px;
+        top: 82px;
+        background: linear-gradient(180deg, #14532d, #052e16);
+      }
+      .hero .hill2 {
+        width: 260px;
+        height: 260px;
+        left: 90px;
+        top: 100px;
+        background: linear-gradient(180deg, #166534, #064e3b);
+      }
+      .cap {
+        font:
+          12px -apple-system,
+          'Segoe UI',
+          Roboto,
+          Arial,
+          sans-serif;
+        color: #6b7280;
+        margin-bottom: 12px;
+      }
+      aside h3 {
+        font:
+          600 12px -apple-system,
+          'Segoe UI',
+          Roboto,
+          Arial,
+          sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b7280;
+        margin-bottom: 10px;
+      }
+      aside .post {
+        display: flex;
+        gap: 10px;
+        padding: 10px 0;
+        border-top: 1px solid #e7e2d6;
+        font:
+          13px/1.4 -apple-system,
+          'Segoe UI',
+          Roboto,
+          Arial,
+          sans-serif;
+      }
+      aside .post i {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 6px;
+      }
+      aside .post span {
+        color: #6b7280;
+        display: block;
+        font-size: 11.5px;
+        margin-top: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <b>THE LUMEN JOURNAL</b>
+      <nav>
+        <span>Engineering</span><span>Product</span><span>Culture</span
+        ><span>Subscribe</span>
+      </nav>
+    </header>
+    <div class="page">
+      <article>
+        <div class="kicker">Engineering · 6 min read</div>
+        <h1>Why your dashboard lies, and what a diff can do about it</h1>
+        <div class="by">By Priya Natarajan · November 3, 2026</div>
+        <p class="drop">
+          Every dashboard we shipped looked right on the day it shipped. The
+          trouble started the week after, when a font fell back, a chart library
+          rounded differently, and a card quietly grew eight pixels taller.
+          Nobody noticed, because nobody looks at the same screen twice.
+        </p>
+        <blockquote>
+          A screenshot is a promise about what the user saw. A diff is how you
+          find out whether you kept it.
+        </blockquote>
+        <p>
+          Pixel comparison catches all of it, and then some. The craft is in
+          choosing which differences matter.
+        </p>
+      </article>
+      <aside>
+        <div class="hero">
+          <i class="sun"></i><i class="hill"></i><i class="hill2"></i>
+        </div>
+        <div class="cap">
+          Dusk over the valley. Gradients and soft edges are where JPEG shows
+          its seams.
+        </div>
+        <h3>More from the journal</h3>
+        <div class="post">
+          <i style="background: linear-gradient(135deg, #7c3aed, #c4b5fd)"></i>
+          <div>Masks are not a workaround<span>Product · 4 min</span></div>
+        </div>
+        <div class="post">
+          <i style="background: linear-gradient(135deg, #0d9488, #99f6e4)"></i>
+          <div>Fifteen minutes with SSIM<span>Engineering · 8 min</span></div>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>
