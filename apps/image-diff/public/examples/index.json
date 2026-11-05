@@ -1,0 +1,58 @@
+[
+  {
+    "id": "typo",
+    "name": "Typo",
+    "description": "One letter in the page heading changed: \"Overview\" became \"Overwiew\". A real regression that is only a few dozen pixels big.",
+    "lookFor": "A tight threshold keeps it; a loose one, or a hash, calls the pages the same.",
+    "engine": "pixelmatch"
+  },
+  {
+    "id": "button-color",
+    "name": "Button color",
+    "description": "The primary button and the selected payment method drifted by three RGB points per channel (#4f46e5 → #4c49e2), the trace a changed design token leaves.",
+    "lookFor": "Exact pixels and Resemble.js (ignore: nothing) flag every button pixel; pixelmatch at its default threshold, Resemble.js with ignore: less and SSIM let it pass. Lower the pixelmatch threshold to 0 to catch it.",
+    "engine": "exact"
+  },
+  {
+    "id": "layout-shift",
+    "name": "Layout shift",
+    "description": "The second stat card moved down by 4 px. Nothing inside it changed.",
+    "lookFor": "Pixel engines paint the card edges and its text twice (old and new position); SSIM stays near 1 because the structure is the same, only moved. The blink view shows the move at once.",
+    "engine": "ssim"
+  },
+  {
+    "id": "antialiasing",
+    "name": "Anti-aliasing",
+    "description": "The content was nudged by 0.3 px. Boxes snap back to the same pixels, but every glyph is rasterized at a new sub-pixel offset: pure rendering noise.",
+    "lookFor": "pixelmatch with anti-aliasing detection (includeAA off) and Resemble.js with ignore: antialiasing drop most of it; turn includeAA on to see the noise counted.",
+    "engine": "pixelmatch"
+  },
+  {
+    "id": "dynamic-content",
+    "name": "Dynamic content",
+    "description": "The clock advanced a minute, the online counter moved, and a different user is signed in (avatar and name). Content that changes on every run.",
+    "lookFor": "Every engine reports it, correctly: these pixels did change. The fix is a mask over the dynamic regions in your tool, not a looser threshold.",
+    "engine": "pixelmatch"
+  },
+  {
+    "id": "dark-mode",
+    "name": "Dark mode",
+    "description": "The same page rendered with the dark theme. Almost every pixel differs.",
+    "lookFor": "Pixel mismatch near 100%, an SSIM near 0, and even the perceptual hash, blind to small changes, has most of its bits flipped.",
+    "engine": "exact"
+  },
+  {
+    "id": "compression",
+    "name": "JPEG compression",
+    "description": "The actual image is the same page saved as a JPEG at quality 60 and read back. No real change, but almost no pixel survives the codec untouched.",
+    "lookFor": "Exact pixels and Resemble.js report most of the image; pixelmatch at threshold 0 does too. SSIM stays close to 1 because the structure is intact. Look at the gradient and the serif text for the artifacts.",
+    "engine": "ssim"
+  },
+  {
+    "id": "missing-section",
+    "name": "Missing section",
+    "description": "The \"Notifications\" section is gone, so everything below it moved up and the full-page screenshot got shorter: the two images have different sizes.",
+    "lookFor": "pixelmatch and SSIM refuse different sizes on their own; the tool pads the shorter image so they can run. Resemble.js reports isSameDimensions: false.",
+    "engine": "resemble"
+  }
+]
