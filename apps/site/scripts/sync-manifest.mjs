@@ -5,10 +5,10 @@
  *
  * - `public/schema/v1.json` is a copy of the package's `src/schema.json`
  *   (the schema's `$id` points at that URL).
- * - `content/3.manifest/<n>.<slug>.md` pages are the `##` sections of the
+ * - `content/5.manifest/<n>.<slug>.md` pages are the `##` sections of the
  *   package README, one page each, with the HTML header and the table of
  *   contents stripped and the intra-document links rewritten.
- * - `content/3.manifest/<n>.schema.md` is a field-by-field reference built
+ * - `content/5.manifest/<n>.schema.md` is a field-by-field reference built
  *   from the schema.
  *
  * Generated files carry `generated: true` in their frontmatter and are
@@ -25,7 +25,7 @@ const readme = fs.readFileSync(path.join(pkg, 'README.md'), 'utf8');
 const schema = JSON.parse(
   fs.readFileSync(path.join(pkg, 'src', 'schema.json'), 'utf8'),
 );
-const contentDir = path.join(site, 'content', '3.manifest');
+const contentDir = path.join(site, 'content', '5.manifest');
 
 // 1. the schema, at the URL its `$id` names
 const schemaOut = path.join(site, 'public', 'schema', 'v1.json');
@@ -204,5 +204,5 @@ for (const [name, def] of Object.entries(schema.$defs ?? {})) {
 fs.writeFileSync(path.join(contentDir, '8.schema.md'), ref);
 
 console.log(
-  `sync-manifest: wrote public/schema/v1.json and ${Object.keys(PAGES).length + 1} pages into content/3.manifest`,
+  `sync-manifest: wrote public/schema/v1.json and ${Object.keys(PAGES).length + 1} pages into content/5.manifest`,
 );
