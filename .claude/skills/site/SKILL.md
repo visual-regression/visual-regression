@@ -9,7 +9,7 @@ Docus (Nuxt) site, statically generated (`nuxt generate`) and deployed to Cloudf
 
 ## Content layout
 
-- `content/1.learn/*`, `4.compare.md`, `7.privacy.md`, `index.md` — hand-written.
+- `content/1.learn/*`, `2.cookbook/*` (stabilization recipes, zero-padded prefixes so the sidebar sorts past 9), `3.deep-dives/*`, `4.compare.md`, `7.privacy.md`, `index.md` — hand-written.
 - `content/5.manifest/` and `content/6.viewer/` — hand-written `1.index.md` plus **generated** pages (`[2-9].*.md`, `generated: true` frontmatter, gitignored, rewritten on every run). `public/schema/` is generated too.
 - Generation: `scripts/sync-manifest.mjs` and `scripts/sync-viewer.mjs` turn each package README (and the schema) into pages: one page per `##` section, with the HTML header, TOC and License section stripped and `https://visual-regression.dev/...` links rewritten to site paths. **Edit the package README or schema, never the generated files.** Section titles are mapped in the script's `PAGES` table.
 - `data/tools/*.yml` — one file per tool, rendered by `ToolsCompare.vue` and `DemoToolFinder.vue` through the shared `ToolList.vue`. Schema/fields: copy an existing file (`pixsame.yml` is the maintainers' own).
