@@ -1,0 +1,52 @@
+{
+  "total": 3,
+  "totalPassed": 1,
+  "totalFailed": 2,
+  "totalSuites": 1,
+  "suites": [
+    {
+      "name": "box.cy.js",
+      "path": "cypress/e2e/image-diff/box.cy.js",
+      "tests": [
+        {
+          "status": "pass",
+          "name": "box.cy-box-a",
+          "percentage": 0,
+          "failureThreshold": 0,
+          "specPath": "cypress/e2e/image-diff/box.cy.js",
+          "specFilename": "box.cy.js",
+          "baselinePath": "cypress/image-diff/cypress-image-diff-screenshots/baseline/box.cy-box-a.png",
+          "diffPath": "",
+          "comparisonPath": "cypress/image-diff/cypress-image-diff-screenshots/comparison/box.cy-box-a.png"
+        },
+        {
+          "status": "fail",
+          "name": "box.cy-box-b",
+          "percentage": 1,
+          "failureThreshold": 0,
+          "specPath": "cypress/e2e/image-diff/box.cy.js",
+          "specFilename": "box.cy.js",
+          "baselinePath": "cypress/image-diff/cypress-image-diff-screenshots/baseline/box.cy-box-b.png",
+          "diffPath": "cypress/image-diff/cypress-image-diff-screenshots/diff/box.cy-box-b.png",
+          "comparisonPath": "cypress/image-diff/cypress-image-diff-screenshots/comparison/box.cy-box-b.png"
+        },
+        {
+          "status": "fail",
+          "name": "box.cy-box-c",
+          "failureThreshold": 0,
+          "specPath": "cypress/e2e/image-diff/box.cy.js",
+          "specFilename": "box.cy.js",
+          "baselinePath": "",
+          "diffPath": "",
+          "comparisonPath": "cypress/image-diff/cypress-image-diff-screenshots/comparison/box.cy-box-c.png"
+        }
+      ]
+    }
+  ],
+  "startedAt": "2026-11-05T00:59:13.347Z",
+  "endedAt": "2026-11-05T00:59:14.558Z",
+  "duration": 1211,
+  "browserName": "electron",
+  "browserVersion": "146.0.7680.216",
+  "cypressVersion": "16.2.0"
+}

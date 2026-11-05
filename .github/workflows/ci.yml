@@ -227,6 +227,7 @@ jobs:
           path: |
             examples/converters/cypress/cypress/snapshots
             examples/converters/cypress/cypress/image-snapshot
+            examples/converters/cypress/cypress/image-diff
             examples/converters/cypress/cypress/e2e/pixsame/__image_snapshots__
             examples/converters/cypress/visual-regression-manifest.*.json
             examples/converters/harness/test-results
