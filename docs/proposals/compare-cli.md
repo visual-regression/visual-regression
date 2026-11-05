@@ -46,6 +46,12 @@ Each stage is one interface, each has one default implementation, and a plugin c
 - **write**: the layout names and places the baseline, actual and diff files (`<name>.png`, `<name>.actual.png`, `<name>.diff.png` as the manifest convention; a pixsame layout with `_#n` counters and `{platform}` tokens; a Playwright-like layout with `-chromium-linux` suffixes), and the manifest writer records the entry.
 - **report**: reporters consume entries as they are decided and the summary at the end.
 
+### Concurrency
+
+Only **decode** and **engine comparison** run in worker threads, because they are the CPU-bound stages and their inputs and outputs are plain data (bytes in, a measurement and an optional diff image out). Everything else stays on the main thread: discover, pair, **decide**, **write**, **report** and the manifest. The hooks (`decide`, `beforeWrite`, a custom `Store`) are closures and cannot cross a worker boundary, and `ManifestWriter` is single-writer per process (it rewrites one file atomically), so the main thread owns the writer and receives each measurement as a worker finishes it.
+
+The consequence for plugins is one rule: an engine that should run in a worker must be given **by module id** (`--engine odiff`, `--engine ./my-engine.mjs`), so each worker can load it itself. A `DiffEngine` passed as an object in the programmatic API runs on the main thread, and `--concurrency` then only parallelizes decoding. Engine options must be structured-cloneable for the same reason.
+
 ## CLI
 
 ```
@@ -60,7 +66,7 @@ visual-regression-compare [compare] <actual-dir> --baseline <dir> [--diff <dir>]
   --manifest <path>                 default: <actual-dir>/visual-regression-manifest.compare.json
   --runner <name> --variant <id> --platform <os>/<browser>  metadata recorded on every entry
   --report console,viewer,ctrf,github-summary[:<path>]     default: console
-  --concurrency <n>                 default: cpu count, in worker threads
+  --concurrency <n>                 default: cpu count, for decode and compare only (see Concurrency)
   --config <file>                   visual-regression.config.{ts,mjs,json}, auto-detected
   --fail-on failed,missing-baseline default: both; exit code 1 when any entry matches
 
@@ -72,7 +78,11 @@ visual-regression-compare approve --manifest <path> [<name>...|--all|--test <fil
   deletes the actual and diff files, records `approved`, prints the files to commit
 ```
 
-`approve` is the piece the GitHub App, a PR comment bot or a reviewer at a terminal needs, and it works on any manifest, not only ones this CLI wrote. It is the same operation the manifest README describes ("Copying `images.actual.path` over `images.baseline.path` approves them").
+`approve` is a thin CLI over the manifest package, not a second implementation. It reads the manifests with `readManifest`, combines several with `mergeManifests`, takes the entries to act on from `run.needsHuman` (or `selectEntries` for `<name>...`, `--test` and `--all`), moves each file, and records the result with `writer.approve({ actualPath })`. It works on any manifest, not only ones this CLI wrote, and it is the same operation the manifest README describes ("Copying `images.actual.path` over `images.baseline.path` approves them"). The GitHub App calls the same functions.
+
+- **Stale baselines.** An entry's `hashes.baseline` is the hash of the baseline the run compared against. Before copying, `approve` hashes the baseline file now on disk; when it differs (the baseline changed since the run, for example another approval merged first), it skips that entry, reports it as stale and exits non-zero, because the reviewer approved a diff against pixels that are no longer the baseline. `--force` overrides. An entry with no recorded baseline hash (`missing-baseline`) is stale only if a baseline file has appeared since. An entry whose `hashes.actual` no longer matches the actual file on disk is skipped the same way.
+- **Several manifests.** `mergeManifests` keeps one entry per screenshot, a later attempt winning. When the manifests have different `projectRoot` values (a monorepo, or CI jobs on different checkouts), each entry keeps resolving its paths against its own manifest's root; `approve` runs from the repository root, uses `repoPaths` and refuses entries whose `unapprovableReason` is set (paths outside the repository, no actual kept), listing them with the merge `warnings`. Two entries that write the same baseline (`collidesWith`) are never approved implicitly: the reviewer must name one.
+- **`baselineWritten`.** It records whether the working tree changed, not what the reviewer decided. `approve` writes `status: approved` with `baselineWritten: true` because the baseline file was replaced. An entry skipped as stale or unapprovable is left untouched (`baselineWritten` stays as it was), and `compare --on-missing fail` entries are `false` until something writes them. The files to commit printed by the command are exactly the entries with `baselineWritten: true` that it just wrote.
 
 Exit code, console output and the GitHub job summary reporter make the CLI usable in a workflow with no other tooling:
 
@@ -230,6 +240,12 @@ What stays open on purpose: the plugin API is where the hosted product different
 2. `0.2`: `approve` command, `odiff` and `ssim` engines, `viewer` and `ctrf` and `github-summary` reporters, config file, the Playwright and pixsame layouts.
 3. `0.3`: plugin API frozen, documented on the site (`/compare-cli`), pixsame's Playwright package migrates first (smallest surface), then the Cypress plugin behind its next major.
 4. `1.0` once two external tools write a manifest through it, or the three pixsame runners share it.
+
+## Alternatives considered
+
+- **Extend `visual-regression-manifest` with a compare entry point.** One package fewer, and the manifest package already holds a PNG reader and limits. But that package is a format with a small, dependency-light surface that other tools import to read or write results; adding an engine, codecs, workers, a plugin API and a CLI would give every consumer (the viewer, converters, third parties) that weight and put the format's stability on the same release train as a fast-moving compare engine. The proposal keeps the format package as the lower layer and builds on its public API only. The cost is two packages to version and document, which release-please already handles.
+- **Wrap an existing engine or runner.** Playwright's comparator is tied to its runner and naming; `reg-cli` already does directory compare with a report but has its own report format, no plugin hooks, and no per-entry manifest; `odiff-cli` is fast and well maintained but is one engine with no pairing, policy or manifest. Wrapping one would be less code at first and inherit its maintenance. It would also tie the hook API (decide, store, layout) to that tool's model, and the engine is the part users most want to swap. The proposal therefore treats these as engines and conventions to adapt (`odiff` ships as an engine, the Playwright layout as a layout), not as the foundation. The honest cost is that we own the pairing, policy and worker code that these tools already have in some form.
+- **Do nothing; keep per-tool copies.** Zero new surface, no migration risk, and each runner stays free to diverge. But the same padding, threshold, naming and manifest-writing logic already exists in several runner integrations and drifts between them (different size-mismatch behavior, different diff ratios for the same pair), and a hosted service has no single place to hook approvals. The cost of the copies grows with each runner added, so the proposal accepts the up-front work and the 0.x instability to stop it.
 
 ## Open questions
 
