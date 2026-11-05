@@ -545,7 +545,7 @@ const manifest = fromLoki({
 });
 ```
 
-A current image with a difference image is `failed`, without one `passed`, and without a reference `missing-baseline` (`requireReference`, Loki's default on CI; elsewhere it writes the reference and the story passes). Entries are named after the files; a recognized configuration becomes the `variant`. This converter is the one not proven against a real run: Loki needs Storybook plus Chrome, which the converter examples do not drive, so its unit test uses the documented layout.
+A current image with a difference image is `failed`, without one `passed`, and without a reference `missing-baseline` (`requireReference`, Loki's default on CI; elsewhere it writes the reference and the story passes). A reference with no current image was not shot in this run and gets no entry; those files are listed under `extra.loki.referencesWithoutShot`. Entries are named after the files; a recognized configuration becomes the `variant`. File names follow the slug of Loki's default `fileNameFormatter` (checked against its source, not against a run); a custom formatter needs no `configurations`, the entries just get no `variant`. This converter is the one not proven against a real run: Loki needs Storybook plus Chrome, which the converter examples do not drive, so its unit test uses the documented layout.
 
 ### Plain image files
 
