@@ -4,6 +4,8 @@ dist
 CHANGELOG.md
 pnpm-lock.yaml
 patches
+# real tool output captured by examples/converters
+packages/*/__tests__/fixtures
 .release-please-manifest.json
 
 # site

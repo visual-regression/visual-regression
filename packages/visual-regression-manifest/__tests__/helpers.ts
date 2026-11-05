@@ -2,9 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { deflateSync } from 'zlib';
 import { dir, setGracefulCleanup } from 'tmp-promise';
+import { expect } from 'vitest';
+// the harness imports the package by name; vitest.config.mts aliases that to src/
+import { checkManifest } from '../../../examples/converters/harness/src/assert-manifest.js';
 import { MANIFEST_SPEC_VERSION } from '../src/constants';
 import { summarize } from '../src/summary';
-import type { Manifest, ManifestEntry } from '../src/types';
+import type { Manifest, ManifestEntry, ManifestStatus } from '../src/types';
 
 setGracefulCleanup();
 
@@ -155,3 +158,49 @@ export const manifest = (
   entries,
   ...overrides,
 });
+
+export type RealOutputExpectations = {
+  statuses: Record<string, ManifestStatus>;
+  absent: string[];
+  reportsDiffRatio: boolean;
+};
+
+/**
+ * The output a tool really wrote, captured by `examples/converters` (see
+ * `E2E_CAPTURE` in its README): one project folder per compare mode, with the
+ * statuses that run expects in `expectations.json`.
+ */
+export const realOutput = (tool: string) => {
+  const dir = path.join(__dirname, 'fixtures', tool);
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort()
+    .map((mode) => ({
+      mode,
+      root: path.join(dir, mode),
+      expectations: JSON.parse(
+        fs.readFileSync(path.join(dir, mode, 'expectations.json'), 'utf8'),
+      ) as RealOutputExpectations,
+    }));
+};
+
+/**
+ * What every converter must get right about captured output: the checks the
+ * examples' harness runs on the live output, applied to the fixture.
+ */
+export const expectRealOutput = (
+  manifest: Manifest,
+  root: string,
+  { statuses, absent, reportsDiffRatio }: RealOutputExpectations,
+) => {
+  const checks = checkManifest(
+    manifest,
+    { statuses, absent },
+    { projectRoot: root, reportsDiffRatio },
+  );
+  expect(
+    checks.filter((c) => c.error).map((c) => `${c.name}: ${c.error}`),
+  ).toEqual([]);
+};
