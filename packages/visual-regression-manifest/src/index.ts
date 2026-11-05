@@ -127,6 +127,7 @@ export {
   type LostPixelMeta,
   type LostPixelMetaItem,
 } from './convert/lost-pixel';
+export { fromLoki, lokiSlug, type FromLokiOptions } from './convert/loki';
 export {
   fromRegCli,
   type FromRegCliOptions,

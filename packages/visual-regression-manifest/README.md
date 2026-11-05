@@ -291,7 +291,7 @@ writer.reset(); // start of a run: forget everything, delete the file
 
 ## Converting to and from other formats
 
-Every converter below is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+Every converter below but Loki's is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
 
 ### CTRF
 
@@ -528,6 +528,24 @@ const manifest = fromLostPixel({
 ```
 
 A current image without a baseline is `missing-baseline`; with a baseline, `meta.json` decides between `passed` and `failed` (and carries the `diffRatio`), or without it the difference image does. After `lost-pixel update`, which writes the baselines of changed and new shots, pass `update: true`: a changed shot is `updated` and a shot missing from `meta.json` (it had no baseline to compare against) is `created`; without the meta file a created baseline looks like a passed shot. A baseline with no current image was not shot in this run and gets no entry (listed under `extra.lostPixel.baselinesWithoutShot`). The breakpoint and browser labels Lost Pixel puts in file names (`home__[w320px|chromium]`) become the entry's `variant` and `platform.browser`.
+
+### Loki
+
+Loki keeps `.loki/reference/`, `.loki/current/` and `.loki/difference/` with one `<configuration>_<kind>_<story>.png` per story and configuration, and writes no report:
+
+```ts
+import { fromLoki } from 'visual-regression-manifest';
+
+const manifest = fromLoki({
+  projectRoot: process.cwd(),
+  configurations: ['chrome.laptop', 'chrome.iphone7'], // the keys of your loki `configurations`
+  // tolerance: 2.3, // your chromeTolerance (pixelmatch's color threshold, in percent)
+  // diffingEngine: 'looks-same', // when not pixelmatch, whose limit is "no differing pixel" (maxDiffRatio 0)
+  // referenceDir, currentDir, differenceDir: when changed
+});
+```
+
+A current image with a difference image is `failed`, without one `passed`, and without a reference `missing-baseline` (`requireReference`, Loki's default on CI; elsewhere it writes the reference and the story passes). Entries are named after the files; a recognized configuration becomes the `variant`. This converter is the one not proven against a real run: Loki needs Storybook plus Chrome, which the converter examples do not drive, so its unit test uses the documented layout.
 
 ### Plain image files
 
