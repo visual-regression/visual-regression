@@ -1,0 +1,9 @@
+{
+  "statuses": {
+    "box-a": "passed",
+    "box-b": "updated",
+    "box-c": "created"
+  },
+  "absent": [],
+  "reportsDiffRatio": true
+}

@@ -122,6 +122,12 @@ export {
   type RoborazziResults,
 } from './convert/roborazzi';
 export {
+  fromLostPixel,
+  type FromLostPixelOptions,
+  type LostPixelMeta,
+  type LostPixelMetaItem,
+} from './convert/lost-pixel';
+export {
   fromRegCli,
   type FromRegCliOptions,
   type RegCliReport,
