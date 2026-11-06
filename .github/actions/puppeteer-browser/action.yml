@@ -1,0 +1,31 @@
+name: Puppeteer browser
+description: Restore the Chrome build for the puppeteer version a workspace package resolves (through the package that depends on it, BackstopJS by default); download it only when that version changed.
+
+inputs:
+  package:
+    description: The workspace package to resolve from.
+    required: true
+  through:
+    description: The dependency of that package whose own puppeteer dependency decides the version.
+    required: false
+    default: backstopjs
+
+runs:
+  using: composite
+  steps:
+    - id: puppeteer
+      shell: bash
+      run: |
+        dir=$(pnpm --filter ${{ inputs.package }} exec node -p "require('path').dirname(require.resolve('puppeteer/package.json', { paths: [require.resolve('${{ inputs.through }}/package.json')] }))")
+        echo "dir=$dir" >> "$GITHUB_OUTPUT"
+        echo "version=$(node -p "require('$dir/package.json').version")" >> "$GITHUB_OUTPUT"
+    - name: Cache puppeteer's Chrome 🧭 (keyed by the exact puppeteer version, no fallback)
+      id: cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/puppeteer
+        key: puppeteer-${{ runner.os }}-${{ steps.puppeteer.outputs.version }}
+    # puppeteer's postinstall is disabled in pnpm-workspace.yaml; this is its install script
+    - if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: node ${{ steps.puppeteer.outputs.dir }}/install.mjs

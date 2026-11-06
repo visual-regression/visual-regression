@@ -4,6 +4,10 @@ dist
 CHANGELOG.md
 pnpm-lock.yaml
 patches
+# real tool output captured by examples/converters
+packages/*/__tests__/fixtures
+# Gradle and Kotlin are not prettier's
+examples/converters/roborazzi
 .release-please-manifest.json
 
 # site

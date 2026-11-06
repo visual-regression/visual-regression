@@ -1,0 +1,10 @@
+{
+  "name": "@visual-regression/e2e-backstopjs",
+  "private": true,
+  "type": "module",
+  "description": "BackstopJS for real: `backstop reference` and `backstop test` with the JSON report, converted by fromBackstopReport.",
+  "devDependencies": {
+    "backstopjs": "6.3.25",
+    "visual-regression-manifest": "workspace:*"
+  }
+}

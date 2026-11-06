@@ -1,0 +1,11 @@
+{
+  "name": "@visual-regression/e2e-playwright",
+  "private": true,
+  "type": "module",
+  "description": "Playwright's toHaveScreenshot for real: its JSON report goes through fromPlaywrightReport, the CTRF report of playwright-ctrf-json-reporter through fromCtrf in lenient mode.",
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "playwright-ctrf-json-reporter": "0.2.0",
+    "visual-regression-manifest": "workspace:*"
+  }
+}

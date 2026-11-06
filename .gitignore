@@ -40,3 +40,21 @@ coverage
 
 # Wrangler
 .wrangler/
+
+# examples/converters: what the real tools write when the harness runs them
+examples/**/test-results/
+examples/**/__image_snapshots__/
+examples/**/__received_output__/
+examples/**/__diff_output__/
+examples/**/visual-regression-manifest*.json
+examples/**/*-snapshots/
+examples/**/__screenshots__/
+examples/**/.vitest/
+examples/**/cypress/snapshots/
+examples/**/cypress/screenshots/
+examples/**/cypress/videos/
+examples/**/cypress/image-snapshot/
+examples/**/backstop_data/
+examples/converters/roborazzi/**/build/
+examples/converters/roborazzi/.gradle/
+examples/converters/roborazzi/.kotlin/

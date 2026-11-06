@@ -1,10 +1,64 @@
 import path from 'path';
 import { describe, expect, it } from 'vitest';
-import { tmpDir, writePng } from '../../__tests__/helpers';
+import {
+  expectRealOutput,
+  fixtureJson,
+  must,
+  realOutput,
+  tmpDir,
+  writePng,
+} from '../../__tests__/helpers';
 import { validateManifest } from '../reader';
 import { fromRoborazziResults, type RoborazziResults } from './roborazzi';
 
 describe('fromRoborazziResults', () => {
+  // captured by examples/converters/roborazzi in CI: Roborazzi's Gradle tasks with a
+  // Robolectric test, one record run, one golden deleted, one compare run (and a
+  // second record run for `record`, where every image is reported as recorded)
+  describe.each(realOutput('roborazzi'))(
+    'real output of a roborazzi $mode run',
+    ({ mode, root, expectations }) => {
+      it('converts the results summary, mapping its absolute paths into the module', () => {
+        const results = fixtureJson<RoborazziResults>(
+          root,
+          'lib/build/test-results/roborazzi/debug/results-summary.json',
+        );
+        const manifest = fromRoborazziResults(results, {
+          projectRoot: root,
+          ci: null,
+          maxDiffRatio: 0,
+        });
+        expectRealOutput(manifest, root, expectations);
+        expect(manifest.runner).toEqual({ name: 'roborazzi' });
+        expect(manifest.entries.map((e) => e.name).sort()).toEqual([
+          'box-a',
+          'box-b',
+          'box-c',
+        ]);
+        if (mode === 'compare') {
+          const failed = must(
+            manifest.entries.find((e) => e.status === 'failed'),
+          );
+          expect(failed.images).toMatchObject({
+            baseline: { path: 'lib/build/outputs/roborazzi/box-b.png' },
+            actual: { path: 'lib/build/outputs/roborazzi/box-b_actual.png' },
+            diff: { path: 'lib/build/outputs/roborazzi/box-b_compare.png' },
+          });
+          const added = must(
+            manifest.entries.find((e) => e.status === 'missing-baseline'),
+          );
+          expect(added.images.actual.path).toBe(
+            'lib/build/outputs/roborazzi/box-c_actual.png',
+          );
+        } else {
+          for (const entry of manifest.entries) {
+            expect(entry.baselineWritten, entry.name).toBe(true);
+          }
+        }
+      });
+    },
+  );
+
   it('converts recorded, added, changed and unchanged results', async () => {
     const root = await tmpDir();
     const out = path.join(root, 'build', 'outputs', 'roborazzi');
