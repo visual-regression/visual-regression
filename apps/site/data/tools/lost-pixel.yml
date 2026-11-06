@@ -23,10 +23,10 @@ reviewSurface:
 baselineStorage: repo-or-service
 pricingModel: freemium
 machineReadableResults: images-only
-manifestSupport: generic
+manifestSupport: converter
 notes:
-  - The engine writes .lostpixel/baseline, current and difference folders; no JSON summary was found.
-lastVerified: '2026-10-13'
+  - The engine writes .lostpixel/baseline, current and difference folders; with LOST_PIXEL_GENERATE_META=true also current/meta.json with each shot's pixel difference. fromLostPixel in visual-regression-manifest reads both.
+lastVerified: '2026-11-05'
 sources:
   - https://www.lost-pixel.com/blog/lost-pixel-team-is-joining-figma
   - https://docs.lost-pixel.com/user-docs/api-reference/lost-pixel.config.js-or-ts.md

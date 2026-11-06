@@ -1,0 +1,9 @@
+{
+  "name": "@visual-regression/e2e-roborazzi",
+  "private": true,
+  "type": "module",
+  "description": "Roborazzi for real: a Gradle module whose Robolectric test captures three views, recorded and compared with the Roborazzi tasks, converted by fromRoborazziResults.",
+  "devDependencies": {
+    "visual-regression-manifest": "workspace:*"
+  }
+}

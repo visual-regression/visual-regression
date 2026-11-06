@@ -102,6 +102,13 @@ export {
   type FromCypressVisualRegressionOptions,
 } from './convert/cypress-visual-regression';
 export {
+  fromCypressImageDiff,
+  type CypressImageDiffReport,
+  type CypressImageDiffSuite,
+  type CypressImageDiffTest,
+  type FromCypressImageDiffOptions,
+} from './convert/cypress-image-diff';
+export {
   fromBackstopReport,
   type BackstopPair,
   type BackstopReport,
@@ -114,6 +121,18 @@ export {
   type RoborazziResult,
   type RoborazziResults,
 } from './convert/roborazzi';
+export {
+  fromLostPixel,
+  type FromLostPixelOptions,
+  type LostPixelMeta,
+  type LostPixelMetaItem,
+} from './convert/lost-pixel';
+export { fromLoki, lokiSlug, type FromLokiOptions } from './convert/loki';
+export {
+  fromRegCli,
+  type FromRegCliOptions,
+  type RegCliReport,
+} from './convert/reg-cli';
 export {
   fromCtrf,
   toCtrf,

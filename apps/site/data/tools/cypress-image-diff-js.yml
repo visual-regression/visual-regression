@@ -14,9 +14,10 @@ reviewSurface:
 baselineStorage: repo
 pricingModel: free
 machineReadableResults: json-report
-manifestSupport: generic
+manifestSupport: converter
 notes:
-  - The JSON report lists suites and tests with baselinePath, comparisonPath, diffPath, percentage and failureThreshold.
-lastVerified: '2026-10-13'
+  - The JSON report lists suites and tests with baselinePath, comparisonPath, diffPath, percentage and failureThreshold; fromCypressImageDiff in visual-regression-manifest converts it.
+  - The reported percentage is the square root of the share of differing pixels, and the threshold is on the same scale.
+lastVerified: '2026-11-05'
 sources:
   - https://github.com/uktrade/cypress-image-diff

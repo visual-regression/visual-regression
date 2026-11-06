@@ -1,0 +1,12 @@
+{
+  "box-a": {
+    "pixelDifference": 0,
+    "pixelDifferencePercentage": 0,
+    "isWithinThreshold": true
+  },
+  "box-b": {
+    "pixelDifference": 9600,
+    "pixelDifferencePercentage": 0.15,
+    "isWithinThreshold": false
+  }
+}
