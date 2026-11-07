@@ -1,11 +1,14 @@
-// Three Cypress visual testing plugins in one project, one config file each:
+// Four Cypress visual testing plugins in one project, one config file each:
 // - cypress-visual-regression: cypress/snapshots/{base,actual,diff}/<spec>/<name>.png
 // - @simonsmith/cypress-image-snapshot: <screenshotsFolder>/../snapshots/<spec>/<name>.snap.png,
 //   failures in __diff_output__/<name>.diff.png next to them
+// - cypress-image-diff-js: <ROOT_DIR>/cypress-image-diff-screenshots/{baseline,comparison,diff}/
+//   <spec name>-<name>.png and a JSON report under <ROOT_DIR>/cypress-image-diff-html-report/
 // - pixsame: <spec dir>/__image_snapshots__/<title>_#0.png with .actual and .diff siblings
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  fromCypressImageDiff,
   fromCypressVisualRegression,
   fromImageTriples,
   fromJestImageSnapshots,
@@ -13,11 +16,17 @@ import {
 
 export const name = 'cypress';
 export const projectRoot = import.meta.dirname;
-/** The plugins compare on their own; the files carry no ratio. */
+/** The plugins compare on their own; the files carry no ratio (cypress-image-diff-js's report does). */
 export const reportsDiffRatio = false;
 
 const cvrDir = path.join(projectRoot, 'cypress', 'snapshots');
 const imageSnapshotDir = path.join(projectRoot, 'cypress', 'image-snapshot');
+const imageDiffDir = path.join(projectRoot, 'cypress', 'image-diff');
+const imageDiffReport = path.join(
+  imageDiffDir,
+  'cypress-image-diff-html-report',
+  'report.json',
+);
 const pixsameDir = path.join(
   projectRoot,
   'cypress',
@@ -30,6 +39,9 @@ const pixsameDir = path.join(
  * `cvr`: a regression run; a missing base leaves the actual and fails.
  * `image-snapshot` with requireSnapshots: a missing snapshot fails and writes nothing;
  * `image-snapshot-write` without it: the snapshot is written and the test passes.
+ * `image-diff` with FAIL_ON_MISSING_BASELINE: a missing baseline fails and the report
+ * leaves its path empty; `image-diff-copy` (the default): the comparison is copied to
+ * the baseline and the test passes.
  * `pixsame` with createMissingImages off: a missing baseline fails; `pixsame-create`
  * (the default): it is written and the test passes.
  */
@@ -37,10 +49,14 @@ export const modes = [
   'cvr',
   'image-snapshot',
   'image-snapshot-write',
+  'image-diff',
+  'image-diff-copy',
   'pixsame',
   'pixsame-create',
 ];
 const pixsameName = (base) => `${base}_#0`;
+/** cypress-image-diff-js prefixes the spec file name (without `.js`). */
+const imageDiffName = (base) => `box.cy-${base}`;
 /** @type {import('../harness/src/scenario.js').Scenario['expectations']} */
 export const expectations = {
   cvr: {
@@ -57,6 +73,20 @@ export const expectations = {
   'image-snapshot-write': {
     statuses: { 'box-a': 'passed', 'box-b': 'failed', 'box-c': 'passed' },
   },
+  'image-diff': {
+    nameOf: imageDiffName,
+    reportsDiffRatio: true,
+    statuses: {
+      'box-a': 'passed',
+      'box-b': 'failed',
+      'box-c': 'missing-baseline',
+    },
+  },
+  'image-diff-copy': {
+    nameOf: imageDiffName,
+    reportsDiffRatio: true,
+    statuses: { 'box-a': 'passed', 'box-b': 'failed', 'box-c': 'passed' },
+  },
   pixsame: {
     nameOf: pixsameName,
     statuses: {
@@ -71,7 +101,7 @@ export const expectations = {
   },
 };
 
-const configOf = (mode) => mode.replace(/-(write|create)$/, '');
+const configOf = (mode) => mode.replace(/-(write|copy|create)$/, '');
 
 const cypress = (ctx, mode, env) =>
   ctx.sh(
@@ -102,7 +132,7 @@ const findFiles = (dir, fileName) => {
 };
 
 export async function clean() {
-  for (const dir of [cvrDir, imageSnapshotDir, pixsameDir]) {
+  for (const dir of [cvrDir, imageSnapshotDir, imageDiffDir, pixsameDir]) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
   fs.rmSync(path.join(projectRoot, 'cypress', 'screenshots'), {
@@ -115,6 +145,8 @@ export async function record(ctx) {
   const runs = {
     cvr: { CVR_TYPE: 'base' },
     'image-snapshot': { CIS_UPDATE: '1' },
+    // a first run has no baselines: every comparison is copied over
+    'image-diff': {},
     pixsame: { PIXSAME_UPDATE: '1' },
   };
   for (const [mode, env] of Object.entries(runs)) {
@@ -129,11 +161,15 @@ export async function perturb() {
   const baselines = [
     ...findFiles(path.join(cvrDir, 'base'), 'box-c.png'),
     ...findFiles(imageSnapshotDir, 'box-c.snap.png'),
+    ...findFiles(
+      path.join(imageDiffDir, 'cypress-image-diff-screenshots', 'baseline'),
+      'box.cy-box-c.png',
+    ),
     ...findFiles(pixsameDir, 'box-c_#0.png'),
   ];
-  if (baselines.length !== 3) {
+  if (baselines.length !== 4) {
     throw new Error(
-      `expected 3 box-c baselines, found ${baselines.join(', ')}`,
+      `expected 4 box-c baselines, found ${baselines.join(', ')}`,
     );
   }
   for (const file of baselines) fs.rmSync(file);
@@ -144,6 +180,8 @@ export async function compare(mode, ctx) {
     cvr: { CVR_TYPE: 'regression' },
     'image-snapshot': { CIS_REQUIRE: '1' },
     'image-snapshot-write': {},
+    'image-diff': { CID_FAIL_MISSING: '1' },
+    'image-diff-copy': {},
     pixsame: { PIXSAME_CREATE: '0' },
     'pixsame-create': {},
   }[mode];
@@ -166,6 +204,12 @@ export function convert(mode) {
       receivedPostfix: '.received',
       maxDiffPixels: 0,
     });
+  }
+  if (mode.startsWith('image-diff')) {
+    return fromCypressImageDiff(
+      JSON.parse(fs.readFileSync(imageDiffReport, 'utf8')),
+      { projectRoot, colorThreshold: 0.1 }, // COMPARISON_OPTIONS.threshold, the plugin's default
+    );
   }
   // pixsame: every image that is not an .actual or .diff sibling is a baseline;
   // an .actual without its baseline is a comparison that had none
@@ -192,7 +236,9 @@ export async function capture(outDir, mode) {
       ? cvrDir
       : mode.startsWith('image-snapshot')
         ? imageSnapshotDir
-        : pixsameDir;
+        : mode.startsWith('image-diff')
+          ? imageDiffDir
+          : pixsameDir;
   fs.cpSync(from, path.join(outDir, path.relative(projectRoot, from)), {
     recursive: true,
   });

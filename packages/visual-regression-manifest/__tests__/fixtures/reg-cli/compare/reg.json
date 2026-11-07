@@ -1,0 +1,1 @@
+{"failedItems":["box-b.png"],"newItems":["box-c.png"],"deletedItems":["box-d.png"],"passedItems":["box-a.png"],"expectedItems":["box-a.png","box-b.png","box-d.png"],"actualItems":["box-a.png","box-b.png","box-c.png"],"diffItems":["box-b.png"],"actualDir":"./actual","expectedDir":"./expected","diffDir":"./diff"}

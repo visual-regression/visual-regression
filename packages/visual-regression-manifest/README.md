@@ -291,7 +291,7 @@ writer.reset(); // start of a run: forget everything, delete the file
 
 ## Converting to and from other formats
 
-Every converter below is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+Every converter below but Loki's is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
 
 ### CTRF
 
@@ -426,6 +426,28 @@ const manifest = fromCypressVisualRegression({
 
 Cypress writes an actual image for every comparison, so a diff image is what marks a failure (`visualRegressionGenerateDiff: 'fail'`, the default); pass `generateDiff` when the run used another mode.
 
+### cypress-image-diff-js
+
+The plugin keeps `baseline/`, `comparison/` and `diff/` folders under `<ROOT_DIR>/cypress-image-diff-screenshots/` and, with `JSON_REPORT` in its config (on by default), writes a JSON report per run into `<ROOT_DIR>/cypress-image-diff-html-report/` (`report_<date>.json`, or `<FILENAME>.json`):
+
+```ts
+import fs from 'fs';
+import { fromCypressImageDiff } from 'visual-regression-manifest';
+
+const manifest = fromCypressImageDiff(
+  JSON.parse(
+    fs.readFileSync('cypress-image-diff-html-report/report.json', 'utf8'),
+  ),
+  {
+    projectRoot: process.cwd(), // the report's paths are relative to the Cypress working directory
+    // colorThreshold: 0.1, // your COMPARISON_OPTIONS.threshold (pixelmatch; the plugin's default)
+    // reportDir, screenshotsDir: when the report was moved or ROOT_DIR is set
+  },
+);
+```
+
+One entry per `compareSnapshot`, named after the screenshot (`<spec name>-<name>` unless `exactName` or a `nameTemplate` was used), in the spec that took it; the report's browser becomes the entry's `platform.browser` and its Cypress version the `runner` version. The plugin's "percentage" is the square root of the share of differing pixels, and so is its `testThreshold`; the converter squares both back into `diffRatio` and `maxDiffRatio` and keeps the plugin's own numbers under `extra.cypressImageDiff`. The report leaves a path empty when the file did not exist, so the converter derives it from the folder layout. A failed test without a baseline is `missing-baseline` (`FAIL_ON_MISSING_BASELINE`); by default the plugin copies the comparison to the baseline instead and the test passes.
+
 ### BackstopJS
 
 With `"report": ["json"]` BackstopJS writes `backstop_data/json_report/jsonReport.json`. Its paths are relative to that directory:
@@ -464,6 +486,66 @@ const manifest = fromRoborazziResults(
 ```
 
 `changed` is `failed` (with `diff_percentage` as the ratio and the `_compare` composite as the diff image), `added` is `missing-baseline`, `unchanged` is `passed` and `recorded` is `updated`. Entries carry an emulated Android `target` and a `robolectric` renderer; `context_data` lands under `extra.roborazzi`.
+
+### reg-cli and reg-suit
+
+reg-cli compares a folder of actual images with a folder of expected ones and writes a JSON report (`-J`, `reg.json` by default) listing the items by file name; reg-suit runs it under the hood:
+
+```bash
+npx reg-cli actual expected diff -J reg.json
+```
+
+```ts
+import fs from 'fs';
+import { fromRegCli } from 'visual-regression-manifest';
+
+const manifest = fromRegCli(JSON.parse(fs.readFileSync('reg.json', 'utf8')), {
+  projectRoot: process.cwd(),
+  // the report carries no ratios and no thresholds, so they come from your options
+  maxDiffRatio: 0.01, // your --thresholdRate; or maxDiffPixels for --thresholdPixel
+  // colorThreshold: 0.1, // your --matchingThreshold (pixelmatch)
+  // reportDir: when reg.json was moved; actualDir, expectedDir, diffDir: when the report names URLs (--urlPrefix)
+  // update: true, // the run was -U
+});
+```
+
+The report's folders are relative to the report file. `failedItems` are `failed` with the diff image from the diff folder, `newItems` (an actual image with no expected one) are `missing-baseline`, `passedItems` are `passed`; after a `-U` run, which copies the failed and new actuals over the expected images, pass `update: true` to get `updated` and `created` instead. `deletedItems`, expected images with no actual, have no entry, as the manifest has no status for a baseline nothing was compared against; they are listed under `extra.regCli.deletedItems` on the manifest. Entries are named by the item path without its extension, so nested folders stay apart.
+
+### Lost Pixel
+
+In its `generateOnly` mode Lost Pixel keeps `.lostpixel/baseline/`, `.lostpixel/current/` (emptied and rewritten on every run) and `.lostpixel/difference/` (one image per shot over its threshold). Run it with `LOST_PIXEL_GENERATE_META=true` to also get `.lostpixel/current/meta.json`, every comparison's pixel difference and verdict:
+
+```ts
+import { fromLostPixel } from 'visual-regression-manifest';
+
+const manifest = fromLostPixel({
+  projectRoot: process.cwd(),
+  threshold: 0, // your `threshold`: a 0..1 share of the pixels, or a pixel count from 1 up
+  // update: true, // the run was `lost-pixel update`
+  // baselineDir, currentDir, differenceDir: your imagePathBaseline/Current/Difference, when changed
+  // meta: 'path/to/meta.json' or false: when it was moved, or to ignore one
+});
+```
+
+A current image without a baseline is `missing-baseline`; with a baseline, `meta.json` decides between `passed` and `failed` (and carries the `diffRatio`), or without it the difference image does. After `lost-pixel update`, which writes the baselines of changed and new shots, pass `update: true`: a changed shot is `updated` and a shot missing from `meta.json` (it had no baseline to compare against) is `created`; without the meta file a created baseline looks like a passed shot. A baseline with no current image was not shot in this run and gets no entry (listed under `extra.lostPixel.baselinesWithoutShot`). The breakpoint and browser labels Lost Pixel puts in file names (`home__[w320px|chromium]`) become the entry's `variant` and `platform.browser`.
+
+### Loki
+
+Loki keeps `.loki/reference/`, `.loki/current/` and `.loki/difference/` with one `<configuration>_<kind>_<story>.png` per story and configuration, and writes no report:
+
+```ts
+import { fromLoki } from 'visual-regression-manifest';
+
+const manifest = fromLoki({
+  projectRoot: process.cwd(),
+  configurations: ['chrome.laptop', 'chrome.iphone7'], // the keys of your loki `configurations`
+  // tolerance: 2.3, // your chromeTolerance (pixelmatch's color threshold, in percent)
+  // diffingEngine: 'looks-same', // when not pixelmatch, whose limit is "no differing pixel" (maxDiffRatio 0)
+  // referenceDir, currentDir, differenceDir: when changed
+});
+```
+
+A current image with a difference image is `failed`, without one `passed`, and without a reference `missing-baseline` (`requireReference`, Loki's default on CI; elsewhere it writes the reference and the story passes). A reference with no current image was not shot in this run and gets no entry; those files are listed under `extra.loki.referencesWithoutShot`. Entries are named after the files; a recognized configuration becomes the `variant`. File names follow the slug of Loki's default `fileNameFormatter` (checked against its source, not against a run); a custom formatter needs no `configurations`, the entries just get no `variant`. This converter is the one not proven against a real run: Loki needs Storybook plus Chrome, which the converter examples do not drive, so its unit test uses the documented layout.
 
 ### Plain image files
 

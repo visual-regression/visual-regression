@@ -29,6 +29,8 @@ jobs:
       e2e-cypress: ${{ steps.e2e.outputs.cypress }}
       e2e-backstopjs: ${{ steps.e2e.outputs.backstopjs }}
       e2e-roborazzi: ${{ steps.e2e.outputs.roborazzi }}
+      e2e-reg-cli: ${{ steps.e2e.outputs.reg-cli }}
+      e2e-lost-pixel: ${{ steps.e2e.outputs.lost-pixel }}
     steps:
       # On push the filter diffs commits locally; on pull_request it uses the API.
       - uses: actions/checkout@v7
@@ -77,6 +79,12 @@ jobs:
             roborazzi:
               - *harness
               - 'examples/converters/roborazzi/**'
+            reg-cli:
+              - *harness
+              - 'examples/converters/reg-cli/**'
+            lost-pixel:
+              - *harness
+              - 'examples/converters/lost-pixel/**'
 
   lint:
     name: lint
@@ -223,6 +231,7 @@ jobs:
           path: |
             examples/converters/cypress/cypress/snapshots
             examples/converters/cypress/cypress/image-snapshot
+            examples/converters/cypress/cypress/image-diff
             examples/converters/cypress/cypress/e2e/pixsame/__image_snapshots__
             examples/converters/cypress/visual-regression-manifest.*.json
             examples/converters/harness/test-results
@@ -307,6 +316,66 @@ jobs:
             examples/converters/roborazzi/lib/build/test-results
             examples/converters/roborazzi/lib/build/reports
             examples/converters/roborazzi/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
+
+  # reg-cli compares a folder of images from any source; the example fills it with
+  # the Playwright library, so the browser cache is Playwright's.
+  e2e-reg-cli:
+    name: e2e-reg-cli
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-reg-cli == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-reg-cli...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          package: '@visual-regression/e2e-reg-cli'
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/reg-cli.test.ts
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-reg-cli
+          path: |
+            examples/converters/reg-cli/actual
+            examples/converters/reg-cli/expected
+            examples/converters/reg-cli/diff
+            examples/converters/reg-cli/reg.json
+            examples/converters/reg-cli/visual-regression-manifest.*.json
+            examples/converters/harness/test-results
+
+  # Lost Pixel screenshots through playwright-core (its peer dependency, pinned by the
+  # example), whose CLI installs the browser the same way.
+  e2e-lost-pixel:
+    name: e2e-lost-pixel
+    needs: [changes]
+    if: ${{ needs.changes.outputs.e2e-lost-pixel == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          install-filter: --filter @visual-regression/e2e-harness... --filter @visual-regression/e2e-lost-pixel...
+      - run: pnpm --filter visual-regression-manifest --filter visual-regression-viewer build
+      - uses: ./.github/actions/playwright-browsers
+        with:
+          package: '@visual-regression/e2e-lost-pixel'
+          cli: playwright-core
+      - run: pnpm --filter @visual-regression/e2e-harness typecheck
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/lost-pixel.test.ts
+      - uses: actions/upload-artifact@v6
+        if: ${{ failure() }}
+        with:
+          name: e2e-lost-pixel
+          path: |
+            examples/converters/lost-pixel/.lostpixel
+            examples/converters/lost-pixel/visual-regression-manifest.*.json
             examples/converters/harness/test-results
 
   prepare-release:

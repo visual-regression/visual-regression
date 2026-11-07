@@ -12,6 +12,8 @@ allowBuilds:
   # BackstopJS's engine; the e2e-backstopjs CI job fetches Chrome behind a cache keyed by version
   puppeteer: false
   esbuild: true
+  # lost-pixel's optional odiff engine; the examples compare with pixelmatch, the default
+  odiff-bin: false
   sharp: true
   unrs-resolver: false
   vue-demi: false
