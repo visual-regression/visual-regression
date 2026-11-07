@@ -1,6 +1,4 @@
-import pixelmatch from 'pixelmatch';
 import type { EngineInfo } from '../types';
-import { hexToRgb, now, toPng, type Engine } from './shared';
 
 export const info: EngineInfo = {
   id: 'pixelmatch',
@@ -11,7 +9,7 @@ export const info: EngineInfo = {
     url: 'https://github.com/mapbox/pixelmatch',
   },
   summary:
-    'The pixel comparison most JavaScript tools build on (Playwright, jest-image-snapshot, pixsame, ...). Compares colors in a perceptual color space with a threshold and detects anti-aliased pixels so font rendering noise is not counted.',
+    'The pixel comparison most JavaScript tools build on: Playwright, jest-image-snapshot and pixsame use older releases of it. Compares colors with a perceptual distance (OKLab since 8.0, YIQ before) and a threshold, and detects anti-aliased pixels so font rendering noise is not counted.',
   options: [
     {
       key: 'threshold',
@@ -67,34 +65,4 @@ export const info: EngineInfo = {
   },
   sizeMismatch:
     'Throws "Image sizes do not match"; it only runs here because the tool pads the smaller image first.',
-};
-
-export const engine: Engine = {
-  async run({ a, b, padded }, options) {
-    const out = new ImageData(a.width, a.height);
-    const start = now();
-    const mismatch = pixelmatch(a.data, b.data, out.data, a.width, a.height, {
-      threshold: Number(options.threshold),
-      includeAA: Boolean(options.includeAA),
-      alpha: Number(options.alpha),
-      diffColor: hexToRgb(String(options.diffColor)),
-      diffColorAlt: options.useDiffColorAlt
-        ? hexToRgb(String(options.diffColorAlt))
-        : undefined,
-      diffMask: Boolean(options.diffMask),
-    });
-    const elapsedMs = now() - start;
-    return {
-      mismatch,
-      total: a.width * a.height,
-      unit: 'pixels',
-      elapsedMs,
-      metrics: [],
-      diff: await toPng(out),
-      legend: options.includeAA
-        ? 'Differing pixels in the diff color.'
-        : 'Differing pixels in the diff color; anti-aliased pixels it ignored in yellow.',
-      notes: padded ? ['Ran on the padded images.'] : [],
-    };
-  },
 };

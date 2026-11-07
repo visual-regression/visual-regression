@@ -1,4 +1,4 @@
-import type { Padding } from '../types';
+import type { Padding } from './types';
 
 type Pixels = { width: number; height: number; data: Uint8ClampedArray };
 

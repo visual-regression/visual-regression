@@ -3,7 +3,7 @@ packages:
   - 'apps/*'
 allowBuilds:
   better-sqlite3: true
-  # resemblejs's Node fallback; the image diff app runs it in the browser only
+  # resemblejs's Node fallback; the site runs it in the browser only
   canvas: false
   esbuild: true
   sharp: true
