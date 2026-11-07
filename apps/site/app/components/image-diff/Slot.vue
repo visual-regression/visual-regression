@@ -11,7 +11,6 @@ defineProps<{
 const emit = defineEmits<{ files: [files: File[]]; clear: [] }>();
 
 const input = ref<HTMLInputElement | null>(null);
-const id = useId();
 const onPick = () => {
   const files = [...(input.value?.files ?? [])];
   if (files.length) emit('files', files);
@@ -21,12 +20,21 @@ const onPick = () => {
 
 <template>
   <div class="min-w-0">
-    <!-- empty: a drop target; filled: a thin bar above the viewer -->
+    <!-- empty: a drop target; filled: a thin bar above the viewer. The input
+         sits inside its label (visually hidden) and the label shows the focus. -->
     <label
       v-if="!url"
-      :for="id"
-      class="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-default px-3 text-center text-sm text-muted transition hover:border-primary hover:bg-primary/5 focus-within:border-primary"
+      class="flex h-28 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-default px-3 text-center text-sm text-muted transition hover:border-primary hover:bg-primary/5 has-[:focus-visible]:border-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
     >
+      <input
+        ref="input"
+        type="file"
+        accept="image/*"
+        multiple
+        class="sr-only"
+        :aria-label="`Choose the ${label.toLowerCase()} image`"
+        @change="onPick"
+      />
       <UIcon name="i-lucide-image-plus" class="size-5" />
       <span class="font-medium text-default">{{ label }}</span>
       <span class="text-xs">drop, paste or choose an image</span>
@@ -43,9 +51,17 @@ const onPick = () => {
         name
       }}</span>
       <label
-        :for="id"
-        class="cursor-pointer text-muted underline underline-offset-2 hover:text-highlighted"
+        class="cursor-pointer rounded text-muted underline underline-offset-2 hover:text-highlighted has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
       >
+        <input
+          ref="input"
+          type="file"
+          accept="image/*"
+          multiple
+          class="sr-only"
+          :aria-label="`Replace the ${label.toLowerCase()} image`"
+          @change="onPick"
+        />
         Replace
       </label>
       <button
@@ -56,14 +72,5 @@ const onPick = () => {
         Clear
       </button>
     </div>
-    <input
-      :id="id"
-      ref="input"
-      type="file"
-      accept="image/*"
-      multiple
-      class="sr-only"
-      @change="onPick"
-    />
   </div>
 </template>

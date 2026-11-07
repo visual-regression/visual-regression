@@ -65,7 +65,18 @@ const onFiles = (slot: Slot, files: File[]) => {
 const nextSlot = () => (a.blob && !b.blob ? b : a);
 const images = (files: File[] | FileList | undefined) =>
   [...(files ?? [])].filter((f) => f.type.startsWith('image/'));
+const onDragOver = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) return;
+  // without this the browser would open the dropped file instead
+  event.preventDefault();
+  dragging.value = true;
+};
+const onDragLeave = (event: DragEvent) => {
+  if (!event.relatedTarget) dragging.value = false;
+};
 const onDrop = (event: DragEvent) => {
+  if (!event.dataTransfer?.types.includes('Files')) return;
+  event.preventDefault();
   dragging.value = false;
   const files = images(event.dataTransfer?.files);
   if (files.length) onFiles(nextSlot(), files);
@@ -114,6 +125,8 @@ const engines = reactive<Record<string, EngineState>>(
 const selected = ref('pixelmatch');
 const mode = ref<ViewMode>('slider');
 let worker: DiffWorker | null = null;
+const workerReady = ref(false);
+let unmounted = false;
 /** the images in the worker; a run belongs to one generation */
 let generation = 0;
 
@@ -193,7 +206,26 @@ const compare = async () => {
 };
 
 // a new pair, or a new padding, compares again
-watch([() => a.blob, () => b.blob, padding], compare);
+watch([() => a.blob, () => b.blob, padding, workerReady], compare);
+
+// clearing a slot drops the numbers, thumbnails and padded copies of the old pair
+watch([() => a.blob, () => b.blob], ([blobA, blobB]) => {
+  if (blobA && blobB) return;
+  generation++;
+  loading.value = false;
+  for (const state of Object.values(engines)) {
+    setResult(state, null);
+    state.status = 'idle';
+    state.error = null;
+  }
+  if (padded.value) {
+    release(padded.value.aUrl);
+    release(padded.value.bUrl);
+    padded.value = null;
+  }
+  a.dims = null;
+  b.dims = null;
+});
 
 // a changed setting reruns that engine only (after a short pause)
 const timers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -229,6 +261,15 @@ const resetOptions = (id: string) => {
 const urlA = ref('');
 const urlB = ref('');
 const fetching = ref(false);
+/** addresses from the page link that point to a third party: loaded only after the reader agrees */
+const waiting = ref<{ a: string; b: string } | null>(null);
+const sameOrigin = (address: string) => {
+  try {
+    return new URL(address, location.href).origin === location.origin;
+  } catch {
+    return false;
+  }
+};
 
 const fetchImage = async (url: string) => {
   try {
@@ -276,22 +317,44 @@ const submitAddresses = () => {
   return loadAddresses(urlA.value.trim(), urlB.value.trim());
 };
 
+const route = useRoute();
+
+const loadWaiting = async () => {
+  if (!waiting.value) return;
+  const { a: from, b: to } = waiting.value;
+  waiting.value = null;
+  await loadAddresses(from, to);
+};
+
 onMounted(async () => {
-  const { DiffWorker } = await import('~/lib/image-diff/worker-client');
-  worker = new DiffWorker();
+  // listeners first: a file dropped while the worker code loads is kept and compared once it is ready
   addEventListener('paste', onPaste);
-  const params = new URLSearchParams(location.search);
-  const from = params.get('a');
-  const to = params.get('b');
+  addEventListener('dragover', onDragOver);
+  addEventListener('dragleave', onDragLeave);
+  addEventListener('drop', onDrop);
+  // the router's query: location.search can be empty for a moment while Nuxt hydrates
+  const first = (value: unknown) => (Array.isArray(value) ? value[0] : value);
+  const from = String(first(route.query.a) ?? '');
+  const to = String(first(route.query.b) ?? '');
   if (from && to) {
     urlA.value = from;
     urlB.value = to;
     preset.value = presets.find((p) => p.a === from && p.b === to)?.id ?? null;
-    await loadAddresses(from, to);
+    // this site's own addresses (the examples) load at once; a third party only after the notice
+    if (sameOrigin(from) && sameOrigin(to)) await loadAddresses(from, to);
+    else waiting.value = { a: from, b: to };
   }
+  const { DiffWorker } = await import('~/lib/image-diff/worker-client');
+  if (unmounted) return;
+  worker = new DiffWorker();
+  workerReady.value = true;
 });
 onBeforeUnmount(() => {
+  unmounted = true;
   removeEventListener('paste', onPaste);
+  removeEventListener('dragover', onDragOver);
+  removeEventListener('dragleave', onDragLeave);
+  removeEventListener('drop', onDrop);
   worker?.terminate();
   for (const state of Object.values(engines)) release(state.diffUrl);
   for (const slot of [a, b]) release(slot.url);
@@ -319,12 +382,7 @@ const presetHint = computed(
 
 <template>
   <ClientOnly>
-    <div
-      class="not-prose space-y-3"
-      @dragover.prevent="dragging = true"
-      @dragleave.prevent="dragging = false"
-      @drop.prevent="onDrop"
-    >
+    <div class="not-prose space-y-3">
       <!-- examples, size handling and addresses: one strip -->
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <div
@@ -409,6 +467,34 @@ const presetHint = computed(
           </div>
         </form>
       </details>
+
+      <div
+        v-if="waiting"
+        class="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-sm"
+        role="region"
+        aria-label="Images from a link"
+      >
+        <p>
+          This link asks your browser to fetch two images from other websites:
+        </p>
+        <ul class="my-1 list-inside list-disc break-all font-mono text-xs">
+          <li>{{ waiting.a }}</li>
+          <li>{{ waiting.b }}</li>
+        </ul>
+        <p class="text-xs text-muted">
+          Those servers will see your request and your IP address, and must
+          allow cross-origin reads (CORS). This site never sees the images.
+        </p>
+        <UButton
+          class="mt-2"
+          size="xs"
+          color="neutral"
+          :loading="fetching"
+          @click="loadWaiting"
+        >
+          Load these images
+        </UButton>
+      </div>
 
       <p
         v-if="loadError"
@@ -524,7 +610,7 @@ const presetHint = computed(
           <p v-else class="text-xs text-muted">
             Drop two images anywhere on this page, or paste one from the
             clipboard.
-            <template v-if="dragging">Release to load.</template>
+            <template v-if="dragging"> Release to load.</template>
           </p>
         </section>
 

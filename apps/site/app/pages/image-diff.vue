@@ -53,6 +53,12 @@ defineOgImage('Docs', { headline: 'Tools', title, description });
           runs again. Click a row to see its diff in the viewer.
         </p>
         <p class="text-muted">
+          Every engine, the exact comparison included, compares the pixels your
+          browser decodes. For color-managed or semi-transparent PNGs those can
+          differ from what a Node decoder (the one in your test tool) produces,
+          so a count here can differ from your tool's.
+        </p>
+        <p class="text-muted">
           The
           <NuxtLink
             to="/diff-algorithms"

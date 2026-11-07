@@ -90,7 +90,7 @@ const setOption = (key: string, value: number | boolean | string) => {
         />
       </button>
 
-      <div class="col-span-4 col-start-2 mt-1 flex items-center gap-3 text-xs">
+      <div class="col-span-3 col-start-2 mt-1 flex items-center gap-3 text-xs">
         <button
           type="button"
           class="inline-flex items-center gap-1 text-muted hover:text-highlighted"
