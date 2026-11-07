@@ -13,7 +13,7 @@ Published npm package defining the run-manifest format. Everything else in the r
 - `src/types.ts`, `constants.ts` — types and shared constants; public API is re-exported from `src/index.ts`.
 - `src/reader.ts`, `writer.ts`, `merge.ts`, `builder.ts`, `validate.ts` — read, write, merge the manifests of a run, build entries, validate.
 - `src/paths.ts`, `png.ts`, `limits.ts`, `ci.ts`, `summary.ts` — path safety, PNG size reading, comparison limits, CI detection, status counts.
-- `src/convert/*.ts` — one converter per tool (`walk.ts` is a shared helper). Fixtures live under `__tests__/` next to a `*.test.ts` in `src/`.
+- `src/convert/*.ts` — one converter per tool (`walk.ts` is a shared helper). Tests sit next to them; real tool output captured by `examples/converters` lives under `__tests__/fixtures/<tool>/<mode>/` with an `expectations.json`.
 - `README.md` — also the source of the site's `/manifest/*` pages (see the `site` skill). `docs/ctrf-proposal.md` is the CTRF proposal.
 
 ## Working on it
@@ -21,7 +21,7 @@ Published npm package defining the run-manifest format. Everything else in the r
 - Build: `pnpm --filter visual-regression-manifest build` (microbundle, cjs + modern; relies on the pnpm patch in `patches/` for `rollup-plugin-typescript2`).
 - Tests sit next to sources as `src/*.test.ts`:
   `pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts` (single file), `-t "name"` (single test).
-- **Adding a converter** = one file in `src/convert/`, one fixture dir, one test; export it from `src/index.ts`; follow an existing converter (e.g. `triples.ts` is the simplest). Then mention it in the README's converting section.
+- **Adding a converter** = one file in `src/convert/`, one test, and an example under `examples/converters/<tool>` whose run (`verify-converters`) captures the real output into `__tests__/fixtures/<tool>/` for that test; export it from `src/index.ts`; follow an existing converter (`jest-image-snapshot.ts` has the full setup). Then mention it in the README's converting section.
 - **Changing the schema** = edit `src/schema.json`, keep `types.ts` and `validate.ts` in step, add/adjust tests, and update the README `##` sections that describe the field. The site schema reference is generated from it.
 
 ## Verify

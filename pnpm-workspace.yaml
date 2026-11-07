@@ -1,7 +1,11 @@
 packages:
   - 'packages/*'
   - 'apps/*'
+  # one example project per converter, driven by examples/converters/harness
+  - 'examples/converters/*'
 allowBuilds:
+  # jest's watcher; `jest run` in the examples does not need the native binding
+  '@parcel/watcher': false
   better-sqlite3: true
   esbuild: true
   sharp: true

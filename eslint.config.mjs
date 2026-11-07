@@ -66,6 +66,7 @@ export default [
       'scripts/**',
       'apps/site/scripts/**',
       '.claude/skills/*/scripts/**',
+      'examples/**',
     ],
     languageOptions: {
       globals: {
@@ -78,10 +79,16 @@ export default [
     files: ['packages/*/app/**'],
     languageOptions: { globals: { ...globals.browser } },
   },
-  // verification scripts report through stdout
+  // verification scripts and the converter examples report through stdout
   {
-    files: ['.claude/skills/*/scripts/**'],
+    files: ['.claude/skills/*/scripts/**', 'examples/**'],
     rules: { 'no-console': 'off' },
+  },
+  // Jest runs CommonJS unless told otherwise, which is how jest-image-snapshot is used
+  {
+    files: ['examples/converters/jest-image-snapshot/tests/**'],
+    languageOptions: { globals: { ...globals.jest } },
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   // the viewer is a command line tool: printing is its interface
   {
