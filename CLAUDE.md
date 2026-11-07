@@ -13,7 +13,6 @@ Details for each part live in project skills (`.claude/skills/`). **Load the mat
 | `packages/visual-regression-manifest` | `manifest-package` | Run-manifest format: JSON Schema, types, reader/writer/merger, converters from other tools' output |
 | `packages/visual-regression-viewer`   | `viewer-package`   | The `visual-regression-viewer` CLI: serves a review page or writes it to a folder                  |
 | `apps/site`                           | `site`             | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs    |
-| `apps/image-diff`                     | —                  | The online image diff tool (diff.visual-regression.dev): Vite + Vue, browser-only, static output   |
 
 Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`. `verify-manifest` owns the sample-run generator the other two reuse.
 
@@ -28,7 +27,7 @@ pnpm install
 pnpm build          # builds packages only (apps are excluded)
 pnpm lint           # eslint (ts/vue/js/mjs incl. apps/site, fails on warnings) + prettier --check; CI runs this
 pnpm fix            # eslint --fix + prettier --write
-pnpm test           # vitest in every package (test:integration:ci, with coverage)
+pnpm test           # vitest in every package (test:integration:ci, with coverage), then the site's unit tests (the image diff engines)
 pnpm test:integration   # same without CI=true/coverage; `:watch` and `:coverage` variants exist
 ```
 
@@ -40,7 +39,7 @@ pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts
 pnpm --filter visual-regression-viewer exec vitest run -t "name"
 ```
 
-Site: `pnpm --filter @visual-regression/site dev` / `build`. Image diff tool: `pnpm --filter @visual-regression/image-diff dev` / `build` / `examples` (regenerates the example PNGs with Playwright's Chromium). The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
+Site: `pnpm --filter @visual-regression/site dev` / `build` / `test`; `diff-examples` regenerates the diff guide's example images and measurements with Chromium (Playwright). The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
 
 ## Release & CI
 
