@@ -1,4 +1,4 @@
-import type { FromWorker, Options, Padding, ToWorker } from '../types';
+import type { FromWorker, Options, Padding, ToWorker } from './types';
 
 type DistributiveOmit<T, K extends keyof T> = T extends unknown
   ? Omit<T, K>
@@ -22,7 +22,7 @@ export class DiffWorker {
   }
 
   #start() {
-    this.#worker = new Worker(new URL('../worker.ts', import.meta.url), {
+    this.#worker = new Worker(new URL('./worker.ts', import.meta.url), {
       type: 'module',
     });
     this.#worker.addEventListener(
@@ -60,6 +60,11 @@ export class DiffWorker {
     for (const pending of this.#pending.values()) pending.reject(stale);
     this.#pending.clear();
     this.#start();
+  }
+
+  terminate() {
+    this.#worker.terminate();
+    this.#pending.clear();
   }
 
   async load(a: Blob, b: Blob, padding: Padding): Promise<Loaded> {

@@ -1,4 +1,3 @@
-import type { EngineInfo } from '../types';
 import { fadedGray, now, toPng, type Engine } from './shared';
 
 // Perceptual hash in the pHash family: the image is reduced to a small
@@ -7,28 +6,6 @@ import { fadedGray, now, toPng, type Engine } from './shared';
 // it against the median coefficient. Two hashes are compared with their
 // Hamming distance. Resampling is a plain area average, so hashes are stable
 // within this tool but not bit-identical with other libraries' pHash values.
-export const info: EngineInfo = {
-  id: 'phash',
-  name: 'Perceptual hash (pHash)',
-  summary:
-    'Reduces each image to a short fingerprint of its coarse structure and compares the fingerprints bit by bit. Survives resizing and small shifts, which is the point: it tells "same picture" from "different picture", not "pixel-perfect".',
-  options: [
-    {
-      key: 'bits',
-      label: 'bits',
-      hint: 'Side of the kept low-frequency square; the hash has bits² bits.',
-      type: 'select',
-      choices: [
-        { value: '8', label: '8 (64-bit hash)' },
-        { value: '16', label: '16 (256-bit hash)' },
-      ],
-    },
-  ],
-  defaults: { bits: '8' },
-  sizeMismatch:
-    'Indifferent to size by design: every image is reduced to the same square, so the padded images are compared.',
-};
-
 /** Side of the grayscale square the transform runs on, per kept side. */
 const reducedSide = (bits: number) => bits * 4;
 

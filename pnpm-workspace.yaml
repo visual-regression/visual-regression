@@ -7,7 +7,7 @@ allowBuilds:
   # jest's watcher; `jest run` in the examples does not need the native binding
   '@parcel/watcher': false
   better-sqlite3: true
-  # resemblejs's Node fallback; the image diff app runs it in the browser only
+  # resemblejs's Node fallback; the site runs it in the browser only
   canvas: false
   # the Cypress binary is fetched by the e2e-cypress CI job behind a cache keyed by version
   cypress: false

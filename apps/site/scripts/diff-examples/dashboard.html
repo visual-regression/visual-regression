@@ -314,6 +314,32 @@
         position: relative;
         left: 0.3px;
       }
+      html[data-variant='shift-1px'] main {
+        position: relative;
+        left: 1px;
+      }
+      /* an element that was not there before: a cookie notice over the corner */
+      .notice {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 240px;
+        padding: 12px 14px;
+        background: var(--fg);
+        color: var(--bg);
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .notice button {
+        margin-top: 8px;
+        padding: 4px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+      }
     </style>
   </head>
   <body>
@@ -419,6 +445,13 @@
       const variant = document.documentElement.dataset.variant;
       if (variant === 'typo')
         document.getElementById('title').textContent = 'Overwiew';
+      if (variant === 'added-element') {
+        const notice = document.createElement('div');
+        notice.className = 'notice';
+        notice.innerHTML =
+          'We use cookies to keep you signed in.<br /><button>Accept</button>';
+        document.body.append(notice);
+      }
       if (variant === 'dynamic-content') {
         document.getElementById('clock').textContent = 'Tue 14:33';
         document.getElementById('online').textContent = '1,291 online';

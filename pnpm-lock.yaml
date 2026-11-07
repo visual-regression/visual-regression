@@ -266,6 +266,15 @@ importers:
       nuxt:
         specifier: ^4.4.8
         version: 4.6.1(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7(supports-color@7.2.0)))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7(supports-color@7.2.0)))(@oxc-project/types@0.153.0)(@parcel/watcher@2.6.0)(@types/node@20.19.43)(@vue/compiler-sfc@3.5.43)(acorn@8.19.0)(better-sqlite3@12.11.1)(confbox@0.2.4)(db0@0.3.4(better-sqlite3@12.11.1))(dotenv@17.4.2)(esbuild@0.28.2)(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(giget@3.3.1)(ioredis@5.11.1(supports-color@7.2.0))(lightningcss@1.33.0)(meow@14.1.0)(mlly@1.8.2)(optionator@0.9.4)(oxc-parser@0.151.0)(rolldown@1.2.13)(rollup-plugin-visualizer@7.1.1(rolldown@1.2.13)(rollup@4.64.5))(rollup@4.64.5)(srvx@1.0.5)(supports-color@7.2.0)(terser@5.51.2)(typescript@6.0.3)(vite@8.3.4(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))(vue-tsc@3.3.14(typescript@6.0.3))(xml2js@0.6.2)(yaml@2.9.1)
+      pixelmatch:
+        specifier: 8.0.0
+        version: 8.0.0
+      resemblejs:
+        specifier: 5.0.0
+        version: 5.0.0(supports-color@7.2.0)
+      ssim.js:
+        specifier: 3.5.0
+        version: 3.5.0
     devDependencies:
       '@anthropic-ai/sdk':
         specifier: ^1.4.0
@@ -276,6 +285,18 @@ importers:
       '@nuxt/kit':
         specifier: ^4.6.1
         version: 4.6.1(@nuxt/schema@4.6.1)(confbox@0.2.4)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magic-string@1.4.3)(mlly@1.8.2)(oxc-parser@0.151.0)(rolldown@1.2.13)(unplugin@3.4.0(esbuild@0.28.2)(rolldown@1.2.13)(rollup@4.64.5)(vite@8.3.4(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)))
+      '@types/resemblejs':
+        specifier: 4.1.3
+        version: 4.1.3
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      playwright:
+        specifier: 1.64.1
+        version: 1.64.1
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.4(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
       wrangler:
         specifier: 4.145.0
         version: 4.145.0(@types/node@20.19.43)
@@ -14843,6 +14864,22 @@ snapshots:
 
   '@kwsites/promise-deferred@1.1.1': {}
 
+  '@mapbox/node-pre-gyp@1.0.11(supports-color@7.2.0)':
+    dependencies:
+      detect-libc: 2.1.2
+      https-proxy-agent: 5.0.1(supports-color@7.2.0)
+      make-dir: 3.1.0
+      node-fetch: 2.7.0
+      nopt: 5.0.0
+      npmlog: 5.0.1
+      rimraf: 3.0.2
+      semver: 7.8.5
+      tar: 6.2.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    optional: true
+
   '@mapbox/node-pre-gyp@1.0.11(supports-color@8.1.1)':
     dependencies:
       detect-libc: 2.1.2
@@ -17963,6 +18000,13 @@ snapshots:
 
   acorn@8.19.0: {}
 
+  agent-base@6.0.2(supports-color@7.2.0):
+    dependencies:
+      debug: 4.4.3(supports-color@7.2.0)
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
+
   agent-base@6.0.2(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -18613,6 +18657,16 @@ snapshots:
       caniuse-lite: 1.0.30001815
 
   caniuse-lite@1.0.30001815: {}
+
+  canvas@2.11.2(supports-color@7.2.0):
+    dependencies:
+      '@mapbox/node-pre-gyp': 1.0.11(supports-color@7.2.0)
+      nan: 2.30.0
+      simple-get: 3.1.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    optional: true
 
   canvas@2.11.2(supports-color@8.1.1):
     dependencies:
@@ -21024,6 +21078,14 @@ snapshots:
       assert-plus: 1.0.0
       jsprim: 2.0.2
       sshpk: 1.18.0
+
+  https-proxy-agent@5.0.1(supports-color@7.2.0):
+    dependencies:
+      agent-base: 6.0.2(supports-color@7.2.0)
+      debug: 4.4.3(supports-color@7.2.0)
+    transitivePeerDependencies:
+      - supports-color
+    optional: true
 
   https-proxy-agent@5.0.1(supports-color@8.1.1):
     dependencies:
@@ -25130,6 +25192,13 @@ snapshots:
   require-directory@2.1.1: {}
 
   require-from-string@2.0.2: {}
+
+  resemblejs@5.0.0(supports-color@7.2.0):
+    optionalDependencies:
+      canvas: 2.11.2(supports-color@7.2.0)
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   resemblejs@5.0.0(supports-color@8.1.1):
     optionalDependencies:
