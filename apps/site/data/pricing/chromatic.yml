@@ -1,0 +1,40 @@
+tool: chromatic
+pricingPage: https://www.chromatic.com/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: e32372121ed1262fa13526b18816668a48fcf7f101f4318772722388498dfc3b
+unit: snapshot
+plans:
+  - name: Free
+    monthly: 0
+    included:
+      snapshots: 5000
+      seats: null
+    overage: null
+    notes:
+      - Chrome only; unlimited projects, users and collaborators.
+  - name: Starter
+    monthly: 179
+    included:
+      snapshots: 35000
+      seats: null
+    overage:
+      per: 1
+      price: 0.008
+    notes:
+      - Adds Safari, Firefox and Edge.
+  - name: Pro
+    monthly: 399
+    included:
+      snapshots: 85000
+      seats: null
+    overage: null
+    notes:
+      - Adds a custom domain; the page lists no overage price for this plan.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - Customizable snapshot volume, SSO, custom Git integrations, priority support with an SLA.
+confidence: high
+notes:
+  - Billed snapshots are what count; TurboSnap reruns of unaffected stories count as a fifth of a snapshot, so the page shows a "turbosnap" equivalent five times each allowance.
