@@ -51,6 +51,39 @@ A short tutorial in six chapters. Read them in order or start with the one you p
 
 ::u-page-section
 #title
+Go deeper
+
+#description
+Once the basics are in place, the two places to continue.
+
+#default
+  :::u-page-grid
+    ::::u-page-card
+    ---
+    icon: i-lucide-chef-hat
+    title: Cookbook
+    to: /cookbook
+    spotlight: true
+    ---
+    #description
+    Fourteen recipes against flaky screenshots, with copy-paste code for Playwright, Cypress, Vitest and the URL-based tools: animations, fonts, time, data, masks, Docker, variants, shards and thresholds.
+    ::::
+
+    ::::u-page-card
+    ---
+    icon: i-lucide-telescope
+    title: Diff engines explained
+    to: /deep-dives/diff-engines
+    spotlight: true
+    ---
+    #description
+    pixelmatch, odiff, Resemble.js, looks-same, SSIM, perceptual hashes and the native and hosted engines: what each one measures, what it ignores and which to pick.
+    ::::
+  :::
+::
+
+::u-page-section
+#title
 The tools
 
 #description
