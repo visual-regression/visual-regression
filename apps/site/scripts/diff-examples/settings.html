@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lumen · Settings</title>
+    <script>
+      document.documentElement.dataset.variant =
+        new URLSearchParams(location.search).get('variant') || '';
+    </script>
+    <style>
+      :root {
+        --bg: #f5f6f8;
+        --surface: #fff;
+        --fg: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #4f46e5;
+        --red: #dc2626;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 960px;
+      }
+      body {
+        font:
+          13px/1.5 -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+      }
+      header {
+        height: 52px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 32px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .logo i {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+      }
+      .crumbs {
+        color: var(--muted);
+        margin-left: 14px;
+      }
+      .crumbs b {
+        color: var(--fg);
+        font-weight: 500;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 28px 24px 40px;
+      }
+      h1 {
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+      }
+      .lead {
+        color: var(--muted);
+        margin-bottom: 22px;
+      }
+      .tabs {
+        display: flex;
+        gap: 20px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 22px;
+      }
+      .tabs span {
+        padding: 0 2px 10px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .tabs span.on {
+        color: var(--accent);
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
+      section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        margin-bottom: 16px;
+      }
+      html[data-variant='missing-section'] #notifications {
+        display: none;
+      }
+      section > h2 {
+        font-size: 14px;
+        font-weight: 600;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 13px 18px;
+        border-top: 1px solid var(--border);
+      }
+      .row:nth-of-type(1) {
+        border-top: 0;
+      }
+      .row .text {
+        flex: 1;
+      }
+      .row .text b {
+        display: block;
+        font-weight: 500;
+      }
+      .row .text span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .input {
+        width: 260px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 7px 10px;
+        background: #fff;
+      }
+      .toggle {
+        width: 36px;
+        height: 20px;
+        border-radius: 99px;
+        background: var(--border);
+        position: relative;
+      }
+      .toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+      .toggle.on {
+        background: var(--accent);
+      }
+      .toggle.on::after {
+        left: 18px;
+      }
+      .btn {
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 7px 12px;
+        font-weight: 500;
+        background: #fff;
+      }
+      .btn.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .btn.danger {
+        color: var(--red);
+        border-color: #fecaca;
+      }
+      .danger-zone {
+        border-color: #fecaca;
+      }
+      .danger-zone h2 {
+        color: var(--red);
+      }
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #7c3aed;
+        color: #fff;
+        font-weight: 600;
+        display: grid;
+        place-items: center;
+      }
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo"><i></i>Lumen</div>
+      <span class="crumbs">Settings / <b>Account</b></span>
+    </header>
+    <div class="wrap">
+      <h1>Account settings</h1>
+      <p class="lead">
+        Manage your profile, how Lumen reaches you, and how you sign in.
+      </p>
+      <div class="tabs">
+        <span class="on">General</span><span>Members</span><span>Billing</span
+        ><span>API keys</span>
+      </div>
+
+      <section id="profile">
+        <h2>Profile</h2>
+        <div class="row">
+          <div class="avatar">JD</div>
+          <div class="text">
+            <b>Profile photo</b><span>PNG or JPEG, at least 256×256</span>
+          </div>
+          <span class="btn">Upload</span>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Full name</b><span>Shown to your teammates</span>
+          </div>
+          <div class="input">Jordan Doyle</div>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Email</b><span>Used to sign in and for receipts</span>
+          </div>
+          <div class="input">jordan@acme-corp.example</div>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Time zone</b><span>Reports and digests follow it</span>
+          </div>
+          <div class="input">(GMT+01:00) Warsaw</div>
+        </div>
+      </section>
+
+      <section id="notifications">
+        <h2>Notifications</h2>
+        <div class="row">
+          <div class="text">
+            <b>Weekly digest</b
+            ><span>A summary of revenue and churn every Monday</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Failed payments</b><span>Email as soon as a charge fails</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Product updates</b><span>New features, about once a month</span>
+          </div>
+          <div class="toggle"></div>
+        </div>
+      </section>
+
+      <section id="security">
+        <h2>Security</h2>
+        <div class="row">
+          <div class="text">
+            <b>Password</b><span>Last changed 3 months ago</span>
+          </div>
+          <span class="btn">Change password</span>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Two-factor authentication</b
+            ><span>Authenticator app enabled</span>
+          </div>
+          <div class="toggle on"></div>
+        </div>
+        <div class="row">
+          <div class="text">
+            <b>Active sessions</b><span>3 devices signed in</span>
+          </div>
+          <span class="btn">Review</span>
+        </div>
+      </section>
+
+      <section class="danger-zone">
+        <h2>Danger zone</h2>
+        <div class="row">
+          <div class="text">
+            <b>Delete account</b
+            ><span
+              >Removes your profile and every report you own. This cannot be
+              undone.</span
+            >
+          </div>
+          <span class="btn danger">Delete account</span>
+        </div>
+      </section>
+
+      <div class="actions">
+        <span class="btn">Cancel</span
+        ><span class="btn primary">Save changes</span>
+      </div>
+    </div>
+  </body>
+</html>

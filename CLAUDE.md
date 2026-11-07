@@ -27,7 +27,7 @@ pnpm install
 pnpm build          # builds packages only (apps are excluded)
 pnpm lint           # eslint (ts/vue/js/mjs incl. apps/site, fails on warnings) + prettier --check; CI runs this
 pnpm fix            # eslint --fix + prettier --write
-pnpm test           # vitest in every package (test:integration:ci, with coverage)
+pnpm test           # vitest in every package (test:integration:ci, with coverage), then the site's unit tests (the image diff engines)
 pnpm test:integration   # same without CI=true/coverage; `:watch` and `:coverage` variants exist
 ```
 
@@ -39,7 +39,7 @@ pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts
 pnpm --filter visual-regression-viewer exec vitest run -t "name"
 ```
 
-Site: `pnpm --filter @visual-regression/site dev` / `build`. The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
+Site: `pnpm --filter @visual-regression/site dev` / `build` / `test`; `diff-examples` regenerates the diff guide's example images and measurements with Chromium (Playwright). The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
 
 ## Release & CI
 

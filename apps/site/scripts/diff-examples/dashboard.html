@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Lumen · Overview</title>
+    <script>
+      // the generator passes the perturbation as ?variant=<name>
+      document.documentElement.dataset.variant =
+        new URLSearchParams(location.search).get('variant') || '';
+    </script>
+    <style>
+      :root {
+        --bg: #f5f6f8;
+        --surface: #ffffff;
+        --fg: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #4f46e5;
+        --accent-soft: #eef2ff;
+        --green: #059669;
+        --green-soft: #ecfdf5;
+        --red: #dc2626;
+        --red-soft: #fef2f2;
+        --amber: #d97706;
+        --sidebar: #ffffff;
+      }
+      html[data-variant='dark-mode'] {
+        --bg: #0f1115;
+        --surface: #171a21;
+        --fg: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #262a33;
+        --accent: #818cf8;
+        --accent-soft: #1e1b4b;
+        --green: #34d399;
+        --green-soft: #052e16;
+        --red: #f87171;
+        --red-soft: #450a0a;
+        --amber: #fbbf24;
+        --sidebar: #12141a;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 960px;
+        height: 600px;
+        overflow: hidden;
+      }
+      body {
+        font:
+          13px/1.45 -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        color: var(--fg);
+        background: var(--bg);
+        display: flex;
+      }
+      aside {
+        width: 208px;
+        background: var(--sidebar);
+        border-right: 1px solid var(--border);
+        padding: 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 700;
+        font-size: 15px;
+        margin: 0 6px 20px;
+      }
+      .logo i {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, var(--accent), #a78bfa);
+      }
+      .nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 7px 10px;
+        border-radius: 6px;
+        color: var(--muted);
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .nav a.active {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .nav a::before {
+        content: '';
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid currentColor;
+        opacity: 0.7;
+      }
+      .nav .group {
+        font-size: 10.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 14px 10px 4px;
+      }
+      .user {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 6px;
+        border-top: 1px solid var(--border);
+      }
+      .avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #7c3aed;
+        color: #fff;
+        font-weight: 600;
+        font-size: 12px;
+        display: grid;
+        place-items: center;
+      }
+      html[data-variant='dynamic-content'] .avatar {
+        background: #0d9488;
+      }
+      .user b {
+        display: block;
+        font-size: 12.5px;
+      }
+      .user span {
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      main {
+        flex: 1;
+        padding: 20px 26px;
+        min-width: 0;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      /* fixed width: a longer word must not push the toolbar around */
+      h1 {
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+        width: 112px;
+      }
+      .topbar .clock {
+        margin-left: auto;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .search {
+        width: 230px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        border-radius: 7px;
+        padding: 7px 11px;
+        color: var(--muted);
+      }
+      .btn {
+        background: var(--accent);
+        color: #fff;
+        border-radius: 7px;
+        padding: 7px 13px;
+        font-weight: 600;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 14px 16px;
+      }
+      html[data-variant='layout-shift'] .stats .card:nth-child(2) {
+        transform: translateY(4px);
+      }
+      .card .label {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 6px;
+      }
+      .card .value {
+        font-size: 22px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+      .delta {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 99px;
+      }
+      .up {
+        color: var(--green);
+        background: var(--green-soft);
+      }
+      .down {
+        color: var(--red);
+        background: var(--red-soft);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 12px;
+      }
+      .card h2 {
+        font-size: 13.5px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .card .sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 7px;
+        height: 150px;
+        padding-top: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      .chart i {
+        flex: 1;
+        background: var(--accent);
+        border-radius: 3px 3px 0 0;
+        opacity: 0.85;
+      }
+      .chart i:nth-child(odd) {
+        opacity: 0.55;
+      }
+      .axis {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 10.5px;
+        margin-top: 6px;
+      }
+      .list {
+        list-style: none;
+      }
+      .list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-top: 1px solid var(--border);
+        font-size: 12.5px;
+      }
+      .list li:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .list .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .list .who {
+        flex: 1;
+      }
+      .list .who span {
+        display: block;
+        color: var(--muted);
+        font-size: 11.5px;
+      }
+      .list .amt {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      .online {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .online::before {
+        content: '';
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      /* text nudged by a sub-pixel: glyphs re-rasterize, boxes snap to the same pixels */
+      html[data-variant='antialiasing'] main {
+        position: relative;
+        left: 0.3px;
+      }
+      html[data-variant='shift-1px'] main {
+        position: relative;
+        left: 1px;
+      }
+      /* an element that was not there before: a cookie notice over the corner */
+      .notice {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 240px;
+        padding: 12px 14px;
+        background: var(--fg);
+        color: var(--bg);
+        border-radius: 10px;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .notice button {
+        margin-top: 8px;
+        padding: 4px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <div class="logo"><i></i>Lumen</div>
+      <nav class="nav">
+        <a class="active" href="#">Overview</a>
+        <a href="#">Customers</a>
+        <a href="#">Revenue</a>
+        <a href="#">Subscriptions</a>
+        <div class="group">Workspace</div>
+        <a href="#">Reports</a>
+        <a href="#">Integrations</a>
+        <a href="#">Settings</a>
+      </nav>
+      <div class="user">
+        <div class="avatar" id="avatar">JD</div>
+        <div>
+          <b id="user-name">Jordan Doyle</b><span>Admin · Acme Corp</span>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <h1 id="title">Overview</h1>
+        <div class="search">Search customers, invoices…</div>
+        <span class="online" id="online">1,284 online</span>
+        <span class="clock" id="clock">Tue 14:32</span>
+        <span class="btn">New report</span>
+      </div>
+      <div class="stats">
+        <div class="card">
+          <div class="label">Monthly recurring revenue</div>
+          <div class="value">$48,920</div>
+          <span class="delta up">↑ 6.4%</span>
+        </div>
+        <div class="card">
+          <div class="label">Active customers</div>
+          <div class="value">2,317</div>
+          <span class="delta up">↑ 2.1%</span>
+        </div>
+        <div class="card">
+          <div class="label">Churn</div>
+          <div class="value">1.9%</div>
+          <span class="delta down">↓ 0.3 pt</span>
+        </div>
+        <div class="card">
+          <div class="label">Open tickets</div>
+          <div class="value">37</div>
+          <span class="delta down">↑ 12</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="card">
+          <h2>Revenue, last 14 days</h2>
+          <div class="sub">Net of refunds, in USD</div>
+          <div class="chart">
+            <i style="height: 48%"></i><i style="height: 56%"></i
+            ><i style="height: 52%"></i><i style="height: 64%"></i>
+            <i style="height: 61%"></i><i style="height: 70%"></i
+            ><i style="height: 58%"></i><i style="height: 74%"></i>
+            <i style="height: 69%"></i><i style="height: 80%"></i
+            ><i style="height: 77%"></i><i style="height: 84%"></i>
+            <i style="height: 79%"></i><i style="height: 92%"></i>
+          </div>
+          <div class="axis">
+            <span>Oct 23</span><span>Oct 30</span><span>Nov 5</span>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Recent payments</h2>
+          <div class="sub">Settled in the last hour</div>
+          <ul class="list">
+            <li>
+              <i class="dot" style="background: #059669"></i>
+              <div class="who">Northwind Traders<span>Pro · yearly</span></div>
+              <span class="amt">$1,188.00</span>
+            </li>
+            <li>
+              <i class="dot" style="background: #4f46e5"></i>
+              <div class="who">
+                Brightwave Studio<span>Team · monthly</span>
+              </div>
+              <span class="amt">$149.00</span>
+            </li>
+            <li>
+              <i class="dot" style="background: #d97706"></i>
+              <div class="who">
+                Halden &amp; Co.<span>Starter · monthly</span>
+              </div>
+              <span class="amt">$29.00</span>
+            </li>
+            <li>
+              <i class="dot" style="background: #dc2626"></i>
+              <div class="who">Oakline Supply<span>Refund</span></div>
+              <span class="amt">−$59.00</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </main>
+    <script>
+      const variant = document.documentElement.dataset.variant;
+      if (variant === 'typo')
+        document.getElementById('title').textContent = 'Overwiew';
+      if (variant === 'added-element') {
+        const notice = document.createElement('div');
+        notice.className = 'notice';
+        notice.innerHTML =
+          'We use cookies to keep you signed in.<br /><button>Accept</button>';
+        document.body.append(notice);
+      }
+      if (variant === 'dynamic-content') {
+        document.getElementById('clock').textContent = 'Tue 14:33';
+        document.getElementById('online').textContent = '1,291 online';
+        document.getElementById('avatar').textContent = 'MK';
+        document.getElementById('user-name').textContent = 'Mira Kowalczyk';
+      }
+    </script>
+  </body>
+</html>

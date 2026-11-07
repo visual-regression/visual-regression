@@ -9,11 +9,13 @@ Docus (Nuxt) site, statically generated (`nuxt generate`) and deployed to Cloudf
 
 ## Content layout
 
-- `content/1.learn/*`, `2.compare.md`, `5.privacy.md`, `index.md` — hand-written.
+- `content/1.learn/*`, `2.compare.md`, `5.diff-algorithms.md`, `6.privacy.md`, `index.md` — hand-written.
 - `content/3.manifest/` and `content/4.viewer/` — hand-written `1.index.md` plus **generated** pages (`[2-9].*.md`, `generated: true` frontmatter, gitignored, rewritten on every run). `public/schema/` is generated too.
 - Generation: `scripts/sync-manifest.mjs` and `scripts/sync-viewer.mjs` turn each package README (and the schema) into pages: one page per `##` section, with the HTML header, TOC and License section stripped and `https://visual-regression.dev/...` links rewritten to site paths. **Edit the package README or schema, never the generated files.** Section titles are mapped in the script's `PAGES` table.
 - `data/tools/*.yml` — one file per tool, rendered by `ToolsCompare.vue` and `DemoToolFinder.vue` through the shared `ToolList.vue`. Schema/fields: copy an existing file (`pixsame.yml` is the maintainers' own).
 - `app/components`, `app/pages/[[lang]]`, `app/utils` (demo run, pixel diff, tool labels, zip) — Vue code.
+- **Image diff tool** at `/image-diff`: `app/pages/image-diff.vue` (a page of its own for the wide layout, not a content page) with `app/components/image-diff/*`. Client-only; the five engines (exact, pixelmatch, Resemble.js, SSIM, perceptual hash), padding and the Web Worker live in `app/lib/image-diff/` and are loaded only by that page (`worker-client.ts` creates the worker on mount; `engines/*-info.ts` hold the option metadata the page needs without the libraries). Unit tests: `pnpm --filter @visual-regression/site test` (vitest, `app/lib/**/*.test.ts`).
+- **Diff algorithm guide** at `/diff-algorithms` (`content/5.diff-algorithms.md`): static, no worker. Every number comes from `data/diff-examples.json` via `app/lib/diff-examples.ts` (`:diff-value`, `:diff-matrix`, `:diff-example` components); the prose is in `app/lib/diff-guide.ts`. The images (`public/diff-examples/`) and the JSON are generated and committed: `pnpm --filter @visual-regression/site diff-examples` (needs `pnpm exec playwright install chromium`; fixtures in `scripts/diff-examples/`) renders them and runs the tool's real worker in Chromium. Rerun it after changing an engine, its defaults or a fixture, and commit the result. Claims about other tools in the guide are read from package source/metadata with a date; keep them that way.
 
 ## Working on it
 
