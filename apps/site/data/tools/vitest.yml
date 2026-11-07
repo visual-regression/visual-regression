@@ -10,7 +10,7 @@ selfHostable: true
 hosting: local
 runners:
   - Vitest (browser mode)
-diffEngine: pixelmatch (threshold, allowedMismatchedPixelRatio)
+diffEngine: a comparator named pixelmatch (threshold, allowedMismatchedPixelRatio), implemented with @blazediff/core in 5.1.0
 reviewSurface:
   - local
 baselineStorage: repo
@@ -19,7 +19,8 @@ machineReadableResults: images-only
 manifestSupport: converter
 notes:
   - File names carry the browser and platform (button-chromium-darwin.png), so one test keeps one reference per browser and OS.
-lastVerified: '2026-10-13'
+lastVerified: '2026-11-07'
 sources:
   - https://vitest.dev/guide/browser/visual-regression-testing
   - https://vitest.dev/blog/vitest-4
+  - https://www.npmjs.com/package/@vitest/browser
