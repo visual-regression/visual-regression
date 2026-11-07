@@ -37,7 +37,7 @@ export const situations: Situation[] = [
     pick: 'pixelmatch, low threshold',
     fact: () =>
       `A three-point color drift: pixelmatch at its default threshold counts ${figure('color-tint', 'pixelmatch')}, with threshold 0 ${figure('color-tint', 'pixelmatch-0')}; SSIM reads ${figure('color-tint', 'ssim')}.`,
-    why: 'Per-pixel color distance with a threshold you set is the only family here that sees small color changes. SSIM works on brightness and does not.',
+    why: 'Per-pixel comparisons see small color changes, and the tolerance decides: the exact comparison, pixelmatch with threshold 0 and Resemble.js with ignore nothing count them; the default threshold and the default tolerances let them through. SSIM works on brightness and the hash on a coarse grayscale, so neither sees them.',
   },
   {
     id: 'lossy',
@@ -69,7 +69,7 @@ export const situations: Situation[] = [
     pick: 'Exact pixels or pixelmatch',
     fact: () =>
       `On a 960×600 page: exact ${field('typo', 'exact', 'ms')}, pixelmatch ${field('typo', 'pixelmatch', 'ms')}, pHash ${field('typo', 'phash', 'ms')}, Resemble.js ${field('typo', 'resemble', 'ms')}, SSIM ${field('typo', 'ssim', 'ms')} (median of five runs, in a worker).`,
-    why: 'One pass over the pixels with a cheap test is as fast as it gets in JavaScript. Native comparators exist for when even that is the slow part of the run.',
+    why: 'The pixel loops (exact, pixelmatch) and the hash are several times faster than Resemble.js and SSIM in these measurements. Native comparators exist for when even that is the slow part of the run.',
   },
 ];
 
@@ -95,7 +95,7 @@ export const algorithms: Algorithm[] = [
       'A pixel differs when any of its four channels (red, green, blue, alpha) differs by more than the tolerance, which is 0 by default.',
     returns: 'A count of differing pixels, and a diff image.',
     knobs: 'A per-channel tolerance.',
-    strengths: 'Nothing slips through, easy to explain, the cheapest.',
+    strengths: 'Nothing slips through, easy to explain.',
     weaknesses:
       'Counts rendering noise and compression artifacts as changes; no notion of what a person can see.',
     use: 'Deterministic renders: generated images, one machine and one browser build.',
@@ -128,7 +128,7 @@ export const algorithms: Algorithm[] = [
       url: 'https://github.com/rsmbl/Resemble.js',
     },
     measures:
-      'Per-channel differences against tolerances (16 per channel by default) and brightness bounds, with presets that also detect anti-aliasing or compare brightness only.',
+      'Per-channel differences against tolerances (a channel is similar when it differs by less than 16 by default) and brightness bounds, with presets that also detect anti-aliasing or compare brightness only.',
     returns:
       'A mismatch percentage, whether the sizes match, the bounding box of the differences, and a diff image.',
     knobs:
@@ -161,14 +161,14 @@ export const algorithms: Algorithm[] = [
     id: 'phash',
     name: 'Perceptual hash',
     measures:
-      'Each image is reduced to 32 by 32 gray values, a discrete cosine transform keeps the 8 by 8 lowest frequencies, and each becomes one bit against the median: a 64-bit fingerprint.',
+      'Each image is reduced to 32 by 32 gray values, a discrete cosine transform keeps the 8 by 8 lowest frequencies, and each becomes one bit against the median: a 64-bit fingerprint. The median includes the lowest coefficient, the average brightness, so a uniform brightness shift leaves the hash unchanged.',
     returns: 'The Hamming distance between the two fingerprints, 0 to 64.',
     knobs:
       'The size of the kept square (8 gives 64 bits, 16 gives 256); the limit on the distance is yours.',
     strengths:
       'Survives resizing, compression and small shifts, compares images of different sizes, fingerprints are tiny.',
     weaknesses:
-      'Blind to small changes and to color; it says "same picture", not "pixel-perfect". This implementation is its own variant, not bit-identical to other libraries.',
+      'Blind to small changes and to global brightness and color; it says "same picture", not "pixel-perfect". This implementation is its own variant, not bit-identical to other libraries.',
     use: 'Near-duplicate detection and coarse "did the page change at all" checks.',
     config: 'phash',
   },
