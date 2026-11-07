@@ -67,9 +67,9 @@ check(
   'generated: manifest and viewer pages exist and are marked generated',
   () => {
     for (const f of [
-      '3.manifest/2.format.md',
-      '3.manifest/8.schema.md',
-      '4.viewer/2.cli.md',
+      '5.manifest/2.format.md',
+      '5.manifest/8.schema.md',
+      '6.viewer/2.cli.md',
     ]) {
       const text = fs.readFileSync(path.join(site, 'content', f), 'utf8');
       assert.match(text, /^generated: true$/m, `${f} lacks generated: true`);
@@ -134,8 +134,8 @@ check('git: generated files are not tracked', () => {
     'git',
     [
       'ls-files',
-      'apps/site/content/3.manifest',
-      'apps/site/content/4.viewer',
+      'apps/site/content/5.manifest',
+      'apps/site/content/6.viewer',
       'apps/site/public/schema',
     ],
     { cwd: repo, encoding: 'utf8' },
