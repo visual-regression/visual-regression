@@ -68,7 +68,6 @@ export default [
       'packages/*/scripts/**',
       'scripts/**',
       'apps/site/scripts/**',
-      'apps/image-diff/scripts/**',
       '.claude/skills/*/scripts/**',
       'examples/**',
     ],
@@ -80,12 +79,12 @@ export default [
     },
   },
   {
-    files: ['packages/*/app/**', 'apps/image-diff/src/**'],
+    files: ['packages/*/app/**'],
     languageOptions: { globals: { ...globals.browser } },
   },
-  // verification, generator and example scripts report through stdout
+  // verification scripts and the converter examples report through stdout
   {
-    files: ['.claude/skills/*/scripts/**', 'apps/image-diff/scripts/**', 'examples/**'],
+    files: ['.claude/skills/*/scripts/**', 'examples/**'],
     rules: { 'no-console': 'off' },
   },
   // Jest runs CommonJS unless told otherwise, which is how jest-image-snapshot is used

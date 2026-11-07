@@ -13,7 +13,6 @@
 | [`packages/visual-regression-manifest`](packages/visual-regression-manifest) | The `visual-regression-manifest` format: JSON Schema, TypeScript types, reader, writer, merger and converters from other tools' output. |
 | [`packages/visual-regression-viewer`](packages/visual-regression-viewer)     | The `visual-regression-viewer` command: reads the manifests of a run, serves a review page for it or writes it to a folder.             |
 | `apps/site`                                                                  | The visual-regression.dev site (Docus, statically generated).                                                                           |
-| `apps/image-diff`                                                            | The online image diff tool at diff.visual-regression.dev (Vite + Vue, static, runs entirely in the browser).                            |
 
 Maintained by the [pixsame](https://pixsame.com) team. Contributions from every visual regression tool are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
