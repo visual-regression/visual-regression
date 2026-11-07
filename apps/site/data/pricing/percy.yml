@@ -1,0 +1,48 @@
+tool: percy
+pricingPage: https://www.browserstack.com/pricing?product=percy
+pageSection:
+  start: Desktop AI-powered visual comparison across desktop browsers
+  end: Detailed Plans Comparison
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: c7bf5886c0f44d8bdcbbf7096e2b71e297a12fbaa842f313b4e752e03234f644
+unit: screenshot
+plans:
+  - name: Free
+    monthly: 0
+    included:
+      snapshots: 5000
+      seats: null
+    overage: null
+    notes:
+      - Unlimited users, cross-browser, one month of build history.
+  - name: Desktop
+    monthly: 249
+    annualMonthly: 199
+    included:
+      snapshots: 10000
+      seats: null
+    overage:
+      per: 1
+      price: 0.036
+    notes:
+      - Desktop browsers; one year of build history; custom volumes on request.
+  - name: Desktop & Mobile
+    monthly: 729
+    annualMonthly: 599
+    included:
+      snapshots: 25000
+      seats: null
+    overage:
+      per: 1
+      price: 0.048
+    notes:
+      - Adds real mobile devices and mobile browsers.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - An add-on on top of a plan: SSO, access control, dedicated success manager, 99% uptime SLA, 2x parallel allocation.
+confidence: high
+notes:
+  - The page is BrowserStack's pricing page for every product; only the Percy plan cards are hashed and extracted.
+  - The page opens on yearly billing. The month-to-month prices ($249 and $729) appear after switching its billing toggle in a browser; the page text a script sees carries only the yearly prices, so a refresh records those and the calculator then shows "billed yearly".

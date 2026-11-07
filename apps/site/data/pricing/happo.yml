@@ -1,0 +1,53 @@
+tool: happo
+pricingPage: https://happo.io/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: e364872ef7b253c8e6f2d20603f2538d167e688f7038d851963d5f69129373f2
+unit: snapshot
+plans:
+  - name: Free
+    monthly: 0
+    included:
+      snapshots: 5000
+      seats: null
+    overage: null
+    notes:
+      - Chrome only; usage pauses at the limit and is never billed.
+  - name: Starter
+    monthly: 149
+    included:
+      snapshots: 50000
+      seats: null
+    overage:
+      per: 1
+      price: 0.006
+    notes:
+      - Chrome and Firefox.
+  - name: Growth
+    monthly: 399
+    included:
+      snapshots: 150000
+      seats: null
+    overage:
+      per: 1
+      price: 0.006
+    notes:
+      - Chrome, Firefox and Safari.
+  - name: Pro
+    monthly: 749
+    included:
+      snapshots: 300000
+      seats: null
+    overage:
+      per: 1
+      price: 0.006
+    notes:
+      - Chrome, Firefox, Safari, iOS Safari and Edge; annual billing available, price not shown.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - One million snapshots per month or more; SAML SSO, SLAs, annual billing.
+confidence: high
+notes:
+  - A snapshot is one screenshot of one component, story or page in one browser target; an accessibility check counts as one too.
+  - Users and concurrent runs are unlimited on every plan.
