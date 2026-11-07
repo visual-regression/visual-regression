@@ -16,6 +16,8 @@ const columns = computed(() => [
     label: 'Tools',
     children: [
       { label: 'Compare the tools', to: '/compare' },
+      { label: 'Diff algorithms', to: '/diff-algorithms' },
+      { label: 'Image diff', to: '/image-diff' },
       { label: 'Viewer', to: '/viewer' },
     ],
   },

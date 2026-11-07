@@ -8,6 +8,11 @@ const items = computed(() => [
     active: route.path.startsWith('/learn'),
   },
   {
+    label: 'Diff algorithms',
+    to: '/diff-algorithms',
+    active: route.path.startsWith('/diff-algorithms'),
+  },
+  {
     label: 'Manifest',
     to: '/manifest',
     active: route.path.startsWith('/manifest'),
@@ -21,6 +26,11 @@ const items = computed(() => [
     label: 'Viewer',
     to: '/viewer',
     active: route.path.startsWith('/viewer'),
+  },
+  {
+    label: 'Image diff',
+    to: '/image-diff',
+    active: route.path.startsWith('/image-diff'),
   },
 ]);
 </script>
