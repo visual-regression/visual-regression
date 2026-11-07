@@ -11,6 +11,11 @@
 // 3. Writes the measurements to data/diff-examples.json and the diff images the
 //    engines drew to public/diff-examples/diffs/. The guide renders those files;
 //    nothing in the guide is typed in by hand.
+//
+// Limitation: the fixtures use the system fonts of the machine that renders
+// them, so on another machine the pixel counts can move by a few pixels and
+// the recorded Chromium version changes. The orderings the guide's prose relies
+// on are asserted by app/lib/diff-examples.test.ts; rerun it after regenerating.
 import { build } from 'esbuild';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';

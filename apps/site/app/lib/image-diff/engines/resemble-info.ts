@@ -14,7 +14,7 @@ export const info: EngineInfo = {
     {
       key: 'ignore',
       label: 'ignore',
-      hint: 'Preset tolerances: "less" (the library default) allows 16 values per channel, "antialiasing" allows 32 and skips pixels it detects as anti-aliased, "colors" compares brightness only, "alpha" ignores the alpha channel.',
+      hint: 'Preset tolerances: "less" (the library default) tolerates differences below 16 per channel, "antialiasing" below 32 and also skips pixels it detects as anti-aliased, "colors" compares brightness only, "alpha" ignores the alpha channel.',
       type: 'select',
       choices: [
         { value: 'nothing', label: 'nothing' },
