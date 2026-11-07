@@ -1,6 +1,7 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Manifest } from 'visual-regression-manifest';
 import {
   checkManifest,
@@ -9,9 +10,44 @@ import {
   viewerReport,
   type Expectation,
 } from './assert-manifest.js';
+import { serveStatic } from './serve.js';
 import { sh } from './shell.js';
 
-export type Ctx = { sh: typeof sh };
+const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..', '..');
+
+/**
+ * Replaces the machine's paths in every text file of a captured fixture: the
+ * example folder first (`__PROJECT_ROOT__`, which the unit tests resolve), then
+ * the Node binary (a bare `node`), the repo checkout and the home folder.
+ */
+export const scrubFixture = (dir: string, projectRoot: string): void => {
+  const replacements: [string, string][] = [
+    [projectRoot, '__PROJECT_ROOT__'],
+    [process.execPath, 'node'],
+    [repoRoot, '__REPO_ROOT__'],
+    [os.homedir(), '__HOME__'],
+  ];
+  const walk = (current: string): void => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const file = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        walk(file);
+        continue;
+      }
+      const buffer = fs.readFileSync(file);
+      if (buffer.includes(0)) continue; // binary (PNG, ...)
+      const text = buffer.toString('utf8');
+      const scrubbed = replacements.reduce(
+        (acc, [from, to]) => acc.replaceAll(from, to),
+        text,
+      );
+      if (scrubbed !== text) fs.writeFileSync(file, scrubbed);
+    }
+  };
+  walk(dir);
+};
+
+export type Ctx = { sh: typeof sh; serveStatic: typeof serveStatic };
 
 /** What every `examples/converters/<tool>/scenario.mjs` exports. */
 export type Scenario = {
@@ -33,6 +69,8 @@ export type Scenario = {
   convert(mode: string): Manifest;
   /** Copies the tool's output into a unit-test fixture folder. */
   capture?(outDir: string, mode: string): Promise<void>;
+  /** Stops whatever `record` started (a static server, for tools that need a URL). */
+  teardown?(ctx: Ctx): Promise<void>;
 };
 
 /** Where `E2E_CAPTURE=1` stores real output for the manifest package's unit tests. */
@@ -57,8 +95,7 @@ export const cleanHarnessOutput = ({ name, projectRoot, modes }: Scenario) => {
 };
 
 export const runScenario = (scenario: Scenario) => {
-  const ctx: Ctx = { sh };
-  const nameOf = scenario.nameOf ?? ((base) => base);
+  const ctx: Ctx = { sh, serveStatic };
   describe(scenario.name, () => {
     beforeAll(async () => {
       cleanHarnessOutput(scenario);
@@ -66,19 +103,25 @@ export const runScenario = (scenario: Scenario) => {
       await scenario.record(ctx);
       await scenario.perturb(ctx);
     });
+    afterAll(async () => {
+      await scenario.teardown?.(ctx);
+    });
     for (const mode of scenario.modes) {
       it(`${mode}: converts the real output into a valid manifest`, async () => {
         const expectation = scenario.expectations[mode];
         expect(expectation, `expectations for mode ${mode}`).toBeDefined();
+        const nameOf =
+          expectation.nameOf ?? scenario.nameOf ?? ((base: string) => base);
         await scenario.compare(mode, ctx);
         const manifest = scenario.convert(mode);
         const checks = checkManifest(manifest, expectation, {
           projectRoot: scenario.projectRoot,
           nameOf,
-          reportsDiffRatio: scenario.reportsDiffRatio,
+          reportsDiffRatio:
+            expectation.reportsDiffRatio ?? scenario.reportsDiffRatio,
         });
         try {
-          const out = viewerReport(
+          const out = await viewerReport(
             manifest,
             scenario.projectRoot,
             `${scenario.name}-${mode}`,
@@ -98,6 +141,7 @@ export const runScenario = (scenario: Scenario) => {
           fs.rmSync(dir, { recursive: true, force: true });
           fs.mkdirSync(dir, { recursive: true });
           await scenario.capture(dir, mode);
+          scrubFixture(dir, scenario.projectRoot);
           const resolved = {
             statuses: Object.fromEntries(
               Object.entries(expectation.statuses).map(([base, status]) => [
@@ -106,7 +150,8 @@ export const runScenario = (scenario: Scenario) => {
               ]),
             ),
             absent: (expectation.absent ?? []).map(nameOf),
-            reportsDiffRatio: scenario.reportsDiffRatio ?? true,
+            reportsDiffRatio:
+              expectation.reportsDiffRatio ?? scenario.reportsDiffRatio ?? true,
           };
           fs.writeFileSync(
             path.join(dir, 'expectations.json'),

@@ -2,7 +2,14 @@ import { describe, expect, it } from 'vitest';
 // the CTRF schema is draft-07, which Ajv's default export speaks
 import Ajv from 'ajv';
 import ctrfSchema from '../../__tests__/ctrf.schema.json';
-import { entry, manifest } from '../../__tests__/helpers';
+import {
+  entry,
+  expectRealOutput,
+  fixtureJson,
+  manifest,
+  must,
+  realOutput,
+} from '../../__tests__/helpers';
 import { validateManifest } from '../reader';
 import {
   CTRF_SPEC_VERSION,
@@ -306,6 +313,121 @@ describe('fromCtrf', () => {
     expect(() =>
       fromCtrf({ reportFormat: 'CTRF', results: { tests: [] } } as never),
     ).toThrow(/pass `projectRoot`/);
+  });
+
+  // captured by examples/converters/playwright: playwright-ctrf-json-reporter's
+  // report of the same runs fromPlaywrightReport is tested with
+  describe.each(
+    realOutput('playwright').filter(({ mode }) => mode.startsWith('ctrf-')),
+  )(
+    'real output of playwright-ctrf-json-reporter, $mode',
+    ({ mode, root, expectations }) => {
+      it('converts the visual tests in lenient mode, with project-relative paths', () => {
+        const run = mode.replace(/^ctrf-/, '');
+        const report = fixtureJson<CtrfReport>(
+          root,
+          `test-results/${run}-reports/ctrf-report.json`,
+        );
+        expect(fromCtrf(report, { projectRoot: root }).entries).toEqual([]);
+        const manifest = fromCtrf(report, { projectRoot: root, lenient: true });
+        expectRealOutput(manifest, root, expectations);
+        expect(manifest.tool).toEqual({
+          name: 'playwright',
+          version: expect.any(String),
+        });
+        const failed = must(manifest.entries.find((e) => e.name === 'box-b'));
+        expect(failed).toMatchObject({
+          status: 'failed',
+          test: {
+            filePath: 'tests/box.spec.mjs',
+            titlePath: ['chromium', 'box.spec.mjs'],
+          },
+          images: {
+            baseline: {
+              path: expect.stringMatching(
+                /^tests\/box\.spec\.mjs-snapshots\/box-b-chromium-[a-z0-9]+\.png$/,
+              ),
+            },
+            actual: {
+              path: `test-results/${run}/box-box-b-chromium/box-b-actual.png`,
+            },
+            diff: {
+              path: `test-results/${run}/box-box-b-chromium/box-b-diff.png`,
+            },
+          },
+          attachments: [
+            {
+              name: 'error-context',
+              contentType: 'text/markdown',
+              path: `test-results/${run}/box-box-b-chromium/error-context.md`,
+            },
+          ],
+          message: expect.stringContaining('toHaveScreenshot(expected) failed'),
+        });
+      });
+    },
+  );
+
+  it('leaves out absolute paths outside projectRoot instead of emitting `..` paths', () => {
+    const png = (name: string, path: string, role?: string) => ({
+      name,
+      contentType: 'image/png',
+      path,
+      ...(role ? { extra: { visualRegression: { role } } } : {}),
+    });
+    const report: CtrfReport = {
+      reportFormat: 'CTRF',
+      specVersion: '0.2.0',
+      results: {
+        tool: { name: 'some-reporter' },
+        summary: {
+          tests: 2,
+          passed: 0,
+          failed: 2,
+          skipped: 0,
+          pending: 0,
+          other: 0,
+          start: 1,
+          stop: 2,
+        },
+        tests: [
+          {
+            name: 'outside baseline',
+            status: 'failed',
+            duration: 1,
+            filePath: '/repo/other/a.spec.ts',
+            attachments: [png('b', '/repo/shots/base.png', 'baseline')],
+          },
+          {
+            name: 'outside actual',
+            status: 'failed',
+            duration: 1,
+            filePath: '/repo/other/b.spec.ts',
+            attachments: [
+              png('b', '/repo/app/shots/base.png', 'baseline'),
+              png('a', '/repo/shots/actual.png', 'actual'),
+              { ...png('trace', '/repo/shots/trace.zip'), contentType: 'x/y' },
+            ],
+          },
+        ],
+      },
+    };
+    const warnings: string[] = [];
+    const converted = fromCtrf(report, {
+      projectRoot: '/repo/app',
+      lenient: true,
+      onWarning: (message) => warnings.push(message),
+    });
+    expect(converted.entries.map((e) => e.name)).toEqual(['outside actual']);
+    const [kept] = converted.entries;
+    expect(kept.images.baseline.path).toBe('shots/base.png');
+    expect(kept.images.actual.path).toBeNull();
+    expect(kept.attachments).toBeUndefined();
+    expect(kept.test.filePath).toBe('');
+    expect(JSON.stringify(converted)).not.toContain('..');
+    expect(warnings).toHaveLength(5);
+    expect(warnings.join('\n')).toMatch(/outside the project root/);
+    expect(warnings.join('\n')).toMatch(/baseline is not in the project/);
   });
 
   it('skips tests without visual data unless lenient, then reads them from their attachments', () => {

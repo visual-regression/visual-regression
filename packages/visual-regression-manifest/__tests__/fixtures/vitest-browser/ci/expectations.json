@@ -1,0 +1,9 @@
+{
+  "statuses": {
+    "box-a-chromium-darwin": "passed",
+    "box-b-chromium-darwin": "failed",
+    "box-c-chromium-darwin": "missing-baseline"
+  },
+  "absent": [],
+  "reportsDiffRatio": false
+}
