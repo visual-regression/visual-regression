@@ -50,7 +50,9 @@ cp "$S/run.zip" .playwright-mcp/sample-run.zip          # browser_file_upload on
 
 Other pages you changed: `browser_navigate`, then `browser_snapshot` (a11y tree, better than a screenshot for assertions) and `browser_console_messages` level `error`.
 
-**4. README/schema edits** — they feed `/manifest/*` and `/viewer/cli`. After `build`, open the affected generated page in the browser and read it; the checker only proves it exists.
+**4. Image diff tool and guide** (`/image-diff`, `/diff-algorithms`): `check-output.mjs` proves both are prerendered and that only `/image-diff` references the engine worker chunk. Drive `/image-diff?a=/diff-examples/dashboard.png&b=/diff-examples/subpixel-text.png`: five result rows whose numbers equal the `subpixel-text` row of `data/diff-examples.json`; upload two PNGs and a JPEG of different size (padding notice, five results); Blink view paused under `prefers-reduced-motion` (`browser_emulate_media`); no horizontal overflow at 375 px; no console errors.
+
+**5. README/schema edits** — they feed `/manifest/*` and `/viewer/cli`. After `build`, open the affected generated page in the browser and read it; the checker only proves it exists.
 
 ## Evidence
 

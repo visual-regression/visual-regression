@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Oakline Supply · Checkout</title>
+    <script>
+      document.documentElement.dataset.variant =
+        new URLSearchParams(location.search).get('variant') || '';
+    </script>
+    <style>
+      :root {
+        --fg: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --accent: #4f46e5;
+      }
+      /* a few RGB points off: the kind of drift a design token change leaves behind */
+      html[data-variant='button-color'] {
+        --accent: #4c49e2;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 960px;
+        height: 600px;
+        overflow: hidden;
+      }
+      body {
+        font:
+          13px/1.5 -apple-system,
+          'Segoe UI',
+          Roboto,
+          'Helvetica Neue',
+          Arial,
+          sans-serif;
+        color: var(--fg);
+        background: #fff;
+      }
+      header {
+        height: 54px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 40px;
+        gap: 24px;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      .steps {
+        display: flex;
+        gap: 18px;
+        color: var(--muted);
+        font-size: 12.5px;
+        margin-left: auto;
+      }
+      .steps b {
+        color: var(--fg);
+      }
+      .steps span::after {
+        content: '›';
+        margin-left: 18px;
+      }
+      .steps span:last-child::after {
+        content: '';
+      }
+      .wrap {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 40px;
+        padding: 26px 40px;
+      }
+      h2 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0 0 10px;
+      }
+      .section + .section {
+        margin-top: 18px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .field {
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 9px 11px;
+        color: var(--muted);
+        background: #fff;
+      }
+      .field.filled {
+        color: var(--fg);
+      }
+      .field.full {
+        grid-column: 1 / -1;
+      }
+      .field small {
+        display: block;
+        font-size: 10.5px;
+        color: var(--muted);
+        margin-bottom: 1px;
+      }
+      .pay {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .pay div {
+        flex: 1;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 9px 11px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+      }
+      .pay div.on {
+        border-color: var(--accent);
+        color: var(--fg);
+        box-shadow: 0 0 0 1px var(--accent);
+      }
+      .pay i {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 1.5px solid currentColor;
+      }
+      .pay .on i {
+        background: radial-gradient(circle, var(--accent) 45%, transparent 50%);
+        border-color: var(--accent);
+      }
+      .summary {
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+      }
+      .item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+      }
+      .item .name {
+        font-weight: 500;
+      }
+      .item .meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .item .price {
+        margin-left: auto;
+        font-variant-numeric: tabular-nums;
+      }
+      .totals {
+        padding: 12px 0;
+        font-size: 12.5px;
+      }
+      .totals div {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+        color: var(--muted);
+      }
+      .totals .total {
+        color: var(--fg);
+        font-weight: 650;
+        font-size: 15px;
+        padding-top: 10px;
+        margin-top: 6px;
+        border-top: 1px solid var(--border);
+      }
+      .button {
+        display: block;
+        text-align: center;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+        font-size: 14px;
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 8px;
+      }
+      .secure {
+        text-align: center;
+        color: var(--muted);
+        font-size: 11.5px;
+        margin-top: 10px;
+      }
+      .promo {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .promo .field {
+        flex: 1;
+      }
+      .promo span {
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 9px 12px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span class="brand">Oakline Supply</span>
+      <div class="steps">
+        <span>Cart</span><span>Information</span><span><b>Payment</b></span>
+      </div>
+    </header>
+    <div class="wrap">
+      <div>
+        <div class="section">
+          <h2>Contact</h2>
+          <div class="field filled full">
+            <small>Email</small>sam.whitaker@example.com
+          </div>
+        </div>
+        <div class="section">
+          <h2>Shipping address</h2>
+          <div class="grid">
+            <div class="field filled"><small>First name</small>Sam</div>
+            <div class="field filled"><small>Last name</small>Whitaker</div>
+            <div class="field filled full">
+              <small>Address</small>418 Larkspur Lane, Apt 2B
+            </div>
+            <div class="field filled"><small>City</small>Portland</div>
+            <div class="field filled"><small>ZIP code</small>97209</div>
+          </div>
+        </div>
+        <div class="section">
+          <h2>Payment</h2>
+          <div class="pay">
+            <div class="on"><i></i>Card</div>
+            <div><i></i>Bank transfer</div>
+            <div><i></i>Pay later</div>
+          </div>
+          <div class="grid">
+            <div class="field filled full">
+              <small>Card number</small>4242 4242 4242 4242
+            </div>
+            <div class="field filled"><small>Expiry</small>08 / 28</div>
+            <div class="field"><small>CVC</small>•••</div>
+          </div>
+        </div>
+      </div>
+      <aside class="summary">
+        <h2>Order summary</h2>
+        <div class="item">
+          <div
+            class="thumb"
+            style="background: linear-gradient(135deg, #b45309, #f59e0b)"
+          ></div>
+          <div>
+            <div class="name">Walnut desk organizer</div>
+            <div class="meta">Qty 1</div>
+          </div>
+          <div class="price">$64.00</div>
+        </div>
+        <div class="item">
+          <div
+            class="thumb"
+            style="background: linear-gradient(135deg, #1e3a8a, #60a5fa)"
+          ></div>
+          <div>
+            <div class="name">Linen notebook, A5</div>
+            <div class="meta">Qty 2 · Navy</div>
+          </div>
+          <div class="price">$36.00</div>
+        </div>
+        <div class="item">
+          <div
+            class="thumb"
+            style="background: linear-gradient(135deg, #065f46, #34d399)"
+          ></div>
+          <div>
+            <div class="name">Brass pen set</div>
+            <div class="meta">Qty 1</div>
+          </div>
+          <div class="price">$42.00</div>
+        </div>
+        <div class="totals">
+          <div class="promo">
+            <div class="field">Discount code</div>
+            <span>Apply</span>
+          </div>
+          <div><span>Subtotal</span><span>$142.00</span></div>
+          <div><span>Shipping</span><span>$6.00</span></div>
+          <div><span>Tax</span><span>$0.00</span></div>
+          <div class="total"><span>Total</span><span>$148.00</span></div>
+        </div>
+        <div class="button">Pay $148.00</div>
+        <div class="secure">Encrypted and secure · 30-day returns</div>
+      </aside>
+    </div>
+  </body>
+</html>

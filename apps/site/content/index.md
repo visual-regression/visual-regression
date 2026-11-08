@@ -92,3 +92,16 @@ Every tool in one comparison, for your convenience.
 #default
 :tools-teaser
 ::
+
+::u-page-section
+#title
+Which diff algorithm fits you?
+
+#description
+Exact pixels, pixelmatch, Resemble.js, SSIM and a perceptual hash answer different questions. Pick by situation, with every claim measured on real example images.
+
+#default
+:diff-algorithm-cards{limit="6" class="mx-auto max-w-4xl"}
+
+:diff-home-links
+::
