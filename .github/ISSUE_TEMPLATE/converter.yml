@@ -1,0 +1,22 @@
+name: Converter request
+description: Ask for a converter from another tool's output to a manifest.
+labels: [converter]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool name and link
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What does the tool write?
+      description: Where the baseline, actual and diff images go, and any report file (JSON, XML, HTML) that lists the comparisons. Link its docs.
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: A sample of its real output
+      description: A small run you can attach or link. See CONTRIBUTING.md if you want to send the converter yourself.
