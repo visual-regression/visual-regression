@@ -2,8 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { loadRun } from './load';
 import type { ViewerOptions } from './options';
+import { openBrowser } from './open';
 import { renderPage } from './render';
 import { startServer } from './serve';
+import { renderSummary } from './summary';
 import { readTemplate } from './template';
 import { watchPaths } from './watch';
 import { writeOutput } from './write';
@@ -11,12 +13,21 @@ import { openInput } from './zip';
 
 const LOOPBACK_HOSTS = ['127.0.0.1', '::1', 'localhost'];
 
-export type Running = { url?: string; close: () => Promise<void> };
+export type Running = {
+  url?: string;
+  /** 1 when `--fail-on-diff` was given and a screenshot needs review, else 0. */
+  exitCode: number;
+  close: () => Promise<void>;
+};
+
+/** Starts the default browser on a URL; resolves `false` when it could not. */
+export type OpenBrowser = (url: string) => Promise<boolean>;
 
 const serveRun = async (
   options: ViewerOptions,
   dir: string,
   log: (message: string) => void,
+  open: OpenBrowser,
 ): Promise<Running> => {
   const build = () => {
     const template = readTemplate(options.template);
@@ -32,7 +43,14 @@ const serveRun = async (
     writeOutput(out, html, files);
     log(`Wrote index.html and ${files.size} images to ${options.out}`);
   }
-  if (!options.serve) return { close: async () => {} };
+  if (options.summary) {
+    fs.writeFileSync(path.resolve(options.summary), renderSummary(data));
+    log(`Wrote the summary to ${options.summary}`);
+  }
+  const review = data.entries.filter((entry) => entry.needsHuman).length;
+  const exitCode = options.failOnDiff && review > 0 ? 1 : 0;
+  if (exitCode) log(`${review} screenshots need review`);
+  if (!options.serve) return { exitCode, close: async () => {} };
 
   const live = !!out && options.watch;
   const server = await startServer({
@@ -50,6 +68,9 @@ const serveRun = async (
   log(`Serving ${data.entries.length} screenshots at ${server.url}`);
   if (!LOOPBACK_HOSTS.includes(options.host)) {
     log(`Warning: ${options.host} is reachable from other machines`);
+  }
+  if (options.open && !(await open(server.url))) {
+    log(`Could not open a browser; open ${server.url} yourself`);
   }
 
   const inputs = [options.template, options.css]
@@ -76,6 +97,7 @@ const serveRun = async (
   }
   return {
     url: server.url,
+    exitCode,
     close: async () => {
       await watcher?.close();
       await server.close();
@@ -88,16 +110,18 @@ const serveRun = async (
  * is unpacked first), writes it when asked to, serves it unless told not to
  * and, when serving a written page, reloads open pages as the files in the
  * output change. An edit of the template or the stylesheet rebuilds the page
- * into the output first.
+ * into the output first. `exitCode` says whether `--fail-on-diff` found
+ * screenshots to review.
  */
 export const main = async (
   options: ViewerOptions,
   log: (message: string) => void = console.log,
+  open: OpenBrowser = openBrowser,
 ): Promise<Running> => {
   const input = openInput(options.dir);
   let running: Running;
   try {
-    running = await serveRun(options, input.dir, log);
+    running = await serveRun(options, input.dir, log, open);
   } catch (error) {
     input.cleanup();
     throw error;
@@ -106,6 +130,7 @@ export const main = async (
   if (!running.url) input.cleanup();
   return {
     url: running.url,
+    exitCode: running.exitCode,
     close: async () => {
       await running.close();
       input.cleanup();

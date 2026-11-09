@@ -39,7 +39,10 @@ const run = async () => {
   };
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
-  started.push(await main(command.options));
+  const running = await main(command.options);
+  started.push(running);
+  // set, not exited with: a written report must be flushed and the watchers closed first
+  process.exitCode = running.exitCode;
 };
 
 run().catch(fail);
