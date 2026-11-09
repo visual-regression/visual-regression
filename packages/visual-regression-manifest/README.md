@@ -22,7 +22,7 @@ The format is runner-agnostic. The same file is written by the [pixsame](https:/
 
 It is built on [CTRF](https://ctrf.io), the Common Test Report Format: the envelope (`reportFormat`, `specVersion`), `tool`, `summary`, the CI and platform fields and the open `extra` objects carry CTRF's names, so a manifest converts to a CTRF report and back without renaming anything ([`toCtrf` / `fromCtrf`](#ctrf)). This format adds what CTRF has no field for: a visual comparison's three images, its statuses, its diff ratio and its threshold.
 
-The spec lives at [visual-regression.dev/manifest](https://visual-regression.dev/manifest). This package has no runtime dependencies.
+The spec lives at [visual-regression.dev/manifest](https://visual-regression.dev/manifest). This package has no runtime dependencies. To convert a tool's output without writing code, use [the command line](#from-the-command-line).
 
 - [The format](#the-format)
 - [Reading manifests](#reading-manifests)
@@ -292,6 +292,46 @@ writer.reset(); // start of a run: forget everything, delete the file
 ## Converting to and from other formats
 
 Every converter below but Loki's is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+
+### From the command line
+
+The package ships a `visual-regression-manifest` command that runs the converters below without a script. It needs Node 20.9 or newer. Run it in the project the tool ran in:
+
+```bash
+# tools that write a JSON report: pass the report
+npx visual-regression-manifest convert playwright report.json --max-diff-ratio 0.01
+
+# tools that leave folders of images: the project root is scanned
+npx visual-regression-manifest convert lost-pixel
+
+# then review it
+npx visual-regression-viewer .
+```
+
+The manifest is written to `visual-regression-manifest.<tool>.json` in the project root, next to the images it lists, which is where [the viewer](https://visual-regression.dev/viewer) looks for them. `-o <dir>` writes it into another folder and `-o <file>.json` to that file. `-p, --project-root <dir>` names the project when you are not in it.
+
+| Tool                        | Reads                                                  | Flags besides `-p`, `-o`, `--options`                                    |
+| --------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `playwright`                | the JSON report                                        | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
+| `vitest`                    | the project root                                       | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
+| `jest-image-snapshot`       | the project root                                       | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
+| `cypress-image-snapshot`    | `cypress/snapshots` in the project root                | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
+| `cypress-visual-regression` | the project root                                       | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
+| `cypress-image-diff`        | the JSON report                                        | `--color-threshold`                                                      |
+| `backstopjs`                | `backstop_data/json_report/jsonReport.json` by default | none                                                                     |
+| `roborazzi`                 | the `results-summary.json`                             | `--max-diff-ratio`                                                       |
+| `reg-cli`                   | `reg.json` by default                                  | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`, `--update` |
+| `lost-pixel`                | the project root                                       | `--max-diff-ratio` (its `threshold`), `--update`                         |
+| `loki`                      | the project root                                       | `--configurations chrome.laptop,chrome.iphone7`                          |
+| `ctrf`                      | the CTRF report                                        | `--lenient`                                                              |
+
+The flags are the options of the converters, described below for each tool: the limits are what your tool was configured with, because the files it leaves behind do not say. A flag the tool does not take is refused. Everything else a converter accepts (`baselineDir`, `snapshotPathTemplate`, `runner`, ...) goes into `--options` as a JSON object, which is merged over what the flags set:
+
+```bash
+npx visual-regression-manifest convert lost-pixel --options '{"baselineDir":"shots/baseline"}'
+```
+
+A report has to lie inside the project root, as the manifest only holds paths relative to it. The command exits with 1 and prints the reason when it cannot convert.
 
 ### CTRF
 

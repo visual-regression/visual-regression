@@ -6,6 +6,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
@@ -97,4 +98,31 @@ check('convert: image triples produce a valid manifest', () => {
   });
   assert.deepEqual(esm.validateManifest(m), []);
   assert.equal(m.entries[0].status, 'failed');
+});
+check('cli: the built bin converts a project and refuses a bad tool', () => {
+  const pkgFile = fromViewer.resolve('visual-regression-manifest/package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
+  const bin = path.resolve(
+    path.dirname(pkgFile),
+    pkg.bin['visual-regression-manifest'],
+  );
+  assert.ok(fs.statSync(bin).mode & 0o111, 'bin is not executable');
+  const project = path.join(runDir, 'cli-project');
+  const png = path.join(runDir, 'e2e/__image_snapshots__/home_#0.png');
+  for (const kind of ['baseline', 'current']) {
+    fs.mkdirSync(path.join(project, '.lostpixel', kind), { recursive: true });
+    fs.copyFileSync(png, path.join(project, '.lostpixel', kind, 'home.png'));
+  }
+  const run = (...args) =>
+    spawnSync(bin, args, { cwd: project, encoding: 'utf8' });
+  const ok = run('convert', 'lost-pixel');
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /1 comparisons, 1 passed/);
+  const [{ manifest }] = cjs.readManifestFiles(project);
+  assert.deepEqual(cjs.validateManifest(manifest), []);
+  assert.equal(manifest.entries[0].status, 'passed');
+  const bad = run('convert', 'percy');
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /Unknown tool "percy"/);
+  assert.equal(run('--version').stdout.trim(), pkg.version);
 });
