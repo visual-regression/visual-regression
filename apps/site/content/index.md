@@ -72,12 +72,12 @@ Once the basics are in place, the two places to continue.
     ::::u-page-card
     ---
     icon: i-lucide-telescope
-    title: Diff engines explained
+    title: Types of visual diffing
     to: /deep-dives/diff-engines
     spotlight: true
     ---
     #description
-    pixelmatch, odiff, Resemble.js, looks-same, SSIM, perceptual hashes and the native and hosted engines: what each one measures, what it ignores and which to pick.
+    Exact, tolerance-based, shift-tolerant, structural, hash-based and layout-aware comparison: what each type measures, what it ignores and which to pick.
     ::::
   :::
 ::
