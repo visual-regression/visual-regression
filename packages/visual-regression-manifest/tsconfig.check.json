@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src/**/*.ts", "src/schema.json"],
+  "exclude": ["src/**/*.test.ts"],
+  "compilerOptions": {
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  }
+}
