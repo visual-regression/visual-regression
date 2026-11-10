@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import { zipSync } from 'fflate';
 import { afterEach, describe, expect, it } from 'vitest';
-import { png, tmpDir, writeFile, writeRun } from '../__tests__/helpers';
+import { entry, png, tmpDir, writeFile, writeRun } from '../__tests__/helpers';
 import { main, type Running } from './main';
 import { DEFAULT_TITLE, type ViewerOptions } from './options';
 import { DATA_MARKER } from './render';
@@ -31,6 +31,8 @@ const options = async (overrides: Partial<ViewerOptions> = {}) => {
     host: '127.0.0.1',
     template,
     title: DEFAULT_TITLE,
+    failOnDiff: false,
+    open: false,
     ...overrides,
   } satisfies ViewerOptions;
 };
@@ -270,5 +272,79 @@ describe('main', () => {
     await expect(
       main(await options({ css: '/nope/theme.css' })),
     ).rejects.toThrow(/ENOENT/);
+  });
+  describe('--fail-on-diff', () => {
+    const quiet = () => undefined;
+
+    it('exits with 1 when a screenshot needs review', async () => {
+      const out = path.join(await tmpDir(), 'report');
+      const log: string[] = [];
+      const result = await main(
+        await options({ out, serve: false, failOnDiff: true }),
+        (m) => log.push(m),
+      );
+      expect(result.exitCode).toBe(1);
+      expect(log).toContain('1 screenshots need review');
+      // the report is written even so
+      expect(fs.existsSync(path.join(out, 'index.html'))).toBe(true);
+    });
+
+    it('exits with 0 when everything passed', async () => {
+      const opts = await options({ serve: false, failOnDiff: true });
+      writeRun(opts.dir, [entry({ status: 'passed' })]);
+      const out = path.join(await tmpDir(), 'report');
+      const result = await main({ ...opts, out }, quiet);
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('exits with 0 without the flag, whatever the run holds', async () => {
+      const out = path.join(await tmpDir(), 'report');
+      const result = await main(await options({ out, serve: false }), quiet);
+      expect(result.exitCode).toBe(0);
+    });
+  });
+
+  it('writes the Markdown summary with --summary', async () => {
+    const summary = path.join(await tmpDir(), 'summary.md');
+    const log: string[] = [];
+    running = await main(await options({ summary }), (m) => log.push(m));
+    const text = fs.readFileSync(summary, 'utf8');
+    expect(text).toContain('1 of 1 screenshots need review.');
+    expect(text).toContain('| home | failed |');
+    expect(log.join('\n')).toContain(`Wrote the summary to ${summary}`);
+  });
+
+  describe('--open', () => {
+    it('opens the page once the server runs', async () => {
+      const opened: string[] = [];
+      running = await main(
+        await options({ open: true }),
+        () => undefined,
+        async (url) => (opened.push(url), true),
+      );
+      expect(opened).toEqual([running.url]);
+    });
+
+    it('says so when there is no browser to start', async () => {
+      const log: string[] = [];
+      running = await main(
+        await options({ open: true }),
+        (m) => log.push(m),
+        async () => false,
+      );
+      expect(log.join('\n')).toContain(
+        `Could not open a browser; open ${running.url} yourself`,
+      );
+    });
+
+    it('does not open anything without the flag', async () => {
+      let called = false;
+      running = await main(
+        await options(),
+        () => undefined,
+        async () => (called = true),
+      );
+      expect(called).toBe(false);
+    });
   });
 });

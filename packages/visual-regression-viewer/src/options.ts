@@ -19,6 +19,12 @@ export type ViewerOptions = {
   template?: string;
   css?: string;
   title: string;
+  /** Exit with code 1 when a screenshot needs review (needs `serve` off, as a server never lets the command finish). */
+  failOnDiff: boolean;
+  /** Open the page in the default browser once the server runs. */
+  open: boolean;
+  /** Write a Markdown summary of the run to this file. */
+  summary?: string;
 };
 
 /** The flags as the user typed them; `serve` and `watch` are `false` after `--no-serve` and `--no-watch`. */
@@ -31,6 +37,9 @@ export type RawFlags = {
   template?: string;
   css?: string;
   title?: string;
+  failOnDiff?: boolean;
+  open?: boolean;
+  summary?: string;
 };
 
 const OPTIONS = {
@@ -42,6 +51,9 @@ const OPTIONS = {
   template: { type: 'string' },
   css: { type: 'string' },
   title: { type: 'string' },
+  'fail-on-diff': { type: 'boolean' },
+  open: { type: 'boolean' },
+  summary: { type: 'string' },
   help: { type: 'boolean', short: 'h' },
   version: { type: 'boolean', short: 'v' },
 } as const;
@@ -57,6 +69,14 @@ export const resolveOptions = (
     throw new UsageError(
       '--no-serve needs -o, --out: without a server and without an output there is nothing to do',
     );
+  }
+  if (flags.failOnDiff && serve) {
+    throw new UsageError(
+      '--fail-on-diff needs --no-serve (and -o): the exit code is only known when the command finishes, which a server never does',
+    );
+  }
+  if (flags.open && !serve) {
+    throw new UsageError('--open needs the web server, so not --no-serve');
   }
   let port = DEFAULT_PORT;
   if (flags.port !== undefined) {
@@ -77,6 +97,9 @@ export const resolveOptions = (
     template: flags.template,
     css: flags.css,
     title: flags.title ?? DEFAULT_TITLE,
+    failOnDiff: flags.failOnDiff === true,
+    open: flags.open === true,
+    summary: flags.summary,
   };
 };
 
@@ -95,6 +118,9 @@ Options:
       --template <file>  Use this HTML page instead of the built-in one
       --css <file>     Add this stylesheet to the page
       --title <text>   Page title (default "${DEFAULT_TITLE}")
+      --open           Open the page in your browser once the server runs
+      --summary <file> Write a Markdown summary of the run to <file>
+      --fail-on-diff   Exit with code 1 when a screenshot needs review (needs --no-serve)
   -v, --version        Print the version
   -h, --help           Print this help
 
@@ -102,6 +128,7 @@ Examples:
   visual-regression-viewer path/to/run
   visual-regression-viewer path/to/run -o report
   visual-regression-viewer path/to/run -o report --no-serve
+  visual-regression-viewer path/to/run -o report --no-serve --fail-on-diff --summary summary.md
 `;
 
 export type Command =
@@ -142,6 +169,9 @@ export const parseCommand = (argv: string[]): Command => {
       template: values.template,
       css: values.css,
       title: values.title,
+      failOnDiff: values['fail-on-diff'],
+      open: values.open,
+      summary: values.summary,
     }),
   };
 };

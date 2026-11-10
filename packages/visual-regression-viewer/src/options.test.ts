@@ -27,6 +27,9 @@ describe('parseCommand', () => {
       template: undefined,
       css: undefined,
       title: DEFAULT_TITLE,
+      failOnDiff: false,
+      open: false,
+      summary: undefined,
     });
   });
 
@@ -62,6 +65,24 @@ describe('parseCommand', () => {
     });
   });
 
+  it('reads --open, --summary and --fail-on-diff', () => {
+    expect(run('--open', '--summary', 'summary.md')).toMatchObject({
+      open: true,
+      summary: 'summary.md',
+      failOnDiff: false,
+    });
+    expect(
+      run('run', '-o', 'report', '--no-serve', '--fail-on-diff'),
+    ).toMatchObject({ failOnDiff: true, serve: false });
+  });
+
+  it('rejects --fail-on-diff with a server and --open without one', () => {
+    expect(() => parseCommand(['--fail-on-diff'])).toThrow(/needs --no-serve/);
+    expect(() =>
+      parseCommand(['-o', 'report', '--no-serve', '--open']),
+    ).toThrow(/needs the web server/);
+  });
+
   it('stops the server with --no-serve', () => {
     expect(run('run', '-o', 'report', '--no-serve')).toMatchObject({
       serve: false,
@@ -90,5 +111,6 @@ describe('parseCommand', () => {
     expect(parseCommand(['-h'])).toEqual({ kind: 'help' });
     expect(parseCommand(['-v'])).toEqual({ kind: 'version' });
     expect(helpText).toContain('--no-serve');
+    expect(helpText).toContain('--fail-on-diff');
   });
 });

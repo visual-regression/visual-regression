@@ -59,6 +59,8 @@ ls "$S/report" "$S/report/e2e/__image_snapshots__"                              
 
 Then serve that folder (`… "$S/run" -o "$S/report" -p $PORT2`, background, PID file) and run `check-served.mjs` against it too: the folder-serving code path differs from the in-memory one (it resolves files on disk, so names with `#`/`%` are the thing to watch). Playwright MCP blocks `file://`, so a browser check of the report goes through that server.
 
+**CI flags** (`--no-serve`, no server to start): `node packages/visual-regression-viewer/dist/cli.js "$S/run" -o "$S/report" --no-serve --summary "$S/summary.md" --fail-on-diff; echo $?` must print 1 (the sample run has 2 screenshots to review), leave the report and a summary that lists `home_#0` and `checkout_#0`, and print 0 for a run whose entries all passed. `--fail-on-diff` with a server and `--open` with `--no-serve` are usage errors. For `--open`, never let it start your browser: put a fake `open` (macOS) or `xdg-open` script that logs its arguments first on `PATH`, start the viewer with `--open -p $PORT` and read the log for the URL.
+
 For `--template`, `--css`, `--title`, zip input (`(cd "$S/run" && zip -qr ../run.zip .)`) and `--host`: run once with the option, then repeat the HTTP check and, for visual options (`--css`), assert the effect in the browser (`getComputedStyle(document.documentElement).getPropertyValue('--vrv-accent')`).
 
 ## Evidence

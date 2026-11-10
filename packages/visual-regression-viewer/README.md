@@ -23,6 +23,7 @@ The command makes no network requests and sends no telemetry. A browser-only ver
 - [Usage](#usage)
 - [Options](#options)
 - [Writing a report](#writing-a-report)
+- [Using it in CI](#using-it-in-ci)
 - [Theming](#theming)
 - [Replacing the page](#replacing-the-page)
 
@@ -32,7 +33,7 @@ The command makes no network requests and sends no telemetry. A browser-only ver
 npx visual-regression-viewer path/to/run
 ```
 
-It needs Node 22.12 or newer. `path/to/run` is the folder that holds the manifests and the screenshots (the project root after a local run, an unpacked CI artifact), and defaults to the current directory. It can also be one manifest file, or a zip of the folder: a CI artifact as downloaded needs no unpacking. Every `visual-regression-manifest.json` and `visual-regression-manifest.<label>.json` below the folder is read, except inside `node_modules` and `.git`.
+It needs Node 22.12 or newer (Node 20 is past its end of life). `path/to/run` is the folder that holds the manifests and the screenshots (the project root after a local run, an unpacked CI artifact), and defaults to the current directory. It can also be one manifest file, or a zip of the folder: a CI artifact as downloaded needs no unpacking. Every `visual-regression-manifest.json` and `visual-regression-manifest.<label>.json` below the folder is read, except inside `node_modules` and `.git`.
 
 By default the page is built in memory and served at `http://127.0.0.1:4173` (the next free port when that one is taken). Nothing is written to disk. The server hands out the page and the image files the manifests name. Other files in the folder are not reachable.
 
@@ -56,6 +57,9 @@ An image path in a manifest is resolved against the folder of the manifest. When
 | `--template <file>`           | Use this HTML page instead of the built-in one. See [Replacing the page](#replacing-the-page).                                                          |
 | `--css <file>`                | Add this stylesheet to the page. See [Theming](#theming).                                                                                               |
 | `--title <text>`              | Page title. Defaults to `Visual regression viewer`.                                                                                                     |
+| `--open`                      | Open the page in your default browser once the server runs. Not with `--no-serve`.                                                                      |
+| `--summary <file>`            | Write a Markdown summary of the run to `<file>`. See [Using it in CI](#using-it-in-ci).                                                                 |
+| `--fail-on-diff`              | Exit with code 1 when a screenshot needs review (`failed` or `missing-baseline`). Requires `--no-serve`. See [Using it in CI](#using-it-in-ci).         |
 | `-v, --version`, `-h, --help` | Print the version, print the options.                                                                                                                   |
 
 ## Writing a report
@@ -75,6 +79,31 @@ With `-o` the page is written to `<dir>/index.html` and the images are copied ne
 When the server runs, it serves `<dir>` from the disk and watches it: whenever a file in it is added, changed or removed, the open pages reload. Running the command again into the same folder from another terminal, or editing `index.html` by hand, shows up in the browser without a refresh.
 
 The files given with `--template` and `--css` are watched too: saving one rebuilds the page into `<dir>` (reading the manifests again), which reloads the open pages. A rebuild that fails, say because the template lost its data marker, is reported and the previous page stays. `--no-watch` turns all of this off, `--no-serve` has no server to reload.
+
+## Using it in CI
+
+Build the report without a server, fail the job when a screenshot needs review, and put the verdict into the job summary:
+
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    node-version: 22
+- name: Build the report
+  run: npx visual-regression-viewer . -o report --no-serve --summary summary.md --fail-on-diff
+- name: Show the summary
+  if: always()
+  run: cat summary.md >> "$GITHUB_STEP_SUMMARY"
+- name: Keep the report
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: visual-regression-report
+    path: report
+```
+
+The report and the summary are written before `--fail-on-diff` sets the exit code, so the steps after a failure still have them (`if: always()`). Download the artifact and open `index.html`, or publish the folder with any static host.
+
+`--summary` writes a short Markdown file: the verdict, a count per status and a table of the screenshots that need review, the biggest diff first (the first 20 of them). It is plain text, so it also works as the body of a pull request comment. Names and paths from the manifests are escaped.
 
 ## Theming
 
