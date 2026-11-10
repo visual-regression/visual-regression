@@ -18,6 +18,8 @@
 
 Pairs each screenshot with its baseline, runs a diff engine, applies your limits, writes the `.actual` and `.diff` files and a [`visual-regression-manifest`](https://visual-regression.dev/manifest) of the run. It captures nothing: the input is images, so it works with a Playwright or Puppeteer script, a Storybook crawl, an emulator or a design-tool export. Review the result with [`visual-regression-viewer`](https://visual-regression.dev/viewer).
 
+The package is the shared compare core behind [pixsame](https://pixsame.com)'s test-runner plugins, and it is published as a beta until they build on it.
+
 - [Usage](#usage)
 - [Options](#options)
 - [Size changes](#size-changes)
@@ -145,7 +147,7 @@ Decoding and comparing run in worker threads when the engine is named by id (`en
 
 - **Engine**: a module whose default export is `{ name, colorMetric, colorThreshold?, compare(baseline, actual) }` or a function from options to one. `compare` gets two RGBA images of the same size and returns `{ diffPixels, diffRatio, diff?, score? }`.
 - **Store, layout, matcher, reporter**: replace where images live (`Store`), how files are named (`Layout`), how a baseline is found (`Matcher`) and what happens with the entries (`Reporter`).
-- **Plugin**: `{ name, setup(api) }` registers engines, reporters, a store, a layout or a matcher, and hooks `beforeCompare`, `afterCompare`, `decide`, `beforeWrite` and `end`. `decide` can turn a `failed` into `approved`; `beforeWrite` can drop the local write of a store that keeps baselines elsewhere. `CompareContext.attachments` is reserved for extra inputs such as a DOM snapshot; nothing fills it yet.
+- **Plugin**: `{ name, setup(api) }` registers engines, reporters, a store, a layout or a matcher, and hooks `beforeCompare`, `afterCompare`, `decide`, `beforeWrite` and `end`. `decide` can turn a `failed` into `approved`; `beforeWrite` can drop the local write of a store that keeps baselines elsewhere. `CompareContext.attachments` is reserved for extra inputs such as a DOM snapshot; nothing fills it yet, and extra inputs have no standard shape.
 
 ## License
 

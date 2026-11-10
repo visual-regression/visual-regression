@@ -1,6 +1,6 @@
 # Proposal: `visual-regression-compare`, a tool-agnostic compare core and CLI
 
-Status: first implementation in `packages/visual-regression-compare` (core, `compare`, `record` and `approve` commands, the pixelmatch engine, the fs store, the manifest layout, the console, CTRF and GitHub summary reporters, the plugin API, a JSON/JS config file). Not yet built: the `odiff`, `resemble` and `ssim` engines, the `viewer` reporter, the Playwright and pixsame layouts, JPEG/WebP codecs and the site page. The rollout below says what belongs to which step. Discussed in the context of visual-regression.dev and pixsame on 2026-11-05; the open questions were answered on 2026-11-10 (see Decisions).
+Status: first implementation in `packages/visual-regression-compare` (core, `compare`, `record` and `approve` commands, the pixelmatch engine, the fs store, the manifest layout, the console, CTRF and GitHub summary reporters, the plugin API, a JSON/JS config file). The package is released only as betas (`X.Y.Z-beta.<n>` under the `beta` dist-tag through the manual Beta release workflow) until a pixsame runner uses it; its release-please pull request is not merged before that. pixsame consumes the core, and the GitHub App reads manifests only. Not yet built: the `odiff`, `resemble` and `ssim` engines, the `viewer` reporter, the Playwright and pixsame layouts, JPEG/WebP codecs and the site page. The rollout below says what belongs to which step. Discussed in the context of visual-regression.dev and pixsame on 2026-11-05; the open questions were answered on 2026-11-10 (see Decisions).
 
 ## The problem
 
@@ -228,3 +228,10 @@ Answered on 2026-11-10:
 - **Git LFS**: the decoder recognizes a pointer file and fails with "the file is a Git LFS pointer, not an image; run `git lfs pull`".
 - **Size mismatch**: nothing is padded automatically. `--on-size-mismatch` is `fail` (default), `pad` or `crop`. With `fail` the comparison does not run: the entry fails, its `message` and `extra.visualRegressionCompare` (`baselineSize`, `actualSize`) show the resolution change, and `diffRatio` is `1`. `pad` and `crop` compare after resizing and say so in the message. This replaces the earlier proposal of `pad` as the default.
 - **DOM snapshots for layout-aware engines**: leave room, build later. `CompareContext` has an `attachments` field that nothing fills; the design waits for the pixsame implementation.
+
+Agreed on 2026-11-10 after questioning whether a vendor-neutral compare tool is useful on its own:
+
+- **Who the core serves**: pixsame's runners first. Replacing the copied compare, image and naming code in the Playwright package with an import from the core, tests unchanged, is what proves the interfaces; if that refactor is awkward, the interfaces change before 1.0.
+- **Standalone CLI**: a reference use of the core. A landing page with use cases on the site is possible once the CLI is built; the engines, the viewer reporter and layouts for more runners are added when a real consumer needs them.
+- **GitHub App**: ships under the pixsame brand and reads manifests only. PR-level approval belongs to the App; the package keeps the file-level `approve`.
+- **Attachments**: DOM snapshots and other extra inputs have no standard shape yet, so `attachments` stays reserved and out of the manifest format.
