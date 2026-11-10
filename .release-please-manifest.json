@@ -1,4 +1,5 @@
 {
   "packages/visual-regression-manifest": "0.0.0",
-  "packages/visual-regression-viewer": "0.0.0"
+  "packages/visual-regression-viewer": "0.0.0",
+  "packages/visual-regression-compare": "0.0.0"
 }

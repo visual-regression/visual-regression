@@ -1,6 +1,6 @@
 # Proposal: `visual-regression-compare`, a tool-agnostic compare core and CLI
 
-Status: proposal, not implemented. Discussed in the context of visual-regression.dev and pixsame on 2026-11-05.
+Status: first implementation in `packages/visual-regression-compare` (core, `compare`, `record` and `approve` commands, the pixelmatch engine, the fs store, the manifest layout, the console, CTRF and GitHub summary reporters, the plugin API, a JSON/JS config file). Not yet built: the `odiff`, `resemble` and `ssim` engines, the `viewer` reporter, the Playwright and pixsame layouts, JPEG/WebP codecs and the site page. The rollout below says what belongs to which step. Discussed in the context of visual-regression.dev and pixsame on 2026-11-05; the open questions were answered on 2026-11-10 (see Decisions).
 
 ## The problem
 
@@ -42,7 +42,7 @@ Each stage is one interface, each has one default implementation, and a plugin c
 - **pair**: find the baseline for an actual (the matcher). Default: same relative path under the two directories. Alternatives: a name template, an explicit list, a manifest from a previous run.
 - **decode**: bytes to `{ width, height, data: Uint8ClampedArray /* RGBA */ }`. PNG built in; JPEG and WebP as optional codecs.
 - **compare**: the engine returns `diffPixels`, `diffRatio`, an optional diff image and an optional engine score (SSIM, Resemble's mismatch percentage).
-- **decide**: the limits (`maxDiffRatio`, `maxDiffPixels`, `colorThreshold`) and the policy for missing baselines (`fail`, `create`) and size mismatches (`pad`, `fail`, `crop`) turn the measurement into one of the manifest statuses: `passed`, `failed`, `missing-baseline`, `created`, `updated`, `approved`.
+- **decide**: the limits (`maxDiffRatio`, `maxDiffPixels`, `colorThreshold`) and the policy for missing baselines (`fail`, `create`) and size mismatches (`fail`, `pad`, `crop`; `fail` is the default, nothing is padded unless asked) turn the measurement into one of the manifest statuses: `passed`, `failed`, `missing-baseline`, `created`, `updated`, `approved`.
 - **write**: the layout names and places the baseline, actual and diff files (`<name>.png`, `<name>.actual.png`, `<name>.diff.png` as the manifest convention; a pixsame layout with `_#n` counters and `{platform}` tokens; a Playwright-like layout with `-chromium-linux` suffixes), and the manifest writer records the entry.
 - **report**: reporters consume entries as they are decided and the summary at the end.
 
@@ -56,16 +56,16 @@ The consequence for plugins is one rule: an engine that should run in a worker m
 
 ```
 visual-regression-compare [compare] <actual-dir> --baseline <dir> [--diff <dir>]
-  --engine pixelmatch|odiff|resemble|ssim|<module-id>   default: pixelmatch
+  --engine pixelmatch|<module-id>   default: pixelmatch   (odiff, resemble, ssim: later)
   --max-diff-ratio 0.01    --max-diff-pixels <n>    --color-threshold 0.1    --include-aa
   --on-missing fail|create          default: fail   (create = status `created`, baseline written)
-  --on-size-mismatch pad|fail|crop  default: pad
+  --on-size-mismatch fail|pad|crop  default: fail   (fail = record both sizes, compare nothing)
   --update none|failures-only|all   default: none   (overwrite baselines, status `updated`)
-  --match <template>                e.g. "{dir}/{name}.png" when actual and baseline names differ
-  --layout manifest|pixsame|playwright|<module-id>
+  --match <template>                e.g. "{dir}{name}-ref.png" when actual and baseline names differ ({dir}, {name}, {path})
+  --layout manifest                 (pixsame, playwright: later; other layouts through a plugin)
   --manifest <path>                 default: <actual-dir>/visual-regression-manifest.compare.json
   --runner <name> --variant <id> --platform <os>/<browser>  metadata recorded on every entry
-  --report console,viewer,ctrf,github-summary[:<path>]     default: console
+  --report console,ctrf[:<path>],github-summary[:<path>]     default: console   (viewer: later)
   --concurrency <n>                 default: cpu count, for decode and compare only (see Concurrency)
   --config <file>                   visual-regression.config.{ts,mjs,json}, auto-detected
   --fail-on failed,missing-baseline default: both; exit code 1 when any entry matches
@@ -100,20 +100,20 @@ Two entry points: a per-image call for runner adapters and a directory call for 
 ```ts
 import {
   createComparer,
-  pixelmatchEngine,
   fsStore,
   manifestLayout,
 } from 'visual-regression-compare';
 
 const comparer = createComparer({
-  engine: pixelmatchEngine({ threshold: 0.1, includeAA: false }),
+  engine: 'pixelmatch', // an id runs in worker threads; an engine object runs in the main thread
+  engineOptions: { threshold: 0.1, includeAA: false },
   limits: { maxDiffRatio: 0.01 },
   onMissingBaseline: 'create',
-  onSizeMismatch: 'pad',
+  onSizeMismatch: 'fail', // the default; 'pad' and 'crop' are opt-in
   store: fsStore({
     baselineDir: 'shots/baseline',
-    actualDir: 'shots/actual',
-    diffDir: 'shots/diff',
+    actualDir: 'shots/actual', // the incoming screenshots, for compareAll
+    diffDir: 'shots/diff', // where .actual and .diff files go
   }),
   layout: manifestLayout(),
   manifest: {
@@ -144,15 +144,17 @@ await comparer.close(); // flushes the manifest, ends reporters
 
 ### Interfaces
 
+The shipped types (`src/types.ts` in the package) are the reference; the shapes that matter:
+
 ```ts
 interface DiffEngine {
-  name: string; // recorded as `comparison.engine` in `extra`
+  name: string; // recorded as `extra.visualRegressionCompare.engine`
   colorMetric: 'yiq' | 'resemble' | 'deltaE' | string; // the manifest's `comparison.colorMetric`
+  colorThreshold?: number; // the per-pixel tolerance used
   compare(
     baseline: RgbaImage,
     actual: RgbaImage,
-    options: EngineOptions,
-  ): Promise<EngineResult>;
+  ): EngineResult | Promise<EngineResult>; // same size
 }
 interface EngineResult {
   diffPixels: number;
@@ -161,68 +163,39 @@ interface EngineResult {
   score?: { name: string; value: number }; // SSIM mean, Resemble mismatch percentage
 }
 
-interface Matcher {
-  baselineFor(actual: ImageRef, store: Store): Promise<ImageRef | null>;
-}
-
+type ImageKind = 'baseline' | 'incoming' | 'actual' | 'diff'; // incoming: the screenshots to compare
 interface Store {
   // where images live; the fs store is the only one in core
   read(ref: ImageRef): Promise<Uint8Array | null>;
   write(ref: ImageRef, bytes: Uint8Array): Promise<void>;
   remove(ref: ImageRef): Promise<void>;
-  list(kind: 'baseline' | 'actual'): AsyncIterable<ImageRef>;
+  list(kind: 'baseline' | 'incoming'): AsyncIterable<ImageRef>;
+  locate(ref: ImageRef): string | null; // absolute path, for the manifest
 }
-
 interface Layout {
   // file naming and placement
-  paths(id: EntryIdentity): { baseline: string; actual: string; diff: string };
-  identityOf(path: string): EntryIdentity | null; // the reverse, for discovery
+  paths(name: string): Record<ImageKind, string>;
+  nameOf(kind: ImageKind, path: string): string | null; // the reverse, for discovery
 }
-
+interface Matcher {
+  baselineFor(incoming: ImageRef): ImageRef | null; // where the baseline is (or goes); null skips the image
+}
 interface Reporter {
   onEntry?(entry: ManifestEntry): void | Promise<void>;
   onEnd?(manifest: Manifest): void | Promise<void>;
 }
-
 interface Plugin {
   name: string;
   setup(api: PluginApi): void | Promise<void>;
 }
-interface PluginApi {
-  addEngine(name: string, engine: DiffEngine): void;
-  addReporter(reporter: Reporter): void;
-  setStore(store: Store): void;
-  setLayout(layout: Layout): void;
-  setMatcher(matcher: Matcher): void;
-  on(
-    event: 'beforeCompare',
-    fn: (ctx: CompareContext) => void | Promise<void>,
-  ): void;
-  on(
-    event: 'afterCompare',
-    fn: (ctx: CompareContext, result: EngineResult) => void | Promise<void>,
-  ): void;
-  on(
-    event: 'decide',
-    fn: (
-      ctx: CompareContext,
-      decision: Decision,
-    ) => Decision | Promise<Decision>,
-  ): void;
-  on(
-    event: 'beforeWrite',
-    fn: (
-      ctx: CompareContext,
-      files: WritePlan,
-    ) => WritePlan | Promise<WritePlan>,
-  ): void;
-  on(event: 'end', fn: (manifest: Manifest) => void | Promise<void>): void;
-}
+// PluginApi: addEngine, addReporter, setStore, setLayout, setMatcher, and
+// on('beforeCompare' | 'afterCompare' | 'decide' | 'beforeWrite' | 'end', fn).
+// `CompareContext.attachments` is reserved for extra inputs (see Decisions); nothing fills it.
 ```
 
 The `decide` hook is the one that matters for a hosted service: it can turn a `failed` into `approved` when the service already holds an approval for that baseline hash, or attach a review URL to the entry's `extra`. The `beforeWrite` hook lets a store that keeps baselines elsewhere skip the local write.
 
-Engines shipped with the core: `pixelmatch` (default), `odiff` (optional peer dependency, used when installed), `resemble`, `ssim`. All four report on the manifest's scale (`colorMetric` set per engine), so the viewer and the deep dive on diff engines can show what the numbers mean.
+Engines planned for the core: `pixelmatch` (default, shipped), `odiff` (optional peer dependency, used when installed), `resemble`, `ssim`; any other engine is a module id. All report on the manifest's scale (`colorMetric` set per engine), so the viewer and the deep dive on diff engines can show what the numbers mean.
 
 ## How pixsame extends it
 
@@ -236,8 +209,8 @@ What stays open on purpose: the plugin API is where the hosted product different
 
 ## Rollout
 
-1. `0.1`: core, `pixelmatch`, fs store, manifest layout, console reporter, `compare` and `record` commands, worker-thread concurrency. Prove it in `examples/converters` by replacing the image-triple fixture generation with a real compare, and against the sample run from `verify-manifest`.
-2. `0.2`: `approve` command, `odiff` and `ssim` engines, `viewer` and `ctrf` and `github-summary` reporters, config file, the Playwright and pixsame layouts.
+1. `0.1` (implemented): core, `pixelmatch`, fs store, manifest layout, console reporter, `compare` and `record` commands, worker-thread concurrency. Prove it in `examples/converters` by replacing the image-triple fixture generation with a real compare, and against the sample run from `verify-manifest`.
+2. `0.2` (`approve`, the `ctrf` and `github-summary` reporters and the config file are implemented; the rest is open): `approve` command, `odiff` and `ssim` engines, `viewer` reporter, the Playwright and pixsame layouts.
 3. `0.3`: plugin API frozen, documented on the site (`/compare-cli`), pixsame's Playwright package migrates first (smallest surface), then the Cypress plugin behind its next major.
 4. `1.0` once two external tools write a manifest through it, or the three pixsame runners share it.
 
@@ -247,9 +220,11 @@ What stays open on purpose: the plugin API is where the hosted product different
 - **Wrap an existing engine or runner.** Playwright's comparator is tied to its runner and naming; `reg-cli` already does directory compare with a report but has its own report format, no plugin hooks, and no per-entry manifest; `odiff-cli` is fast and well maintained but is one engine with no pairing, policy or manifest. Wrapping one would be less code at first and inherit its maintenance. It would also tie the hook API (decide, store, layout) to that tool's model, and the engine is the part users most want to swap. The proposal therefore treats these as engines and conventions to adapt (`odiff` ships as an engine, the Playwright layout as a layout), not as the foundation. The honest cost is that we own the pairing, policy and worker code that these tools already have in some form.
 - **Do nothing; keep per-tool copies.** Zero new surface, no migration risk, and each runner stays free to diverge. But the same padding, threshold, naming and manifest-writing logic already exists in several runner integrations and drifts between them (different size-mismatch behavior, different diff ratios for the same pair), and a hosted service has no single place to hook approvals. The cost of the copies grows with each runner added, so the proposal accepts the up-front work and the 0.x instability to stop it.
 
-## Open questions
+## Decisions
 
-- Package name: `visual-regression-compare` keeps the unscoped convention of the two existing packages; `@visual-regression/compare` reads better once there are more than three. Decide before 0.1, renames are expensive.
-- Should the fs store understand a Git LFS checkout (pointer files instead of images) and fail with a clear message? Cheap and avoids a classic support issue.
-- Size mismatch default: pixsame pads, Playwright fails. Padding makes the diff ratio comparable but hides a layout change behind a number; failing is honest but noisy. Proposal: `pad`, with the mismatch recorded in `message` and `extra`.
-- Whether `compareImage` should accept a DOM snapshot alongside the image for engines that do layout-aware comparison later. Leave room in `CompareContext` (`attachments`), do not design it now.
+Answered on 2026-11-10:
+
+- **Package name**: `visual-regression-compare`, unscoped like the two existing packages.
+- **Git LFS**: the decoder recognizes a pointer file and fails with "the file is a Git LFS pointer, not an image; run `git lfs pull`".
+- **Size mismatch**: nothing is padded automatically. `--on-size-mismatch` is `fail` (default), `pad` or `crop`. With `fail` the comparison does not run: the entry fails, its `message` and `extra.visualRegressionCompare` (`baselineSize`, `actualSize`) show the resolution change, and `diffRatio` is `1`. `pad` and `crop` compare after resizing and say so in the message. This replaces the earlier proposal of `pad` as the default.
+- **DOM snapshots for layout-aware engines**: leave room, build later. `CompareContext` has an `attachments` field that nothing fills; the design waits for the pixsame implementation.

@@ -1,0 +1,73 @@
+{
+  "name": "visual-regression-compare",
+  "description": "Tool-agnostic image comparison for visual regression testing: pairs baseline and actual screenshots, runs a pluggable diff engine, applies limits, writes .actual and .diff files and a visual-regression-manifest run manifest. A CLI for folders of images and a library for test-runner adapters.",
+  "version": "0.0.0",
+  "author": "Jakub Freisler <jakub.freisler@frsource.org>",
+  "homepage": "https://visual-regression.dev/compare-cli",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/visual-regression/visual-regression.git",
+    "directory": "packages/visual-regression-compare"
+  },
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "visual-regression-compare": "dist/cli.js",
+    "vrc": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "del-cli dist && tsc -p tsconfig.build.json --emitDeclarationOnly --declaration --outDir dist && esbuild src/index.ts src/worker.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outdir=dist && esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --packages=external --banner:js='#!/usr/bin/env node' --outfile=dist/cli.js && node scripts/executable.mjs",
+    "test:integration": "vitest run",
+    "test:integration:watch": "vitest",
+    "test:integration:coverage": "vitest run --coverage",
+    "test:integration:ci": "CI=true vitest run --coverage"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "packageManager": "pnpm@12.6.0",
+  "dependencies": {
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
+    "visual-regression-manifest": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/pngjs": "^6.0.5",
+    "@types/tmp": "0.2.6",
+    "@vitest/coverage-v8": "4.1.11",
+    "del-cli": "7.0.0",
+    "esbuild": "0.28.2",
+    "tmp-promise": "3.0.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
+  },
+  "keywords": [
+    "visual regression testing",
+    "visual diff",
+    "image diff",
+    "screenshot testing",
+    "pixelmatch",
+    "run manifest",
+    "CLI"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ]
+}
