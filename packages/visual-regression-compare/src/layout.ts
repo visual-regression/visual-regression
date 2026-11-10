@@ -8,6 +8,12 @@ export const sanitizeName = (name: string) =>
     .replace(/[\\:*?"<>|\u0000-\u001f]/g, '-')
     .split('/')
     .filter((segment) => segment !== '' && segment !== '.' && segment !== '..')
+    // `x.actual` would share a file with the actual image of `x`
+    .map((segment, _, all) =>
+      segment === all[all.length - 1]
+        ? segment.replace(/\.(actual|diff)$/, '-$1')
+        : segment,
+    )
     .join('/') || 'screenshot';
 
 /**

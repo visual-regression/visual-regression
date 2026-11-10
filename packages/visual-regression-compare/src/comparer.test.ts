@@ -193,6 +193,23 @@ describe('compareImage', () => {
       ).toBe('passed');
     });
 
+    it('leaves a baseline alone when only the PNG encoding differs', async () => {
+      const identical = makePng(10, 10);
+      put('base/a.png', makePng(10, 10, undefined, 0));
+      const reencoded = Buffer.from(identical);
+      // same pixels, different bytes: flip a byte in a non-pixel chunk is brittle,
+      // so compare against an uncompressed encoding of the same pixels
+      const { PNG } = await import('pngjs');
+      const png = PNG.sync.read(Buffer.from(identical));
+      const other = PNG.sync.write(png, { deflateLevel: 0 });
+      expect(Buffer.compare(other, reencoded)).not.toBe(0);
+      const entry = await make({ update: 'all' }).compareImage({
+        name: 'a',
+        actual: other,
+      });
+      expect(entry).toMatchObject({ status: 'passed', baselineWritten: false });
+    });
+
     it('replaces the baseline after a size change', async () => {
       put('base/a.png', makePng(10, 10));
       const entry = await make({ update: 'all' }).compareImage({

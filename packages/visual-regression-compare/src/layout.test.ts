@@ -11,6 +11,9 @@ describe('sanitizeName', () => {
     expect(sanitizeName('home/page: "a"?')).toBe('home/page- -a--');
     expect(sanitizeName('../../etc/passwd')).toBe('etc/passwd');
     expect(sanitizeName('/')).toBe('screenshot');
+    // would share a file with the actual or diff image of `x`
+    expect(sanitizeName('a.actual/x.actual')).toBe('a.actual/x-actual');
+    expect(sanitizeName('x.diff')).toBe('x-diff');
   });
 });
 

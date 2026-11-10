@@ -36,6 +36,7 @@ export type ApproveCliOptions = {
   names: string[];
   all: boolean;
   test?: string;
+  repoRoot?: string;
   force: boolean;
   dryRun: boolean;
 };
@@ -86,6 +87,7 @@ approve options:
   --manifest <path>         a manifest to apply (repeatable; required)
   --all                     every entry that needs a human (the default without names)
   --test <file>             only entries of this test file
+  --repo-root <dir>         the repository the manifest's paths are applied to (default: the working directory)
   --force                   approve although the baseline changed since the run
   --dry-run                 report what would be approved
 
@@ -99,6 +101,15 @@ const number = (name: string, value: string | undefined) => {
     throw new UsageError(`${name} must be a number, got "${value}"`);
   }
   return parsed;
+};
+
+const ratio = (value: number | undefined) => {
+  if (value !== undefined && (value < 0 || value > 1)) {
+    throw new UsageError(
+      `--max-diff-ratio must be between 0 and 1, got ${value}`,
+    );
+  }
+  return value;
 };
 
 const oneOf = <T extends string>(
@@ -120,15 +131,10 @@ export const parseCommand = (
   argv: string[],
   config: ConfigFile = {},
 ): Command => {
-  const first = argv[0];
-  const verb =
-    first === 'compare' || first === 'record' || first === 'approve'
-      ? first
-      : undefined;
   let parsed: ReturnType<typeof parseArgs>;
   try {
     parsed = parseArgs({
-      args: verb ? argv.slice(1) : argv,
+      args: argv,
       allowPositionals: true,
       options: {
         help: { type: 'boolean', short: 'h' },
@@ -155,6 +161,7 @@ export const parseCommand = (
         'fail-on': { type: 'string' },
         all: { type: 'boolean' },
         test: { type: 'string' },
+        'repo-root': { type: 'string' },
         force: { type: 'boolean' },
         'dry-run': { type: 'boolean' },
       },
@@ -162,7 +169,13 @@ export const parseCommand = (
   } catch (error) {
     throw new UsageError((error as Error).message);
   }
-  const { values, positionals } = parsed;
+  const { values } = parsed;
+  // the verb may stand anywhere among the flags
+  const verbAt = parsed.positionals.findIndex((arg) =>
+    ['compare', 'record', 'approve'].includes(arg),
+  );
+  const verb = verbAt === -1 ? undefined : parsed.positionals[verbAt];
+  const positionals = parsed.positionals.filter((_, i) => i !== verbAt);
   if (values.help) return { kind: 'help' };
   if (values.version) return { kind: 'version' };
 
@@ -178,12 +191,16 @@ export const parseCommand = (
         names: positionals,
         all: Boolean(values.all) || positionals.length === 0,
         test: values.test as string | undefined,
+        repoRoot: values['repo-root'] as string | undefined,
         force: Boolean(values.force),
         dryRun: Boolean(values['dry-run']),
       },
     };
   }
 
+  if (manifests.length > 1) {
+    throw new UsageError('compare takes one --manifest <path>');
+  }
   const actualDir = positionals[0] ?? config.actualDir;
   if (!actualDir) throw new UsageError('Missing <actual-dir>');
   if (positionals.length > 1) {
@@ -203,6 +220,9 @@ export const parseCommand = (
     (status) =>
       oneOf('--fail-on', status, MANIFEST_STATUSES, 'failed') as ManifestStatus,
   );
+  if (failOn.length === 0) {
+    throw new UsageError('--fail-on needs at least one status');
+  }
   const colorThreshold = number(
     '--color-threshold',
     values['color-threshold'] as string | undefined,
@@ -220,11 +240,12 @@ export const parseCommand = (
         ...(colorThreshold !== undefined && { threshold: colorThreshold }),
         ...(values['include-aa'] && { includeAA: true }),
       },
-      maxDiffRatio:
+      maxDiffRatio: ratio(
         number(
           '--max-diff-ratio',
           values['max-diff-ratio'] as string | undefined,
         ) ?? config.maxDiffRatio,
+      ),
       maxDiffPixels:
         number(
           '--max-diff-pixels',
@@ -234,23 +255,25 @@ export const parseCommand = (
         ? 'create'
         : oneOf(
             '--on-missing',
-            values['on-missing'] as string | undefined,
+            (values['on-missing'] as string | undefined) ??
+              config.onMissingBaseline,
             ['fail', 'create'],
-            config.onMissingBaseline ?? 'fail',
+            'fail',
           ),
       onSizeMismatch: oneOf(
         '--on-size-mismatch',
-        values['on-size-mismatch'] as string | undefined,
+        (values['on-size-mismatch'] as string | undefined) ??
+          config.onSizeMismatch,
         ['fail', 'pad', 'crop'],
-        config.onSizeMismatch ?? 'fail',
+        'fail',
       ),
       update: record
         ? 'all'
         : oneOf(
             '--update',
-            values.update as string | undefined,
+            (values.update as string | undefined) ?? config.update,
             ['none', 'failures-only', 'all'],
-            config.update ?? 'none',
+            'none',
           ),
       match: (values.match as string | undefined) ?? config.match,
       layout: oneOf(

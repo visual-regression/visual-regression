@@ -53,7 +53,13 @@ describe('runCli', () => {
     expect(failed.log).toContain('Manifest:');
     expect(fs.existsSync(file('base/a.diff.png'))).toBe(true);
 
-    const approved = await cli('approve', '--manifest', manifest);
+    const approved = await cli(
+      'approve',
+      '--manifest',
+      manifest,
+      '--repo-root',
+      dir.path,
+    );
     expect(approved.code).toBe(0);
     expect(approved.log).toContain('Approved 1 screenshot');
 
@@ -74,6 +80,23 @@ describe('runCli', () => {
     const result = await cli(file('in'), '--baseline', file('base'));
     expect(result.code).toBe(1);
     expect(result.error).toContain('No images found');
+  });
+
+  it('closes the comparer when an image cannot be compared, so the process can exit', async () => {
+    put('base/a.png', makePng(4, 4));
+    put('in/a.png', 'not a png');
+    const result = await cli(
+      file('in'),
+      '--baseline',
+      file('base'),
+      '--concurrency',
+      '1',
+    );
+    expect(result.code).toBe(2);
+    expect(result.error).toContain('the actual image');
+    expect(
+      fs.existsSync(file('in/visual-regression-manifest.compare.json')),
+    ).toBe(true);
   });
 
   it('record writes baselines and exits 0', async () => {
@@ -106,7 +129,14 @@ describe('runCli', () => {
       '--concurrency',
       '1',
     );
-    const approve = await cli('approve', '--manifest', file('m.json'), 'ghost');
+    const approve = await cli(
+      'approve',
+      '--manifest',
+      file('m.json'),
+      '--repo-root',
+      dir.path,
+      'ghost',
+    );
     expect(approve.code).toBe(1);
     expect(approve.error).toContain('No entry named "ghost"');
   });

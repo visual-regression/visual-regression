@@ -240,11 +240,8 @@ export class Comparer {
     for (const fn of this.registry.hooks.afterCompare)
       await fn(ctx, measurement);
 
-    const sameBytes =
-      baselineBytes !== null &&
-      Buffer.compare(baselineBytes, input.actual) === 0;
     const limit = this.limitFor(measurement);
-    let decision = this.decide(measurement, limit, sameBytes);
+    let decision = this.decide(measurement, limit);
     for (const fn of this.registry.hooks.decide) {
       decision = await fn(ctx, decision);
     }
@@ -317,7 +314,6 @@ export class Comparer {
   private decide(
     measurement: Measurement,
     limit: number | undefined,
-    sameBytes: boolean,
   ): Decision {
     const { update = 'none', onMissingBaseline = 'fail' } = this.options;
     if (measurement.kind === 'missing-baseline') {
@@ -346,7 +342,7 @@ export class Comparer {
       ? ` Both images were ${measurement.resized === 'pad' ? 'padded' : 'cropped'} to the same size (baseline ${sizeText(measurement.baselineSize)}, actual ${sizeText(measurement.actualSize)}).`
       : '';
     const counts = `${diffPixels} pixels (${percent(diffRatio)}) differ`;
-    if (passed && !(update === 'all' && !sameBytes)) {
+    if (passed && !(update === 'all' && diffPixels > 0)) {
       return {
         status: 'passed',
         message:

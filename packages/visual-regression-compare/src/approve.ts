@@ -48,7 +48,9 @@ const sha256 = (file: string) =>
  * Where the project of a manifest is, for applying its paths: the directory
  * inside the repository (from `ci.workspace` for a CI run, else from where
  * the project root lies below `repoRoot`) and the directory its paths resolve
- * against. A project root outside the repository root is used as it is.
+ * against. `projectDir` is `null` when the project lies outside the
+ * repository root: a manifest copied or moved elsewhere would otherwise
+ * make approve rewrite files in a tree the caller did not point it at.
  */
 const locateProject = (manifest: Manifest, repoRoot: string) => {
   if (manifest.ci?.workspace) {
@@ -61,7 +63,7 @@ const locateProject = (manifest: Manifest, repoRoot: string) => {
   if (relative === '') return { projectDir: '', base: repoRoot };
   return isSafeRelativePath(relative)
     ? { projectDir: relative, base: repoRoot }
-    : { projectDir: '', base: manifest.projectRoot };
+    : { projectDir: null, base: repoRoot };
 };
 
 /**
@@ -113,6 +115,17 @@ export const approve = ({
       continue;
     }
     const { projectDir, base } = locateProject(source.manifest, root);
+    if (projectDir === null) {
+      skip(
+        m,
+        `the project root ${source.manifest.projectRoot} is outside the repository root ${root}; run from the repository root or pass --repo-root`,
+      );
+      continue;
+    }
+    if (!entry.images.actual.path) {
+      skip(m, 'the run kept no actual image for it');
+      continue;
+    }
     const actualRepo = toRepoPath(projectDir, entry.images.actual.path);
     const baselineRepo = toRepoPath(projectDir, entry.images.baseline.path);
     if (!actualRepo || !baselineRepo) {
@@ -135,7 +148,14 @@ export const approve = ({
       const baselineNow = fs.existsSync(baseline)
         ? sha256(baseline)
         : undefined;
-      if (baselineNow !== entry.hashes?.baseline) {
+      // a manifest without hashes says nothing about the baseline, except
+      // that a missing one must still be missing
+      const expected = entry.hashes?.baseline;
+      const stale =
+        entry.status === 'missing-baseline'
+          ? baselineNow !== undefined
+          : expected !== undefined && baselineNow !== expected;
+      if (stale) {
         skip(m, 'the baseline changed since the run (stale)');
         continue;
       }
@@ -149,7 +169,12 @@ export const approve = ({
       Object.assign(entry, {
         status: 'approved',
         images: {
-          baseline: entry.images.baseline,
+          // the approved screenshot is the baseline now, with its size
+          baseline: {
+            ...entry.images.baseline,
+            width: entry.images.actual.width ?? entry.images.baseline.width,
+            height: entry.images.actual.height ?? entry.images.baseline.height,
+          },
           actual: { path: null },
           diff: { path: null },
         },

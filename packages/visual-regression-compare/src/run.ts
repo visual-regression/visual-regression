@@ -51,7 +51,6 @@ const compare = async (
         options.manifest ??
         path.join(actualDir, 'visual-regression-manifest.compare.json'),
       projectRoot: commonRoot([
-        process.cwd(),
         actualDir,
         path.resolve(options.baselineDir),
         ...(options.diffDir ? [path.resolve(options.diffDir)] : []),
@@ -64,8 +63,13 @@ const compare = async (
     reporters: parseReporters(options.report),
     concurrency: options.concurrency,
   });
-  await comparer.compareAll();
-  const manifest = await comparer.close();
+  try {
+    await comparer.compareAll();
+  } finally {
+    // also after a failure: the worker threads would keep the process alive
+    await comparer.close();
+  }
+  const manifest = comparer.writer.toJSON();
   const failing = manifest.entries.filter((entry: ManifestEntry) =>
     options.failOn.includes(entry.status),
   );
@@ -93,6 +97,7 @@ const approveCommand = (options: ApproveCliOptions, out: Out) => {
     manifests: options.manifests,
     names: options.all ? undefined : options.names,
     testFile: options.test,
+    repoRoot: options.repoRoot,
     force: options.force,
     dryRun: options.dryRun,
   });

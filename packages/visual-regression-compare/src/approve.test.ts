@@ -156,13 +156,51 @@ describe('approve', () => {
     expect(result.files[0]).toBe(`${path.basename(dir.path)}/base/a.png`);
   });
 
-  it('applies a project outside the repository root against its own root', async () => {
+  it('refuses a project outside the repository root, so a moved manifest cannot reach the old tree', async () => {
     const manifest = await run();
     const elsewhere = await tmp.dir({ unsafeCleanup: true });
     const result = approve({ manifests: [manifest], repoRoot: elsewhere.path });
-    expect(result.files).toEqual(['base/a.png', 'base/n.png']);
-    expect(exists('base/a.png')).toBe(true);
+    expect(result.approved).toEqual([]);
+    expect(result.skipped[0].reason).toContain('--repo-root');
+    expect(exists('base/a.actual.png')).toBe(true);
     await elsewhere.cleanup();
+  });
+
+  it('approves a manifest without hashes, but not over a baseline that appeared', async () => {
+    const manifest = await run();
+    const json = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+    for (const entry of json.entries) delete entry.hashes;
+    fs.writeFileSync(manifest, JSON.stringify(json));
+    put('base/n.png', makePng(2, 2));
+    const result = approve({ manifests: [manifest], repoRoot: dir.path });
+    expect(result.files).toEqual(['base/a.png']);
+    expect(result.skipped).toHaveLength(1);
+  });
+
+  it('says so when the entry kept no actual image', async () => {
+    const manifest = await run();
+    const result = approve({
+      manifests: [manifest],
+      repoRoot: dir.path,
+      names: ['ok'],
+    });
+    expect(result.skipped[0].reason).toBe(
+      'the run kept no actual image for it',
+    );
+  });
+
+  it('records the size of the approved screenshot as the baseline size', async () => {
+    put('base/s.png', makePng(8, 8));
+    const comparer = createComparer({
+      store: fsStore({ baselineDir: file('base') }),
+      manifest: { projectRoot: dir.path, path: file('size.json') },
+      concurrency: 1,
+    });
+    await comparer.compareImage({ name: 's', actual: makePng(8, 12) });
+    await comparer.close();
+    approve({ manifests: [file('size.json')], repoRoot: dir.path });
+    const entry = readManifestFile(file('size.json')).entries[0];
+    expect(entry.images.baseline).toMatchObject({ width: 8, height: 12 });
   });
 
   it('refuses a CI project outside the checkout', async () => {

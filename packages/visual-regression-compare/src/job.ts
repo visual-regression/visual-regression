@@ -33,14 +33,24 @@ export type JobResult =
     }
   | { kind: 'size-mismatch'; baselineSize: Size; actualSize: Size };
 
+const decodeNamed = (which: string, bytes: Uint8Array) => {
+  try {
+    return decodePng(bytes);
+  } catch (error) {
+    throw new Error(`the ${which} image: ${(error as Error).message}`, {
+      cause: error,
+    });
+  }
+};
+
 const sizeOf = ({ width, height }: RgbaImage): Size => ({ width, height });
 
 export const runCompare = async (
   job: Pick<CompareJob, 'baseline' | 'actual' | 'onSizeMismatch'>,
   engine: DiffEngine,
 ): Promise<JobResult> => {
-  let baseline = decodePng(job.baseline);
-  let actual = decodePng(job.actual);
+  let baseline = decodeNamed('baseline', job.baseline);
+  let actual = decodeNamed('actual', job.actual);
   const baselineSize = sizeOf(baseline);
   const actualSize = sizeOf(actual);
   let resized: 'pad' | 'crop' | undefined;

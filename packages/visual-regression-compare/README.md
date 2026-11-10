@@ -32,7 +32,7 @@ Pairs each screenshot with its baseline, runs a diff engine, applies your limits
 npx visual-regression-compare screenshots/actual --baseline screenshots/baseline
 ```
 
-Every `*.png` below `screenshots/actual` is compared with the same relative path below `screenshots/baseline`. A failing screenshot leaves `<name>.actual.png` and `<name>.diff.png` next to its baseline (or in `--diff <dir>`); the manifest goes to `<actual-dir>/visual-regression-manifest.compare.json`. The exit code is `1` when a screenshot fails or has no baseline, `2` on a usage error.
+Every `*.png` below `screenshots/actual` is compared with the same relative path below `screenshots/baseline`. A failing screenshot leaves `<name>.actual.png` and `<name>.diff.png` next to its baseline (or in `--diff <dir>`); the manifest goes to `<actual-dir>/visual-regression-manifest.compare.json`. The exit code is `1` when a screenshot fails or has no baseline, `2` on a usage or other error (an image that cannot be decoded aborts the run after the manifest is written).
 
 ```yaml
 - run: npx visual-regression-compare screenshots/actual --baseline screenshots/baseline --report console,github-summary
@@ -45,25 +45,25 @@ Every `*.png` below `screenshots/actual` is compared with the same relative path
 
 ## Options
 
-| Option                                | Default                      | What it does                                                                                          |
-| ------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `--baseline <dir>`                    | required                     | Directory of baseline images.                                                                         |
-| `--diff <dir>`                        | next to the baselines        | Where `.actual` and `.diff` files are written.                                                        |
-| `--engine <id>`                       | `pixelmatch`                 | A built-in engine, a module path (`./my-engine.mjs`) or a package name.                               |
-| `--max-diff-ratio <n>`                | `0`                          | Largest accepted share of differing pixels, 0..1.                                                     |
-| `--max-diff-pixels <n>`               |                              | Largest accepted number of differing pixels. With both limits, the stricter one wins.                 |
-| `--color-threshold <n>`               | `0.1`                        | Per-pixel color tolerance of the engine (pixelmatch: YIQ distance, 0..1).                             |
-| `--include-aa`                        | off                          | Count anti-aliased pixels as differences.                                                             |
-| `--on-missing fail\|create`           | `fail`                       | A screenshot without baseline is `missing-baseline`, or becomes the baseline (`created`).             |
-| `--on-size-mismatch fail\|pad\|crop`  | `fail`                       | See [Size changes](#size-changes).                                                                    |
-| `--update none\|failures-only\|all`   | `none`                       | Overwrite baselines (status `updated`): never, when the comparison failed, or whenever pixels differ. |
-| `--match <template>`                  | same relative path           | Baseline path from the screenshot path: `{dir}` (with trailing slash), `{name}`, `{path}`.            |
-| `--manifest <path>`                   | in `<actual-dir>`            | Where the manifest is written.                                                                        |
-| `--runner`, `--variant`, `--platform` |                              | Metadata recorded on every entry; `--platform linux/chrome`.                                          |
-| `--report <list>`                     | `console`                    | `console`, `ctrf[:<file>]` (CTRF report), `github-summary[:<file>]` (default `$GITHUB_STEP_SUMMARY`). |
-| `--concurrency <n>`                   | CPU count                    | Worker threads for decoding and comparing.                                                            |
-| `--fail-on <list>`                    | `failed,missing-baseline`    | Statuses that make the exit code `1`.                                                                 |
-| `--config <file>`                     | `visual-regression.config.*` | See [Config file](#config-file).                                                                      |
+| Option                                | Default                      | What it does                                                                                                                                                         |
+| ------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--baseline <dir>`                    | required                     | Directory of baseline images.                                                                                                                                        |
+| `--diff <dir>`                        | next to the baselines        | Where `.actual` and `.diff` files are written.                                                                                                                       |
+| `--engine <id>`                       | `pixelmatch`                 | A built-in engine, a module path (`./my-engine.mjs`) or a package name.                                                                                              |
+| `--max-diff-ratio <n>`                | `0`                          | Largest accepted share of differing pixels, 0..1.                                                                                                                    |
+| `--max-diff-pixels <n>`               |                              | Largest accepted number of differing pixels. With both limits, the stricter one wins.                                                                                |
+| `--color-threshold <n>`               | `0.1`                        | Per-pixel color tolerance of the engine (pixelmatch: YIQ distance, 0..1).                                                                                            |
+| `--include-aa`                        | off                          | Count anti-aliased pixels as differences.                                                                                                                            |
+| `--on-missing fail\|create`           | `fail`                       | A screenshot without baseline is `missing-baseline`, or becomes the baseline (`created`).                                                                            |
+| `--on-size-mismatch fail\|pad\|crop`  | `fail`                       | See [Size changes](#size-changes).                                                                                                                                   |
+| `--update none\|failures-only\|all`   | `none`                       | Overwrite baselines (status `updated`): never, when the comparison failed, or whenever pixels differ (the same pixels in another PNG encoding leave the file alone). |
+| `--match <template>`                  | same relative path           | Baseline path from the screenshot path: `{dir}` (with trailing slash), `{name}`, `{path}`.                                                                           |
+| `--manifest <path>`                   | in `<actual-dir>`            | Where the manifest is written.                                                                                                                                       |
+| `--runner`, `--variant`, `--platform` |                              | Metadata recorded on every entry; `--platform linux/chrome`.                                                                                                         |
+| `--report <list>`                     | `console`                    | `console`, `ctrf[:<file>]` (CTRF report), `github-summary[:<file>]` (default `$GITHUB_STEP_SUMMARY`).                                                                |
+| `--concurrency <n>`                   | CPU count                    | Worker threads for decoding and comparing.                                                                                                                           |
+| `--fail-on <list>`                    | `failed,missing-baseline`    | Statuses that make the exit code `1`.                                                                                                                                |
+| `--config <file>`                     | `visual-regression.config.*` | See [Config file](#config-file).                                                                                                                                     |
 
 A baseline that is a Git LFS pointer (a checkout without `git lfs pull`) fails with a message saying so, not with a decoding error.
 
@@ -84,9 +84,10 @@ npx visual-regression-compare approve --manifest a.json --manifest b.json home "
 
 Copies each entry's `images.actual.path` over its `images.baseline.path`, deletes the actual and diff files, rewrites the entry as `approved` in its manifest and prints the baseline files to commit. It works on any manifest, not only on ones this tool wrote. Without names it takes every entry that needs a human; `--test <file>` narrows that to one test file, `--dry-run` only reports.
 
-- An entry is skipped, and the exit code is `1`, when its baseline or its actual file changed since the run (the hashes in the manifest no longer match), because the reviewer approved a diff against pixels that are no longer there. `--force` overrides.
+- An entry is skipped, and the exit code is `1`, when its baseline or its actual file changed since the run (the hashes in the manifest no longer match), because the reviewer approved a diff against pixels that are no longer there. A screenshot without a baseline is skipped once a baseline has appeared. A manifest without hashes (written by another tool) skips this check. `--force` overrides.
 - Entries of several manifests that write the same baseline are never approved without naming one.
-- Paths resolve against the working directory as the repository root. A CI manifest carries `ci.workspace`, which locates its project inside the repository; a project outside the checkout is refused.
+- Paths resolve against the repository root: the working directory, or `--repo-root <dir>`. A project root outside it is refused (a manifest copied elsewhere must not make approve rewrite files in the tree it was written for), as is a CI project outside the checkout; a CI manifest carries `ci.workspace`, which locates its project inside the repository.
+- The approved entry keeps the comparison that was approved and takes the size of the approved screenshot as the baseline size.
 
 ## Config file
 
