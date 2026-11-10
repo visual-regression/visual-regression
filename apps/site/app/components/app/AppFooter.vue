@@ -14,7 +14,6 @@ const columns = computed(() => [
     label: 'Learn',
     children: [
       ...childrenOf('/learn'),
-      { label: 'Cookbook', to: '/cookbook' },
       { label: 'Deep dives', to: '/deep-dives/diff-engines' },
     ],
   },

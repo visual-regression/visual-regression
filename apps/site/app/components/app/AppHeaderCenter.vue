@@ -18,7 +18,7 @@ const items = computed(() => [
     active: route.path.startsWith('/manifest'),
   },
   {
-    label: 'Tools',
+    label: 'Comparison',
     to: '/compare',
     active: route.path.startsWith('/compare'),
   },
