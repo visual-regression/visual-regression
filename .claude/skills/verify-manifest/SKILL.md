@@ -37,7 +37,7 @@ A stale `dist` (older than `src/`) gives false confidence: rebuild after every s
 node .claude/skills/verify-manifest/scripts/smoke-dist.mjs "$RUN"
 ```
 
-It prints `ok`/`FAIL` per check and exits non-zero on any failure. It resolves the package the way the viewer does (through the workspace link and `exports`) and checks: cjs and esm expose the same API; `visual-regression-manifest/schema.json` resolves and equals `manifestSchema`; `readManifestFiles` finds and validates the sample; a broken manifest throws `ManifestParseError` with issues; `mergeManifests` lets a later attempt win; `toCtrf` → `fromCtrf` keeps entries; `fromImageTriples` yields a valid manifest.
+It prints `ok`/`FAIL` per check and exits non-zero on any failure. It resolves the package the way the viewer does (through the workspace link and `exports`) and checks: cjs and esm expose the same API; `visual-regression-manifest/schema.json` resolves and equals `manifestSchema`; `readManifestFiles` finds and validates the sample; a broken manifest throws `ManifestParseError` with issues; `mergeManifests` lets a later attempt win; `toCtrf` → `fromCtrf` keeps entries; `fromImageTriples` yields a valid manifest; the built `visual-regression-manifest` bin (resolved through `package.json`'s `bin`) converts a tiny Lost Pixel project, exits 0 with a valid manifest, exits 1 on an unknown tool and prints the package version.
 
 Extend it when you add something with a public surface:
 

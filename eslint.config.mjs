@@ -110,9 +110,12 @@ export default [
     files: ['examples/converters/vitest-browser/tests/**'],
     languageOptions: { globals: { ...globals.browser } },
   },
-  // the viewer is a command line tool: printing is its interface
+  // the viewer and the manifest converter are command line tools: printing is their interface
   {
-    files: ['packages/visual-regression-viewer/src/{cli,main}.ts'],
+    files: [
+      'packages/visual-regression-viewer/src/{cli,main}.ts',
+      'packages/visual-regression-manifest/src/cli.ts',
+    ],
     rules: { 'no-console': 'off' },
   },
 ];
