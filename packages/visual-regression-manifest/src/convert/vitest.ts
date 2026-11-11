@@ -14,7 +14,7 @@ export type FromVitestScreenshotsOptions = Omit<ManifestHeaderInput, 'runner'> &
     roots?: string[];
     /** Name of the reference screenshot folders next to the test files. */
     screenshotsDirName?: string;
-    /** Folder that holds the `-actual` and `-diff` images of failed comparisons, as a path relative to the directory it sits in. */
+    /** Folder under the project root that holds the actual, diff and reference images of failed comparisons (`attachmentsDir` of the Vitest config). */
     attachmentsDir?: string;
   };
 
@@ -40,6 +40,38 @@ export const parseVitestScreenshotName = (stem: string) => {
     : { name: stem };
 };
 
+type AttachmentKind = 'actual' | 'diff' | 'reference';
+/** `button-actual-chromium-darwin`: the kind sits between the name and the browser/platform suffix. */
+const ATTACHMENT = new RegExp(
+  `^(.*)-(actual|diff|reference)-(${BROWSERS.join('|')})-(${PLATFORMS.join('|')})$`,
+);
+/** `button-chromium-darwin-actual`: the kind last, as in older attachment names. */
+const LEGACY_ATTACHMENT = /^(.*)-(actual|diff)$/;
+
+const parseAttachmentName = (
+  stem: string,
+): { stem: string; kind: AttachmentKind } | undefined => {
+  const match = stem.match(ATTACHMENT);
+  if (match) {
+    return {
+      stem: `${match[1]}-${match[3]}-${match[4]}`,
+      kind: match[2] as AttachmentKind,
+    };
+  }
+  const legacy = stem.match(LEGACY_ATTACHMENT);
+  return legacy
+    ? { stem: legacy[1], kind: legacy[2] as AttachmentKind }
+    : undefined;
+};
+
+/** Index of the last occurrence of `needle` as a run of consecutive segments, or -1. */
+const lastIndexOfSegments = (segments: string[], needle: string[]) => {
+  for (let i = segments.length - needle.length; i >= 0; i--) {
+    if (needle.every((segment, j) => segments[i + j] === segment)) return i;
+  }
+  return -1;
+};
+
 type Found = {
   /** Directory that holds the `__screenshots__` or `.vitest/attachments` folder: the test file's directory. */
   testDir: string;
@@ -54,10 +86,11 @@ const keyOf = ({ testDir, testFile, stem }: Found) =>
 /**
  * Builds a manifest from the files Vitest's `toMatchScreenshot` (browser
  * mode) leaves behind: reference images in `__screenshots__/<test file>/`
- * next to the tests, and `<name>-actual.png` / `<name>-diff.png` under
- * `.vitest/attachments/<test file>/` for the comparisons that failed. A
- * reference with no attachments passed; attachments with no reference mean
- * there was nothing to compare against.
+ * next to the tests, and `<name>-actual-<browser>-<platform>.png` /
+ * `<name>-diff-...png` under `.vitest/attachments/<test file dir>/<test file>/`
+ * at the project root for the comparisons that failed. A reference with no
+ * attachments passed; a `<name>-reference-...png` attachment is the screenshot
+ * of a comparison that had no reference (on CI, where Vitest writes none).
  */
 export const fromVitestScreenshots = ({
   roots,
@@ -82,7 +115,7 @@ export const fromVitestScreenshots = ({
   const baselines = new Map<string, Found & { file: string }>();
   const attachments = new Map<
     string,
-    Found & { actual?: string; diff?: string }
+    Found & Partial<Record<AttachmentKind, string>>
   >();
 
   for (const root of roots ?? [projectRoot]) {
@@ -101,22 +134,25 @@ export const fromVitestScreenshots = ({
         baselines.set(keyOf(found), { ...found, file });
         continue;
       }
-      // <testDir>/.vitest/attachments/<testFile>/<stem>-(actual|diff).png
-      const folder = segments.slice(-2 - attachmentsSegments.length, -2);
-      if (folder.join('/') !== attachmentsSegments.join('/')) continue;
-      const kind = stem.match(/^(.*)-(actual|diff)$/);
-      if (!kind) continue;
+      // <root>/.vitest/attachments/<testFileDir>/<testFile>/<name>-(actual|diff|reference)-<browser>-<platform>.png
+      // (the files directly in the attachments folder are copies named by hash)
+      const at = lastIndexOfSegments(segments, attachmentsSegments);
+      if (at < 0) continue;
+      const below = segments.slice(at + attachmentsSegments.length, -1);
+      if (below.length < 1) continue;
+      const parsed = parseAttachmentName(stem);
+      if (!parsed) continue;
       const found = {
-        testDir: segments
-          .slice(0, -2 - attachmentsSegments.length)
-          .join(path.sep),
-        testFile,
-        stem: kind[1],
+        testDir: [...segments.slice(0, at), ...below.slice(0, -1)].join(
+          path.sep,
+        ),
+        testFile: below.at(-1) ?? '',
+        stem: parsed.stem,
       };
       const key = keyOf(found);
-      const group: Found & { actual?: string; diff?: string } =
+      const group: Found & Partial<Record<AttachmentKind, string>> =
         attachments.get(key) ?? found;
-      group[kind[2] as 'actual' | 'diff'] = file;
+      group[parsed.kind] = file;
       attachments.set(key, group);
     }
   }
@@ -129,22 +165,29 @@ export const fromVitestScreenshots = ({
       baselines.get(key)?.file ??
       path.join(testDir, screenshotsDirName, testFile, `${stem}.png`);
     const group = attachments.get(key);
+    const parsed = parseVitestScreenshotName(stem);
+    // the reference attachment is the screenshot of a comparison that had no
+    // reference; next to a reference that exists by now it is a leftover
+    const taken =
+      group?.actual ?? (baselines.has(key) ? undefined : group?.reference);
     const actual =
-      group?.actual ??
+      taken ??
       path.join(
-        testDir,
+        projectRoot,
         ...attachmentsSegments,
+        path.relative(projectRoot, testDir),
         testFile,
-        `${stem}-actual.png`,
+        parsed.os
+          ? `${parsed.name}-actual-${parsed.browser}-${parsed.os}.png`
+          : `${stem}-actual.png`,
       );
-    const status: ManifestStatus = group?.actual
+    const status: ManifestStatus = taken
       ? baselines.has(key)
         ? 'failed'
         : 'missing-baseline'
       : 'passed';
-    const parsed = parseVitestScreenshotName(stem);
     const baselineSize = readPngSize(baseline);
-    const actualSize = group?.actual ? readPngSize(group.actual) : undefined;
+    const actualSize = taken ? readPngSize(taken) : undefined;
     builder.record({
       actualPath: actual,
       baselinePath: baseline,

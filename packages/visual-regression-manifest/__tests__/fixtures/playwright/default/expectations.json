@@ -1,0 +1,10 @@
+{
+  "statuses": {
+    "box-b-chromium-darwin": "failed",
+    "box-c-chromium-darwin": "created"
+  },
+  "absent": [
+    "box-a-chromium-darwin"
+  ],
+  "reportsDiffRatio": true
+}

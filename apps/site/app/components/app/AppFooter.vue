@@ -10,12 +10,20 @@ const childrenOf = (path: string) =>
   );
 
 const columns = computed(() => [
-  { label: 'Learn', children: childrenOf('/learn') },
+  {
+    label: 'Learn',
+    children: [
+      ...childrenOf('/learn'),
+      { label: 'Deep dives', to: '/deep-dives/diff-engines' },
+    ],
+  },
   { label: 'Manifest standard', children: childrenOf('/manifest') },
   {
     label: 'Tools',
     children: [
       { label: 'Compare the tools', to: '/compare' },
+      { label: 'Diff algorithms', to: '/diff-algorithms' },
+      { label: 'Image diff', to: '/image-diff' },
       { label: 'Viewer', to: '/viewer' },
     ],
   },

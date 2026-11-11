@@ -1,0 +1,9 @@
+{
+  "statuses": {
+    "e2e_box-a_0_box-a_0_phone": "passed",
+    "e2e_box-b_0_box-b_0_phone": "failed",
+    "e2e_box-c_0_box-c_0_phone": "missing-baseline"
+  },
+  "absent": [],
+  "reportsDiffRatio": true
+}

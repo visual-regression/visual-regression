@@ -37,11 +37,11 @@ A stale `dist` (older than `src/`) gives false confidence: rebuild after every s
 node .claude/skills/verify-manifest/scripts/smoke-dist.mjs "$RUN"
 ```
 
-It prints `ok`/`FAIL` per check and exits non-zero on any failure. It resolves the package the way the viewer does (through the workspace link and `exports`) and checks: cjs and esm expose the same API; `visual-regression-manifest/schema.json` resolves and equals `manifestSchema`; `readManifestFiles` finds and validates the sample; a broken manifest throws `ManifestParseError` with issues; `mergeManifests` lets a later attempt win; `toCtrf` → `fromCtrf` keeps entries; `fromImageTriples` yields a valid manifest.
+It prints `ok`/`FAIL` per check and exits non-zero on any failure. It resolves the package the way the viewer does (through the workspace link and `exports`) and checks: cjs and esm expose the same API; `visual-regression-manifest/schema.json` resolves and equals `manifestSchema`; `readManifestFiles` finds and validates the sample; a broken manifest throws `ManifestParseError` with issues; `mergeManifests` lets a later attempt win; `toCtrf` → `fromCtrf` keeps entries; `fromImageTriples` yields a valid manifest; the built `visual-regression-manifest` bin (resolved through `package.json`'s `bin`) converts a tiny Lost Pixel project, exits 0 with a valid manifest, exits 1 on an unknown tool and prints the package version.
 
 Extend it when you add something with a public surface:
 
-- **New converter** → add a `check(...)` that feeds it a tiny fixture written under `$RUN` and asserts `validateManifest(result)` is `[]` and the statuses are the expected ones. Export it from `src/index.ts` first, or the check (correctly) fails.
+- **New converter** → add a `check(...)` that feeds it a tiny fixture written under `$RUN` and asserts `validateManifest(result)` is `[]` and the statuses are the expected ones. Export it from `src/index.ts` first, or the check (correctly) fails. Then add an example under `examples/converters/<tool>` and run `verify-converters`: that is where the real tool's output is proven.
 - **Schema change** → make `make-sample-run.mjs` exercise the new field so the sample, the reader and the viewer all see it.
 
 ## Evidence
@@ -50,7 +50,7 @@ Paste the `ok`/`FAIL` lines of `smoke-dist.mjs` and the exit code. Proof standar
 
 - It must run against a freshly built `dist` (state the build command you ran), not `src`.
 - A passing run proves nothing if the check cannot fail: after adding a check, break the thing it guards once (e.g. corrupt `dist/schema.json` temporarily, restore it with a rebuild) and confirm it reports `FAIL`.
-- Say what you did **not** verify (e.g. a converter's real tool output; the fixtures are hand-made).
+- Say what you did **not** verify. A converter's real tool output is `verify-converters`' job, not this one's.
 
 ## Cleanup
 

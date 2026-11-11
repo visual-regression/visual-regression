@@ -3,6 +3,7 @@
   "description": "Review a visual regression run in the browser: reads the visual-regression-manifest files of a run, builds a self-contained HTML viewer, serves it locally or writes it to disk. Themeable with CSS variables, the page template is replaceable.",
   "version": "0.0.0",
   "author": "Jakub Freisler <jakub.freisler@frsource.org>",
+  "bugs": "https://github.com/visual-regression/visual-regression/issues",
   "homepage": "https://visual-regression.dev/viewer",
   "repository": {
     "type": "git",
@@ -31,20 +32,20 @@
     "visual-regression-manifest": "workspace:*"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "4.3.3",
+    "@tailwindcss/vite": "4.3.5",
     "@types/node": "22.20.5",
     "@types/tmp": "0.2.6",
     "@vitejs/plugin-vue": "6.0.10",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "4.1.12",
     "del-cli": "7.0.0",
     "esbuild": "0.28.2",
-    "tailwindcss": "4.3.3",
+    "tailwindcss": "4.3.5",
     "tmp-promise": "3.0.3",
     "typescript": "6.0.3",
-    "vite": "8.3.4",
+    "vite": "8.3.6",
     "vite-plugin-singlefile": "2.3.4",
-    "vitest": "4.1.11",
-    "vue": "3.5.43"
+    "vitest": "4.1.12",
+    "vue": "3.5.45"
   },
   "keywords": [
     "visual regression testing",

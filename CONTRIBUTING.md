@@ -7,6 +7,7 @@ Thanks for your interest. This repository is maintained by the pixsame team and 
 - Questions go to [GitHub Discussions](https://github.com/visual-regression/visual-regression/discussions).
 - Bugs and feature requests go to [GitHub Issues](https://github.com/visual-regression/visual-regression/issues). Check for an existing one first.
 - Security problems: see [SECURITY.md](SECURITY.md), never a public issue.
+- Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## Pull requests
 
@@ -17,7 +18,7 @@ Thanks for your interest. This repository is maintained by the pixsame team and 
 
 ## Adding your tool
 
-- A converter from your tool's output to a manifest is one file under `packages/visual-regression-manifest/src/convert/`, one fixture directory under `__tests__/`, and one test. Follow an existing converter.
+- A converter from your tool's output to a manifest is one file under `packages/visual-regression-manifest/src/convert/`, one test, and an example project under `examples/converters/<tool>/` that runs your tool for real and converts what it writes; its run captures the test's fixtures under `__tests__/fixtures/`. Follow an existing converter and read `examples/converters/README.md`.
 - A comparison entry for the site is one YAML file under `apps/site/data/tools/`. Every claim needs a source URL from your own docs and a `lastVerified` date.
 
 ## Development setup

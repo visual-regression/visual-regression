@@ -8,14 +8,15 @@ The home of visual-regression.dev: a pnpm workspace with three published npm pac
 
 Details for each part live in project skills (`.claude/skills/`). **Load the matching skill before working on that part**:
 
-| Path                                  | Skill              | What it is                                                                                         |
-| ------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
-| `packages/visual-regression-manifest` | `manifest-package` | Run-manifest format: JSON Schema, types, reader/writer/merger, converters from other tools' output |
-| `packages/visual-regression-viewer`   | `viewer-package`   | The `visual-regression-viewer` CLI: serves a review page or writes it to a folder                  |
-| `packages/visual-regression-compare`  | `compare-package`  | The `visual-regression-compare` CLI and library: compares plain images, writes the run manifest    |
-| `apps/site`                           | `site`             | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs    |
+| Path                                  | Skill               | What it is                                                                                         |
+| ------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
+| `packages/visual-regression-manifest` | `manifest-package`  | Run-manifest format: JSON Schema, types, reader/writer/merger, converters from other tools' output |
+| `packages/visual-regression-viewer`   | `viewer-package`    | The `visual-regression-viewer` CLI: serves a review page or writes it to a folder                  |
+| `packages/visual-regression-compare`  | `compare-package`   | The `visual-regression-compare` CLI and library: compares plain images, writes the run manifest    |
+| `apps/site`                           | `site`              | The Docus (Nuxt) site, statically generated; docs are partly generated from the package READMEs    |
+| `examples/converters`                 | `verify-converters` | One example project per converter: runs the real tool in a browser, converts its output, checks it |
 
-Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`. `verify-manifest` owns the sample-run generator the other two reuse.
+Each part also has a verification skill that builds it and drives it for real (HTTP, browser, built output), beyond unit tests. **Load it before calling a change done**: `verify-manifest`, `verify-viewer`, `verify-site`, and `verify-converters` for anything under `src/convert/`. `verify-manifest` owns the sample-run generator the other two reuse. `refresh-pricing` is the maintainer-only procedure for the pricing data behind the site's cost calculator (run locally, never in CI).
 
 Cross-part facts worth knowing up front: the viewer and the compare package depend on the manifest package; the site's `/manifest/*` and `/viewer/*` pages are generated from the two package READMEs (edit the README, never the generated files).
 
@@ -28,7 +29,7 @@ pnpm install
 pnpm build          # builds packages only (apps are excluded)
 pnpm lint           # eslint (ts/vue/js/mjs incl. apps/site, fails on warnings) + prettier --check; CI runs this
 pnpm fix            # eslint --fix + prettier --write
-pnpm test           # vitest in every package (test:integration:ci, with coverage)
+pnpm test           # vitest in every package (test:integration:ci, with coverage), then the site's unit tests (the image diff engines)
 pnpm test:integration   # same without CI=true/coverage; `:watch` and `:coverage` variants exist
 ```
 
@@ -40,7 +41,7 @@ pnpm --filter visual-regression-manifest exec vitest run src/merge.test.ts
 pnpm --filter visual-regression-viewer exec vitest run -t "name"
 ```
 
-Site: `pnpm --filter @visual-regression/site dev` / `build`. The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
+Site: `pnpm --filter @visual-regression/site dev` / `build` / `test`; `diff-examples` regenerates the diff guide's example images and measurements with Chromium (Playwright). The site is linted by the root `pnpm lint` (Nuxt preset scoped to `apps/site`) and formatting by the same command.
 
 ## Release & CI
 

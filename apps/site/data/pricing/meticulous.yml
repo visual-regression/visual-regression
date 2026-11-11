@@ -1,0 +1,14 @@
+tool: meticulous
+pricingPage: https://www.meticulous.ai/how-it-works
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: 32b48d6dd6fec2b5f1f627f1bbaca9bde427a21efdbcc1833ca4b7b1fbdc21eb
+unit: custom
+plans:
+  - name: Enterprise
+    monthly: null
+    notes:
+      - The page answers "How does enterprise pricing work?" with "Please reach out to us at help@meticulous.ai".
+confidence: low
+notes:
+  - Meticulous publishes no pricing page; the how-it-works page is the only one that mentions pricing.

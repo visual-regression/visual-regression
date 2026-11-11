@@ -67,9 +67,9 @@ check(
   'generated: manifest and viewer pages exist and are marked generated',
   () => {
     for (const f of [
-      '3.manifest/2.format.md',
-      '3.manifest/8.schema.md',
-      '4.viewer/2.cli.md',
+      '5.manifest/2.format.md',
+      '5.manifest/8.schema.md',
+      '6.viewer/2.cli.md',
     ]) {
       const text = fs.readFileSync(path.join(site, 'content', f), 'utf8');
       assert.match(text, /^generated: true$/m, `${f} lacks generated: true`);
@@ -134,8 +134,8 @@ check('git: generated files are not tracked', () => {
     'git',
     [
       'ls-files',
-      'apps/site/content/3.manifest',
-      'apps/site/content/4.viewer',
+      'apps/site/content/5.manifest',
+      'apps/site/content/6.viewer',
       'apps/site/public/schema',
     ],
     { cwd: repo, encoding: 'utf8' },
@@ -145,3 +145,43 @@ check('git: generated files are not tracked', () => {
     `tracked generated files:\n${tracked}`,
   );
 });
+check(
+  'image diff: pages exist and only /image-diff loads the engine worker',
+  () => {
+    for (const route of ['/image-diff', '/diff-algorithms'])
+      assert.ok(exists(route), `${route} is not prerendered`);
+    const nuxt = path.join(out, '_nuxt');
+    const workers = fs
+      .readdirSync(nuxt)
+      .filter((f) => /^worker-.*\.js$/.test(f));
+    assert.equal(
+      workers.length,
+      1,
+      `expected one worker chunk, found ${workers}`,
+    );
+    // the chunk that creates the worker, and every chunk or page that mentions it
+    const users = walk(out).filter(
+      (f) =>
+        /\.(js|html)$/.test(f) &&
+        fs.readFileSync(f, 'utf8').includes(workers[0]),
+    );
+    assert.ok(users.length > 0, 'no chunk references the worker');
+    const pages = users.filter(
+      (f) => f.endsWith('.html') && !f.endsWith('/image-diff.html'),
+    );
+    assert.deepEqual(
+      pages,
+      [],
+      `pages preload the worker: ${pages.join(', ')}`,
+    );
+    for (const f of users)
+      assert.ok(
+        !/pixelmatch|ssim/i.test(path.basename(f)),
+        `unexpected chunk ${f}`,
+      );
+    assert.ok(
+      fs.readdirSync(path.join(out, 'diff-examples')).includes('dashboard.png'),
+      'example images are missing',
+    );
+  },
+);

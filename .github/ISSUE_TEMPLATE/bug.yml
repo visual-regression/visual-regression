@@ -1,0 +1,33 @@
+name: Bug report
+description: Something in a package or on the site does not work as documented.
+labels: [bug]
+body:
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options:
+        - visual-regression-manifest
+        - visual-regression-viewer
+        - A converter (name the tool below)
+        - The site
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version and Node version
+      placeholder: visual-regression-viewer 1.2.3, Node 22.12
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: A command, a small run folder or a manifest file helps most. Remove anything private from it first.
+    validations:
+      required: true

@@ -9,17 +9,20 @@ Docus (Nuxt) site, statically generated (`nuxt generate`) and deployed to Cloudf
 
 ## Content layout
 
-- `content/1.learn/*`, `2.compare.md`, `5.privacy.md`, `index.md` — hand-written.
-- `content/3.manifest/` and `content/4.viewer/` — hand-written `1.index.md` plus **generated** pages (`[2-9].*.md`, `generated: true` frontmatter, gitignored, rewritten on every run). `public/schema/` is generated too.
+- `content/1.learn/*`, `3.deep-dives/*`, `4.compare.md`, `7.privacy.md`, `8.diff-algorithms.md`, `index.md` — hand-written.
+- `content/5.manifest/` and `content/6.viewer/` — hand-written `1.index.md` plus **generated** pages (`[2-9].*.md`, `generated: true` frontmatter, gitignored, rewritten on every run). `public/schema/` is generated too.
 - Generation: `scripts/sync-manifest.mjs` and `scripts/sync-viewer.mjs` turn each package README (and the schema) into pages: one page per `##` section, with the HTML header, TOC and License section stripped and `https://visual-regression.dev/...` links rewritten to site paths. **Edit the package README or schema, never the generated files.** Section titles are mapped in the script's `PAGES` table.
 - `data/tools/*.yml` — one file per tool, rendered by `ToolsCompare.vue` and `DemoToolFinder.vue` through the shared `ToolList.vue`. Schema/fields: copy an existing file (`pixsame.yml` is the maintainers' own).
 - `app/components`, `app/pages/[[lang]]`, `app/utils` (demo run, pixel diff, tool labels, zip) — Vue code.
+- **Image diff tool** at `/image-diff`: `app/pages/image-diff.vue` (a page of its own for the wide layout, not a content page) with `app/components/image-diff/*`. Client-only; the five engines (exact, pixelmatch, Resemble.js, SSIM, perceptual hash), padding and the Web Worker live in `app/lib/image-diff/` and are loaded only by that page (`worker-client.ts` creates the worker on mount; `engines/*-info.ts` hold the option metadata the page needs without the libraries). Unit tests: `pnpm --filter @visual-regression/site test` (vitest, `app/lib/**/*.test.ts`).
+- **Diff algorithm guide** at `/diff-algorithms` (`content/8.diff-algorithms.md`): static, no worker. Every number comes from `data/diff-examples.json` via `app/lib/diff-examples.ts` (`:diff-value`, `:diff-matrix`, `:diff-example` components); the prose is in `app/lib/diff-guide.ts`. The images (`public/diff-examples/`) and the JSON are generated and committed: `pnpm --filter @visual-regression/site diff-examples` (needs `pnpm exec playwright install chromium`; fixtures in `scripts/diff-examples/`) renders them and runs the tool's real worker in Chromium. Rerun it after changing an engine, its defaults or a fixture, and commit the result. Claims about other tools in the guide are read from package source/metadata with a date; keep them that way.
 
 ## Working on it
 
 - `pnpm --filter @visual-regression/site dev` / `build` — both run `pnpm sync` first (`predev`/`prebuild`). Run `pnpm --filter @visual-regression/site sync` alone to regenerate pages after a README/schema edit.
 - Building needs installed deps only; it reads the packages' READMEs and `src/schema.json`, not their `dist`.
 - **Adding/updating a tool**: one YAML file in `data/tools/`; every claim needs a source URL in `sources` and an up-to-date `lastVerified` date. Don't claim anything you can't source from the tool's own docs.
+- **Pricing data and the calculator**: `data/pricing/<tool>.yml` (same stem as the tool, only for tools whose `pricingModel` is not `free`; `pricingSchema` in `content.config.ts`) feeds `CostCalculator.vue` on `/compare`. `scripts/fetch-pricing.mjs` (`pnpm --filter @visual-regression/site pricing:fetch`) fetches each `pricingPage`, hashes the page text (`pageSection` narrows multi-product pages), and for changed pages asks Claude (`@anthropic-ai/sdk`, `ANTHROPIC_API_KEY`) to extract the plans with a strict tool schema; `--check` only reports changes (exit 1 if any, no key needed), `--only <tool>`, `--force`, `--accept` (record the hash after checking numbers by hand), `--dry-run` (print the request). Tests: `pnpm --filter @visual-regression/site pricing:test`. It is run locally by a maintainer, never in CI; the `refresh-pricing` skill has the procedure. Every number must come from the vendor's page; "contact us" plans get `monthly: null`. pixsame has no pricing file: the hosted renderer is in preparation and the calculator says so instead of pricing it.
 
 ## Verify
 

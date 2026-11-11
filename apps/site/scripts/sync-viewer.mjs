@@ -2,7 +2,7 @@
 /**
  * Generates the command line page of the viewer from the package README, so
  * the site can never drift from `visual-regression-viewer`:
- * `content/4.viewer/2.cli.md` is the README without its HTML header, its
+ * `content/6.viewer/2.cli.md` is the README without its HTML header, its
  * table of contents and its license section, with links to the site
  * rewritten to site paths.
  *
@@ -55,7 +55,7 @@ const siteLinks = (text) =>
   text.replace(/\]\(https:\/\/visual-regression\.dev(\/[^)]*)\)/g, ']($1)');
 
 fs.writeFileSync(
-  path.join(site, 'content', '4.viewer', '2.cli.md'),
+  path.join(site, 'content', '6.viewer', '2.cli.md'),
   `---
 title: Command line
 description: Serve the viewer, write it to a folder, restyle it or replace the page, from the command line.
@@ -70,4 +70,4 @@ ${siteLinks(body)}
 `,
 );
 
-console.log('sync-viewer: wrote content/4.viewer/2.cli.md');
+console.log('sync-viewer: wrote content/6.viewer/2.cli.md');

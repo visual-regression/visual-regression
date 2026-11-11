@@ -1,0 +1,36 @@
+tool: sauce-visual
+pricingPage: https://saucelabs.com/pricing
+currency: USD
+fetchedAt: '2026-11-05'
+pageHash: d4e06c0f2ad3d626454e754d314716879e373084f3d450e59220e6b6301c71a6
+unit: snapshot
+plans:
+  - name: Virtual Device Cloud
+    monthly: 199
+    annualMonthly: 149
+    included:
+      snapshots: 500
+      seats: null
+    overage: null
+    notes:
+      - A browser and emulator testing plan that includes "Visual testing - 500 monthly snapshots"; 1 to 5 concurrent sessions.
+  - name: Real Device Cloud
+    monthly: 249
+    annualMonthly: 199
+    included:
+      snapshots: 500
+      seats: null
+    overage: null
+    notes:
+      - Same 500 monthly visual snapshots, on real devices.
+  - name: Sauce Visual
+    monthly: null
+    notes:
+      - The standalone visual testing product is listed with "Contact sales" and no numbers.
+  - name: Enterprise
+    monthly: null
+    notes:
+      - Custom; invoiced annually in advance.
+confidence: medium
+notes:
+  - Visual testing is bundled into the device cloud plans with a small allowance; the page lists no price for snapshots beyond it.

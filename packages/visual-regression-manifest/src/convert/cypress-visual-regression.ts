@@ -25,13 +25,43 @@ export type FromCypressVisualRegressionOptions = Omit<
   };
 
 /**
+ * The path of an actual screenshot relative to the base folder's layout.
+ * cypress-visual-regression names a screenshot `<spec path>/<name>` and
+ * Cypress puts it under its screenshots folder below the spec's path relative
+ * to the specs' common ancestor: `actual/<spec file>/<spec path>/<name>.png`
+ * for `base/<spec path>/<name>.png`. A known base or diff path that ends the
+ * actual's path wins; otherwise the prefix is found by its shape: it ends with
+ * the spec file name, which the spec path repeats.
+ */
+const baseRelativeOf = (rel: string, known: Set<string>) => {
+  const segments = rel.split(path.sep);
+  for (let i = 1; i < segments.length; i++) {
+    const candidate = segments.slice(i).join(path.sep);
+    if (known.has(candidate)) return candidate;
+  }
+  for (let i = segments.length - 2; i >= 1; i--) {
+    const specFile = segments[i - 1];
+    const again = segments.indexOf(specFile, i);
+    if (again < 0) continue;
+    const specPath = segments.slice(i, again + 1);
+    const prefix = segments.slice(0, i);
+    const isSuffix = prefix.every(
+      (segment, j) => segment === specPath[specPath.length - prefix.length + j],
+    );
+    if (isSuffix) return segments.slice(i).join(path.sep);
+  }
+  return rel;
+};
+
+/**
  * Builds a manifest from the folders of cypress-visual-regression:
- * `cypress/snapshots/base/<spec>/<name>.png`, `.../actual/<spec>/<name>.png`
- * and `.../diff/<spec>/<name>.png`. Cypress writes an actual image for every
- * comparison, so the diff image is what tells a failure, unless the run was
- * configured to generate diffs always or never, in which case every compared
- * screenshot with a baseline is reported as `passed` or `failed` respectively
- * only when the images say so (see `generateDiff`).
+ * `cypress/snapshots/base/<spec>/<name>.png`, `.../diff/<spec>/<name>.png`,
+ * and the actual screenshots Cypress wrote below its own spec prefix in
+ * `.../actual/`. Cypress writes an actual image for every comparison, so the
+ * diff image is what tells a failure, unless the run was configured to
+ * generate diffs always or never, in which case every compared screenshot
+ * with a baseline is reported as `passed` or `failed` respectively only when
+ * the images say so (see `generateDiff`).
  */
 export const fromCypressVisualRegression = ({
   baseDirectory = 'cypress/snapshots/base',
@@ -58,14 +88,19 @@ export const fromCypressVisualRegression = ({
     listFiles(dir)
       .filter(isImage)
       .map((file) => path.relative(dir, file));
-  const keys = new Set([
+  const known = new Set([
     ...relativeImages(baseDir),
-    ...relativeImages(actualDir),
+    ...relativeImages(diffDir),
   ]);
+  const actuals = new Map<string, string>();
+  for (const rel of relativeImages(actualDir)) {
+    actuals.set(baseRelativeOf(rel, known), path.join(actualDir, rel));
+  }
+  const keys = new Set([...relativeImages(baseDir), ...actuals.keys()]);
 
   for (const rel of keys) {
     const baseline = path.join(baseDir, rel);
-    const actual = path.join(actualDir, rel);
+    const actual = actuals.get(rel) ?? path.join(actualDir, rel);
     const diff = path.join(diffDir, rel);
     const hasBaseline = fs.existsSync(baseline);
     const hasActual = fs.existsSync(actual);
