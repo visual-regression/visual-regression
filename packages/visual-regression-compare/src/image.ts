@@ -17,6 +17,23 @@ export const decodePng = (bytes: Uint8Array): RgbaImage => {
   return { width, height, data: new Uint8ClampedArray(data) };
 };
 
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/** Width and height from the IHDR chunk of a PNG, without decoding it; `undefined` when the bytes are not a PNG. */
+export const pngSize = (
+  bytes: Uint8Array,
+): { width: number; height: number } | undefined => {
+  if (
+    bytes.length < 24 ||
+    PNG_SIGNATURE.some((byte, at) => bytes[at] !== byte) ||
+    String.fromCharCode(...bytes.subarray(12, 16)) !== 'IHDR'
+  ) {
+    return undefined;
+  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  return { width: view.getUint32(16), height: view.getUint32(20) };
+};
+
 export const encodePng = ({ width, height, data }: RgbaImage): Uint8Array => {
   const png = new PNG({ width, height });
   png.data = Buffer.from(data.buffer, data.byteOffset, data.byteLength);

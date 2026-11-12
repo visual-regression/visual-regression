@@ -859,3 +859,25 @@ describe('beforeWrite and the baseline', () => {
     expect(fs.readFileSync(file('out/a.diff.png'), 'utf8')).toBe('stamped');
   });
 });
+
+describe('the size of a screenshot that was not decoded', () => {
+  it('comes from the PNG header: no baseline, replaced as it is', async () => {
+    put('base/b.png', makePng(4, 4));
+    const missing = await make().compareImage({
+      name: 'a',
+      actual: makePng(12, 7),
+    });
+    expect(missing.images.actual).toMatchObject({ width: 12, height: 7 });
+    const replaced = await make({ update: 'all' }).compareImage({
+      name: 'b',
+      actual: makePng(9, 5),
+    });
+    expect(replaced.status).toBe('updated');
+    // the actual file is not kept, its size is
+    expect(replaced.images.actual).toMatchObject({
+      path: null,
+      width: 9,
+      height: 5,
+    });
+  });
+});
