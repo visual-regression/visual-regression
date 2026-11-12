@@ -13,6 +13,11 @@
       "path": "packages/visual-regression-viewer",
       "component": "visual-regression-viewer",
       "release-as": "1.0.0"
+    },
+    "packages/visual-regression-compare": {
+      "path": "packages/visual-regression-compare",
+      "component": "visual-regression-compare",
+      "release-as": "1.0.0"
     }
   }
 }

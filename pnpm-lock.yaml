@@ -378,6 +378,46 @@ importers:
         specifier: 5.0.5
         version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/browser-playwright@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.6(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
 
+  packages/visual-regression-compare:
+    dependencies:
+      pixelmatch:
+        specifier: ^7.2.0
+        version: 7.2.0
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
+      visual-regression-manifest:
+        specifier: workspace:*
+        version: link:../visual-regression-manifest
+    devDependencies:
+      '@types/node':
+        specifier: 20.19.43
+        version: 20.19.43
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
+      '@types/tmp':
+        specifier: 0.2.6
+        version: 0.2.6
+      '@vitest/coverage-v8':
+        specifier: 4.1.11
+        version: 4.1.11(vitest@4.1.11)
+      del-cli:
+        specifier: 7.0.0
+        version: 7.0.0
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      tmp-promise:
+        specifier: 3.0.3
+        version: 3.0.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
+
   packages/visual-regression-manifest:
     devDependencies:
       '@types/node':
@@ -5128,6 +5168,9 @@ packages:
 
   '@types/pixelmatch@5.2.6':
     resolution: {integrity: sha512-wC83uexE5KGuUODn6zkm9gMzTwdY5L0chiK+VrKcDfEjzxh1uadlWTvOmAbCpnM9zx/Ww3f8uKlYQVnO/TrqVg==}
+
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
 
   '@types/resemblejs@4.1.3':
     resolution: {integrity: sha512-p0NA5aACdWCK+I4NJbwUvFoixwYxvfLu+UqaiZt/J3+3PJavMYOxRrdbeXbbiKiMGdKdDFjoxlFWkkaMU7SDxA==}
@@ -18057,6 +18100,10 @@ snapshots:
     dependencies:
       '@types/node': 22.20.5
 
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 22.20.5
+
   '@types/resemblejs@4.1.3': {}
 
   '@types/resolve@1.17.1':
@@ -18438,7 +18485,6 @@ snapshots:
       std-env: 4.3.0
       tinyrainbow: 3.2.0
       vitest: 4.1.11(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/coverage-v8@4.1.11)(vite@8.3.6(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
-    optional: true
 
   '@vitest/coverage-v8@4.1.12(vitest@4.1.12)':
     dependencies:
@@ -18471,6 +18517,14 @@ snapshots:
       '@vitest/utils': 4.1.12
       chai: 6.3.0
       tinyrainbow: 3.2.0
+
+  '@vitest/mocker@4.1.11(vite@8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))':
+    dependencies:
+      '@vitest/spy': 4.1.11
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)
 
   '@vitest/mocker@4.1.11(vite@8.3.6(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))':
     dependencies:
@@ -27810,6 +27864,35 @@ snapshots:
       jiti: 2.7.0
       terser: 5.51.2
       yaml: 2.9.1
+
+  vitest@4.1.11(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)):
+    dependencies:
+      '@vitest/expect': 4.1.11
+      '@vitest/mocker': 4.1.11(vite@8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1))
+      '@vitest/pretty-format': 4.1.11
+      '@vitest/runner': 4.1.11
+      '@vitest/snapshot': 4.1.11
+      '@vitest/spy': 4.1.11
+      '@vitest/utils': 4.1.11
+      es-module-lexer: 2.3.2
+      expect-type: 1.4.0
+      magic-string: 0.30.21
+      obug: 2.2.1
+      pathe: 2.0.3
+      picomatch: 4.0.7
+      std-env: 4.3.0
+      tinybench: 2.9.0
+      tinyexec: 1.3.1
+      tinyglobby: 0.2.17
+      tinyrainbow: 3.2.0
+      vite: 8.3.6(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.10.0
+      '@types/node': 20.19.43
+      '@vitest/coverage-v8': 4.1.11(vitest@4.1.11)
+    transitivePeerDependencies:
+      - msw
 
   vitest@4.1.11(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(@vitest/coverage-v8@4.1.11)(vite@8.3.6(@types/node@22.20.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(yaml@2.9.1)):
     dependencies:
