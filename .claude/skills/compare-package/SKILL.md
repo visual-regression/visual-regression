@@ -20,6 +20,7 @@ Takes plain images, compares them against baselines with a pluggable engine, wri
 
 - Tests sit next to sources (`pnpm --filter visual-regression-compare exec vitest run`); they alias the manifest package to its source. `makePng` in `src/test-utils.ts` makes images.
 - Build: `pnpm --filter visual-regression-compare build` (tsc declarations + esbuild: `index.js` and `worker.js` as the library, `cli.js` as the bin). The manifest package must be built first for `tsc`.
+- `scripts/declaration-extensions.mjs` (last build step) spells out `.js` in the relative specifiers of `dist/**/*.d.ts`: the package is ESM, and without it a consumer on `moduleResolution: node16`/`nodenext` gets `any` for every type that comes through `export *`. Check a build with a `node16` project that imports a type from the package.
 - `new URL('./worker.js', import.meta.url)` is the worker location: it must stay next to the bundle that creates the pool.
 - Size mismatch defaults to `fail` (record the change, never pad implicitly); `pad` and `crop` are opt-in.
 
