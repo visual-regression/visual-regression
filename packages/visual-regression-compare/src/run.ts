@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import type { ManifestEntry } from 'visual-regression-manifest';
 import { approve } from './approve';
@@ -61,7 +62,7 @@ const compare = async (
       variant: options.variant,
     },
     reporters: parseReporters(options.report),
-    concurrency: options.concurrency,
+    concurrency: options.concurrency ?? os.cpus().length,
   });
   try {
     await comparer.compareAll();

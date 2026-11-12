@@ -10,7 +10,7 @@ export {
   BUILT_IN_ENGINES,
   type PixelmatchOptions,
 } from './engines';
-export { fsStore, type FsStoreOptions } from './store';
+export { fileStore, fsStore, type FsStoreOptions } from './store';
 export {
   manifestLayout,
   samePathMatcher,

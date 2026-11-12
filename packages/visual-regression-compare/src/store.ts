@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { isSafeRelativePath } from 'visual-regression-manifest';
-import type { ImageKind, ImageRef, Store } from './types';
+import type { CompareFiles, ImageKind, ImageRef, Store } from './types';
 
 export type FsStoreOptions = {
   baselineDir: string;
@@ -79,5 +79,38 @@ export const fsStore = ({
       await walk(root, '');
       for (const relative of found.sort()) yield { kind, path: relative };
     },
+  };
+};
+
+/**
+ * A store for one screenshot whose files are given as absolute paths (see
+ * `CompareFiles`). Every ref of a kind is that kind's file, whatever its path.
+ */
+export const fileStore = (files: Required<CompareFiles>): Store => {
+  const locate = ({ kind }: ImageRef) => {
+    if (kind === 'incoming') {
+      throw new Error('A file store has no incoming images');
+    }
+    return files[kind];
+  };
+  return {
+    locate,
+    async read(ref) {
+      try {
+        return await fs.promises.readFile(locate(ref));
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+        throw error;
+      }
+    },
+    async write(ref, bytes) {
+      const file = locate(ref);
+      await fs.promises.mkdir(path.dirname(file), { recursive: true });
+      await fs.promises.writeFile(file, bytes);
+    },
+    async remove(ref) {
+      await fs.promises.rm(locate(ref), { force: true });
+    },
+    async *list() {},
   };
 };

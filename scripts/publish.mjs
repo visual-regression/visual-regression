@@ -26,9 +26,16 @@
  *
  * `--packages a,b` limits any mode to the named packages. A beta run requires
  * it and publishes nothing without it; stable and canary runs publish every
- * eligible package when it is omitted. A selected package's `workspace:`
- * dependencies are not published along with it, so select them too when they
- * have no matching version on npm yet.
+ * eligible package when it is omitted.
+ *
+ * `pnpm publish` turns a `workspace:` dependency into the sibling's version
+ * from its package.json. A sibling that is not part of the run and whose own
+ * version is not on npm (the `0.0.0` placeholder of a package that was
+ * released from another run) would end up as a dependency that cannot be
+ * installed. Such a sibling is set, in the working tree like the other
+ * rewrites, to the version npm holds for the run's channel (the `beta`,
+ * `canary` or `latest` dist-tag). A sibling with no such version stops the run
+ * before anything is published: select it too.
  *
  * Usage (from the repository root, after `pnpm build`):
  *   node scripts/publish.mjs                 # stable versions -> latest
@@ -41,7 +48,7 @@
 
 import { execFileSync } from 'child_process';
 import { randomBytes } from 'crypto';
-import { appendFileSync } from 'fs';
+import { appendFileSync, readFileSync } from 'fs';
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
@@ -100,9 +107,10 @@ const run = (cmd, args, opts = {}) =>
     ...opts,
   });
 
-let packages = JSON.parse(
+const workspace = JSON.parse(
   run('pnpm', ['-r', 'ls', '--json', '--depth', '-1']),
-).filter(
+);
+let packages = workspace.filter(
   // `0.0.0` is the placeholder of a package release-please has not released
   // yet. Stable and canary runs skip it, so a sibling cannot reach npm before
   // its own release; only a beta run publishes it, as `1.0.0-beta.<n>`.
@@ -167,6 +175,67 @@ if (prerelease !== null) {
     return { ...pkg, version };
   });
 }
+
+// `workspace:` dependencies of a package, by sibling name
+const workspaceDependencies = ({ path }) => {
+  const manifest = JSON.parse(readFileSync(`${path}/package.json`, 'utf8'));
+  return ['dependencies', 'optionalDependencies', 'peerDependencies']
+    .flatMap((field) => Object.entries(manifest[field] ?? {}))
+    .filter(([, range]) => String(range).startsWith('workspace:'))
+    .map(([name]) => name);
+};
+
+// The version npm holds for this run's channel; `null` when there is none that
+// can be installed (no such tag, or only the `0.0.0` placeholder).
+const publishedVersion = (name) => {
+  let tags;
+  try {
+    tags = JSON.parse(
+      run('npm', ['view', name, 'dist-tags', '--json'], {
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }),
+    );
+  } catch {
+    return null;
+  }
+  const channel = beta !== null ? 'beta' : canary ? 'canary' : 'latest';
+  const version = tags[channel] ?? tags.latest;
+  // a stable package must not depend on a prerelease
+  if (!version || version === '0.0.0') return null;
+  if (prerelease === null && version.includes('-')) return null;
+  return version;
+};
+
+const pinReleasedSiblings = () => {
+  const inRun = new Set(packages.map(({ name }) => name));
+  const pinned = new Map();
+  const missing = [];
+  for (const pkg of packages) {
+    for (const name of workspaceDependencies(pkg)) {
+      if (inRun.has(name) || pinned.has(name)) continue;
+      const sibling = workspace.find((other) => other.name === name);
+      if (!sibling || isPublished(sibling.name, sibling.version)) continue;
+      const version = publishedVersion(name);
+      if (version === null) missing.push(`${pkg.name} -> ${name}`);
+      else pinned.set(name, { sibling, version });
+    }
+  }
+  if (missing.length) {
+    console.error(
+      `a workspace dependency has no version on npm to point at: ${missing.join(', ')}. Select the dependency in the same run (--packages) or release it first.`,
+    );
+    process.exit(1);
+  }
+  // after the check: nothing is rewritten when the run is refused
+  for (const { sibling, version } of pinned.values()) {
+    console.log(
+      `pin     ${sibling.name} ${sibling.version} -> ${version} (published)`,
+    );
+    run('npm', ['pkg', 'set', `version=${version}`], { cwd: sibling.path });
+  }
+};
+
+pinReleasedSiblings();
 
 const distTag = (version) => {
   if (!version.includes('-')) return 'latest';
