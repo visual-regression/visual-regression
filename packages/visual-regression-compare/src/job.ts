@@ -4,6 +4,7 @@ import type {
   DiffEngine,
   EngineOptions,
   EngineResult,
+  ImagePart,
   RgbaImage,
   SizeMismatch,
 } from './types';
@@ -13,6 +14,8 @@ export type CompareJob = {
   baseline: Uint8Array;
   actual: Uint8Array;
   onSizeMismatch: SizeMismatch;
+  /** Images to hand back besides the measurement (`diff` is always encoded; this decides whether it is sent). */
+  include?: ImagePart[];
   /** An engine id (see `loadEngine`), so a worker can load it itself. */
   engine: { id: string; options?: EngineOptions; cwd?: string };
 };
@@ -29,6 +32,9 @@ export type JobResult =
       diffRatio: number;
       /** The diff image, already encoded. */
       diffPng?: Uint8Array;
+      /** The compared baseline and actual, encoded, when the job asked for them. */
+      baselinePng?: Uint8Array;
+      actualPng?: Uint8Array;
       score?: EngineResult['score'];
     }
   | { kind: 'size-mismatch'; baselineSize: Size; actualSize: Size };
@@ -46,7 +52,7 @@ const decodeNamed = (which: string, bytes: Uint8Array) => {
 const sizeOf = ({ width, height }: RgbaImage): Size => ({ width, height });
 
 export const runCompare = async (
-  job: Pick<CompareJob, 'baseline' | 'actual' | 'onSizeMismatch'>,
+  job: Pick<CompareJob, 'baseline' | 'actual' | 'onSizeMismatch' | 'include'>,
   engine: DiffEngine,
 ): Promise<JobResult> => {
   let baseline = decodeNamed('baseline', job.baseline);
@@ -65,6 +71,13 @@ export const runCompare = async (
     );
   }
   const { diff, ...result } = await engine.compare(baseline, actual);
+  // unchanged sizes: the bytes that came in are the images that were compared
+  const compared = (part: 'baseline' | 'actual', image: RgbaImage) =>
+    job.include?.includes(part)
+      ? {
+          [`${part}Png`]: resized ? encodePng(image) : job[part],
+        }
+      : {};
   return {
     kind: 'compared',
     baselineSize,
@@ -72,6 +85,8 @@ export const runCompare = async (
     ...(resized && { resized }),
     ...result,
     ...(diff && { diffPng: encodePng(diff) }),
+    ...compared('baseline', baseline),
+    ...compared('actual', actual),
   };
 };
 

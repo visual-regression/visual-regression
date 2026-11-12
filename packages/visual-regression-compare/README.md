@@ -141,7 +141,74 @@ await comparer.compareAll(); // every image under actualDir
 await comparer.close(); // flushes the manifest, ends the reporters
 ```
 
-Decoding and comparing run in worker threads when the engine is named by id (`engine: 'pixelmatch'`, `engine: './my-engine.mjs'`). An engine passed as an object runs in the main thread, and `concurrency` then only affects `compareAll`'s parallel reads. Engine options must be structured-cloneable.
+Decoding and comparing run in worker threads when the engine is named by id (`engine: 'pixelmatch'`, `engine: './my-engine.mjs'`) and `concurrency` is above 1. The library's default is `1`, which runs everything in the calling thread, because a test runner's own workers already use the CPUs; the command line defaults to the CPU count. An engine passed as an object runs in the main thread, and `concurrency` then only affects `compareAll`'s parallel reads. Engine options must be structured-cloneable.
+
+### Per-call settings
+
+A test runner changes its options from one assertion to the next. `compareImage` and `compare` take them on the input, for that screenshot only:
+
+```ts
+await comparer.compareImage({
+  name: 'checkout',
+  actual: pngBuffer,
+  options: {
+    limits: { maxDiffRatio: 0.02 }, // replaces the comparer's limits
+    engineOptions: { threshold: 0.2, includeAA: true }, // merged over its engine options
+    update: 'failures-only',
+    onMissingBaseline: 'create',
+    onSizeMismatch: 'pad',
+  },
+});
+```
+
+The entry records the limit and color threshold the call used.
+
+### Files at known paths
+
+A runner that already knows where the baseline, the `.actual` and the `.diff` file live (or that compares against a baseline kept under another name) passes them as absolute paths. They replace the store, layout and matcher for that call; `actual` and `diff` default to `<baseline>.actual.png` and `<baseline>.diff.png`.
+
+```ts
+await comparer.compareImage({
+  name: 'checkout',
+  actual: pngBuffer,
+  files: {
+    baseline: '/repo/e2e/__image_snapshots__/checkout.png',
+    actual: '/repo/e2e/__image_snapshots__/checkout.actual.png',
+  },
+});
+```
+
+### Getting the images back
+
+`compare` returns the entry and, when asked, the PNG bytes of the baseline, the actual and the diff as they were compared (padded or cropped to the same size when the sizes differed). That is what a review UI needs, including for a screenshot that passed.
+
+```ts
+const { entry, images } = await comparer.compare(
+  { name: 'checkout', actual: pngBuffer },
+  { include: ['baseline', 'actual', 'diff'] },
+);
+// images.diff, images.actual, images.baseline: Uint8Array
+```
+
+### Your own manifest writer
+
+By default the comparer writes its own manifest. A runner that builds the header itself (CI and run metadata, one file per worker) passes its `ManifestWriter`, and states per-entry fields the comparer cannot know (`options`, `renderer`, `attachments`, `baselineExtra`, `target`, `subject`) as `entry` on the input. They are recorded as given.
+
+```ts
+const writer = new ManifestWriter(
+  'out/visual-regression-manifest.worker-0.json',
+  {
+    projectRoot: process.cwd(),
+    runner: { name: 'my-runner' },
+  },
+);
+const comparer = createComparer({ store, manifest: { writer } });
+await comparer.compareImage({
+  name: 'checkout',
+  actual: pngBuffer,
+  entry: { renderer: { backend: 'docker', name: 'chromium' } },
+});
+```
 
 ## Extending
 
