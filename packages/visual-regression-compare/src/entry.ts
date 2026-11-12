@@ -1,5 +1,6 @@
 import path from 'path';
 import type { ManifestEntryInput } from 'visual-regression-manifest';
+import { pngSize } from './image';
 import type { Settings } from './settings';
 import type {
   CompareInput,
@@ -106,7 +107,8 @@ export const entryInput = ({
     baselineWritten,
     message: decision.message,
     baselineSize: sized?.baselineSize,
-    actualSize: sized?.actualSize,
+    // a screenshot that was not decoded (no baseline, or replaced as it is) still has its size in the header
+    actualSize: sized?.actualSize ?? pngSize(input.actual),
     platform: input.platform ?? defaults.platform,
     viewport: input.viewport,
     variant: input.variant ?? defaults.variant,

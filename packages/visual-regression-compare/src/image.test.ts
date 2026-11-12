@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cropToSame, decodePng, encodePng, padToSame } from './image';
+import { cropToSame, decodePng, encodePng, padToSame, pngSize } from './image';
 import { makePng } from './test-utils';
 
 describe('image', () => {
@@ -34,5 +34,20 @@ describe('image', () => {
       decodePng(makePng(3, 5)),
     );
     expect([a.width, a.height, b.width, b.height]).toEqual([3, 2, 3, 2]);
+  });
+
+  it('reads the size of a PNG from its header', () => {
+    expect(pngSize(makePng(7, 3))).toEqual({ width: 7, height: 3 });
+    expect(pngSize(makePng(300, 1000))).toEqual({ width: 300, height: 1000 });
+  });
+
+  it('reads no size from bytes that are not a PNG', () => {
+    expect(pngSize(new Uint8Array())).toBeUndefined();
+    expect(
+      pngSize(Buffer.from('not a png at all, just some text')),
+    ).toBeUndefined();
+    const damaged = Uint8Array.from(makePng(2, 2));
+    damaged[1] = 0;
+    expect(pngSize(damaged)).toBeUndefined();
   });
 });
