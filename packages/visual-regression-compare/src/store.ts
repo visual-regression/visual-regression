@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { isSafeRelativePath } from 'visual-regression-manifest';
+import { IMAGE_SUFFIX, isSafeRelativePath } from 'visual-regression-manifest';
 import type { CompareFiles, ImageKind, ImageRef, Store } from './types';
 
 export type FsStoreOptions = {
@@ -112,5 +112,19 @@ export const fileStore = (files: Required<CompareFiles>): Store => {
       await fs.promises.rm(locate(ref), { force: true });
     },
     async *list() {},
+  };
+};
+
+/** `actual` and `diff` beside the baseline unless the caller named them. */
+export const withDefaultFiles = ({
+  baseline,
+  actual,
+  diff,
+}: CompareFiles): Required<CompareFiles> => {
+  const stem = baseline.replace(/\.png$/, '');
+  return {
+    baseline,
+    actual: actual ?? `${stem}${IMAGE_SUFFIX.actual}.png`,
+    diff: diff ?? `${stem}${IMAGE_SUFFIX.diff}.png`,
   };
 };

@@ -9,8 +9,8 @@ Takes plain images, compares them against baselines with a pluggable engine, wri
 
 ## What's where
 
-- `src/comparer.ts`: `createComparer`, `compareImage` (one image, for adapters), `compareAll` (the store's incoming images), `decide` (statuses), manifest recording. The main thread owns decide, write, report and the `ManifestWriter`.
-- `src/job.ts`, `pool.ts`, `worker.ts`: the CPU-bound part (decode, pad/crop, engine, encode diff) as plain data in/out; the pool runs it in worker threads when the engine is named by id and falls back to the calling thread otherwise.
+- `src/comparer.ts`: `createComparer` (a factory returning `{ writer, compare, compareImage, compareAll, close }`; no classes): the one effectful pipeline (hooks, store reads and writes, manifest). Everything it decides with is a pure module next to it: `settings.ts` (per-call overrides), `decide.ts` (limit and status), `measure.ts` (job result to measurement and images), `plan.ts` (files to write, `baselineWritten`), `entry.ts` (the manifest entry), `engine.ts` (engine resolution), `manifest.ts` (the default writer), `async.ts` (`pipe`, `runAll`, `mapLimit`, `once`). The main thread owns decide, write, report and the `ManifestWriter`.
+- `src/job.ts`, `pool.ts` (`createWorkerPool`), `worker.ts`: the CPU-bound part (decode, pad/crop, engine, encode diff) as plain data in/out; the pool runs it in worker threads when the engine is named by id and falls back to the calling thread otherwise.
 - `src/engines/`: `loadEngine(id)` (built-in, module path, package) and the pixelmatch engine.
 - `src/store.ts`, `layout.ts`: `fsStore` (baseline/incoming/actual/diff roots), `manifestLayout`, matchers, `sanitizeName`.
 - `src/messages.ts`: the `Reason` union (written to `extra.visualRegressionCompare.reason`), the `Messages` type and the built-in `englishMessages`. A new status path needs a reason code and an English message there, and a row in the README table.
@@ -18,6 +18,8 @@ Takes plain images, compares them against baselines with a pluggable engine, wri
 - `src/approve.ts`: applies approvals from manifests (hash-checked, rewrites the manifests). `src/options.ts`, `config.ts`, `run.ts`, `cli.ts`: the command line (`run.ts` returns the exit code, `cli.ts` is the bin).
 
 ## Working on it
+
+- Style: functional and declarative. Factories and plain objects instead of classes, pure functions for every decision (data in, data out, tested without a file system), no mutation of arguments, `switch` over discriminated unions. A new effect goes into the pipeline in `comparer.ts`; a new rule goes into a pure module.
 
 - Tests sit next to sources (`pnpm --filter visual-regression-compare exec vitest run`); they alias the manifest package to its source. `makePng` in `src/test-utils.ts` makes images.
 - Build: `pnpm --filter visual-regression-compare build` (tsc declarations + esbuild: `index.js` and `worker.js` as the library, `cli.js` as the bin). The manifest package must be built first for `tsc`.
