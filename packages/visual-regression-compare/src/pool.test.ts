@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import tmp from 'tmp-promise';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { WorkerPool } from './pool';
+import { createWorkerPool } from './pool';
 import { makePng } from './test-utils';
 
 let dir: tmp.DirectoryResult;
@@ -37,11 +37,11 @@ const job = (engineId = 'pixelmatch', cwd?: string) => ({
   engine: { id: engineId, cwd },
 });
 
-describe('WorkerPool', () => {
+describe('createWorkerPool', () => {
   it('runs jobs in this thread when it has one slot or no worker file', async () => {
     for (const pool of [
-      new WorkerPool(1, workerFile),
-      new WorkerPool(4, undefined),
+      createWorkerPool(1, workerFile),
+      createWorkerPool(4, undefined),
     ]) {
       expect(pool.threaded).toBe(false);
       expect(await pool.run(job())).toMatchObject({
@@ -53,7 +53,7 @@ describe('WorkerPool', () => {
   });
 
   it('spreads jobs over worker threads', async () => {
-    const pool = new WorkerPool(2, workerFile);
+    const pool = createWorkerPool(2, workerFile);
     expect(pool.threaded).toBe(true);
     const results = await Promise.all(
       Array.from({ length: 6 }, () => pool.run(job())),
@@ -63,7 +63,7 @@ describe('WorkerPool', () => {
   });
 
   it('rejects a job whose engine cannot be loaded and keeps working', async () => {
-    const pool = new WorkerPool(2, workerFile);
+    const pool = createWorkerPool(2, workerFile);
     await expect(pool.run(job('./missing.mjs', dir.path))).rejects.toThrow(
       /Cannot load engine/,
     );
@@ -76,7 +76,7 @@ describe('WorkerPool', () => {
       path.join(dir.path, 'exits.mjs'),
       `export default { name: 'exits', colorMetric: 'yiq', compare: () => process.exit(3) };`,
     );
-    const pool = new WorkerPool(2, workerFile);
+    const pool = createWorkerPool(2, workerFile);
     await expect(pool.run(job('./exits.mjs', dir.path))).rejects.toThrow(
       /exited with code 3/,
     );
@@ -89,7 +89,7 @@ describe('WorkerPool', () => {
       path.join(dir.path, 'hangs.mjs'),
       `export default { name: 'hangs', colorMetric: 'yiq', compare: () => new Promise(() => {}) };`,
     );
-    const pool = new WorkerPool(2, workerFile);
+    const pool = createWorkerPool(2, workerFile);
     const hanging = pool.run(job('./hangs.mjs', dir.path));
     await new Promise((resolve) => setTimeout(resolve, 200));
     const closed = expect(hanging).rejects.toThrow(/closed/);

@@ -1,6 +1,8 @@
-import type { Reason } from './messages';
+import type { Messages, Reason } from './messages';
 import type {
   Manifest,
+  ManifestHeaderInput,
+  ManifestWriter,
   ManifestColorMetric,
   ManifestEntry,
   ManifestEntryInput,
@@ -256,4 +258,60 @@ export type PluginApi = {
 export type Plugin = {
   name: string;
   setup(api: PluginApi): void | Promise<void>;
+};
+
+export type ComparerOptions = {
+  /**
+   * A built-in engine name, a module id (`./my-engine.mjs`, a package) or an
+   * engine object. Names and ids run in worker threads; an object runs in the
+   * main thread. Default `pixelmatch`.
+   */
+  engine?: string | DiffEngine;
+  /** Passed to the engine factory; must be structured-cloneable. */
+  engineOptions?: EngineOptions;
+  limits?: Limits;
+  /** What a screenshot without a baseline becomes: `missing-baseline` (`fail`) or a created baseline. Default `fail`. */
+  onMissingBaseline?: OnMissingBaseline;
+  /** Default `fail`: no padding, the size change itself is the result. */
+  onSizeMismatch?: SizeMismatch;
+  /** Overwrite baselines: never (default), when the comparison failed, or whenever the pixels differ. */
+  update?: UpdatePolicy;
+  store: Store;
+  layout?: Layout;
+  matcher?: Matcher;
+  manifest: {
+    /**
+     * A manifest writer the caller owns, for a runner that builds the header
+     * (CI, run and reproduction metadata, one file per worker) itself. The
+     * other keys of this object are then ignored.
+     */
+    writer?: ManifestWriter;
+    /** Where the manifest is written; default `visual-regression-manifest.compare.json` in the project root. */
+    path?: string;
+    /** Absolute path every manifest path is relative to; default the working directory. */
+    projectRoot?: string;
+    tool?: ManifestHeaderInput['tool'];
+    runner?: ManifestHeaderInput['runner'];
+    /** Metadata recorded on every entry that does not state its own. */
+    platform?: CompareInput['platform'];
+    variant?: string;
+  };
+  plugins?: Plugin[];
+  reporters?: Reporter[];
+  /**
+   * The words of the entries' `message`, one function per reason (see
+   * `Messages`): a language. English is built in, so this is only needed for
+   * another language or other wording; a reason it does not cover keeps its
+   * English message.
+   */
+  messages?: Partial<Messages>;
+  /**
+   * Worker threads for decoding and comparing, and parallel reads in
+   * `compareAll`. Default `1`: everything runs in the calling thread, which is
+   * what a runner adapter wants (its own workers already use the CPUs). The
+   * command line passes the CPU count.
+   */
+  concurrency?: number;
+  /** The built worker module; found next to this file in the published package. */
+  workerFile?: URL | string;
 };

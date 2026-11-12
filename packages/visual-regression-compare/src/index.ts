@@ -1,9 +1,4 @@
-export {
-  Comparer,
-  TOOL_NAME,
-  createComparer,
-  type ComparerOptions,
-} from './comparer';
+export { TOOL_NAME, createComparer, type Comparer } from './comparer';
 export {
   loadEngine,
   pixelmatchEngine,

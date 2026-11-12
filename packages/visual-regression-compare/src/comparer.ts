@@ -1,598 +1,272 @@
-import fs from 'fs';
 import path from 'path';
-import {
-  ManifestWriter,
-  IMAGE_SUFFIX,
-  getManifestFileName,
-  maxRatioFrom,
-  type Manifest,
-  type ManifestEntry,
-  type ManifestHeaderInput,
-  type ManifestStatus,
-} from 'visual-regression-manifest';
-import { loadEngine } from './engines';
-import { runCompare, type JobResult } from './job';
-import { WorkerPool } from './pool';
+import type { Manifest, ManifestEntry } from 'visual-regression-manifest';
+import { collect, forEachSeries, mapLimit, once, pipe, runAll } from './async';
+import { acceptedRatio, decide } from './decide';
+import { createEngineResolver, runsInWorker } from './engine';
+import { entryInput, locator, projectPath } from './entry';
+import { runCompare } from './job';
 import { manifestLayout, samePathMatcher, sanitizeName } from './layout';
-import { fileStore } from './store';
-import { englishMessages, type Messages, type Reason } from './messages';
-import { createRegistry, type Registry } from './plugins';
+import { createManifestWriter } from './manifest';
+import { imagesOf, toMeasurement } from './measure';
+import { englishMessages } from './messages';
+import { baselineWritten, planWrites } from './plan';
+import { createRegistry } from './plugins';
+import { createWorkerPool } from './pool';
+import { resolveSettings, type Settings } from './settings';
+import { fileStore, withDefaultFiles } from './store';
 import type {
   CompareContext,
-  CompareFiles,
   CompareInput,
-  CompareOptions,
   CompareResult,
+  ComparerOptions,
   Decision,
   DiffEngine,
-  EngineOptions,
   ImagePart,
   ImageRef,
-  Layout,
-  Limits,
-  Matcher,
   Measurement,
-  OnMissingBaseline,
-  Plugin,
-  Reporter,
-  SizeMismatch,
   Store,
-  UpdatePolicy,
   WritePlan,
 } from './types';
 
-export const TOOL_NAME = 'visual-regression-compare';
-
-const packageVersion = () => {
-  try {
-    const text = fs.readFileSync(
-      new URL('../package.json', import.meta.url),
-      'utf8',
-    );
-    return (JSON.parse(text) as { version?: string }).version;
-  } catch {
-    return undefined;
-  }
-};
-
-export type ComparerOptions = {
-  /**
-   * A built-in engine name, a module id (`./my-engine.mjs`, a package) or an
-   * engine object. Names and ids run in worker threads; an object runs in the
-   * main thread. Default `pixelmatch`.
-   */
-  engine?: string | DiffEngine;
-  /** Passed to the engine factory; must be structured-cloneable. */
-  engineOptions?: EngineOptions;
-  limits?: Limits;
-  /** What a screenshot without a baseline becomes: `missing-baseline` (`fail`) or a created baseline. Default `fail`. */
-  onMissingBaseline?: OnMissingBaseline;
-  /** Default `fail`: no padding, the size change itself is the result. */
-  onSizeMismatch?: SizeMismatch;
-  /** Overwrite baselines: never (default), when the comparison failed, or whenever the pixels differ. */
-  update?: UpdatePolicy;
-  store: Store;
-  layout?: Layout;
-  matcher?: Matcher;
-  manifest: {
-    /**
-     * A manifest writer the caller owns, for a runner that builds the header
-     * (CI, run and reproduction metadata, one file per worker) itself. The
-     * other keys of this object are then ignored.
-     */
-    writer?: ManifestWriter;
-    /** Where the manifest is written; default `visual-regression-manifest.compare.json` in the project root. */
-    path?: string;
-    /** Absolute path every manifest path is relative to; default the working directory. */
-    projectRoot?: string;
-    tool?: ManifestHeaderInput['tool'];
-    runner?: ManifestHeaderInput['runner'];
-    /** Metadata recorded on every entry that does not state its own. */
-    platform?: CompareInput['platform'];
-    variant?: string;
-  };
-  plugins?: Plugin[];
-  reporters?: Reporter[];
-  /**
-   * The words of the entries' `message`, one function per reason (see
-   * `Messages`): a language. English is built in, so this is only needed for
-   * another language or other wording; a reason it does not cover keeps its
-   * English message.
-   */
-  messages?: Partial<Messages>;
-  /**
-   * Worker threads for decoding and comparing, and parallel reads in
-   * `compareAll`. Default `1`: everything runs in the calling thread, which is
-   * what a runner adapter wants (its own workers already use the CPUs). The
-   * command line passes the CPU count.
-   */
-  concurrency?: number;
-  /** The built worker module; found next to this file in the published package. */
-  workerFile?: URL | string;
-};
-
-type Settings = {
-  limits: Limits;
-  engineOptions: EngineOptions;
-  update: UpdatePolicy;
-  onMissingBaseline: OnMissingBaseline;
-  onSizeMismatch: SizeMismatch;
-};
-
-/** `actual` and `diff` beside the baseline unless the caller named them. */
-const withDefaults = ({ baseline, actual, diff }: CompareFiles) => {
-  const stem = baseline.replace(/\.png$/, '');
-  return {
-    baseline,
-    actual: actual ?? `${stem}${IMAGE_SUFFIX.actual}.png`,
-    diff: diff ?? `${stem}${IMAGE_SUFFIX.diff}.png`,
-  };
-};
+export { TOOL_NAME } from './manifest';
 
 const DEFAULT_WORKER = new URL('./worker.js', import.meta.url);
 
-export class Comparer {
-  readonly writer: ManifestWriter;
-  private readonly projectRoot: string;
-  private readonly store: () => Store;
-  private readonly layout: () => Layout;
-  private readonly matcher: () => Matcher;
-  private readonly pool: WorkerPool;
-  private readonly registry: Registry;
-  private readonly ready: Promise<void>;
-  private readonly engines = new Map<string, Promise<DiffEngine>>();
-  private readonly messages: Messages;
-  private closed = false;
+/** One screenshot, resolved to where its files are and what it runs with. */
+type Call = {
+  input: CompareInput;
+  name: string;
+  include: readonly ImagePart[];
+  settings: Settings;
+  store: Store;
+  baseline: ImageRef;
+  actual: ImageRef;
+  diff: ImageRef;
+};
 
-  constructor(private readonly options: ComparerOptions) {
-    this.projectRoot = options.manifest.writer
-      ? options.manifest.writer.projectRoot
-      : path.resolve(options.manifest.projectRoot ?? process.cwd());
-    this.registry = createRegistry({
-      store: options.store,
-      layout: options.layout ?? manifestLayout(),
-      matcher: options.matcher ?? samePathMatcher(),
-      reporters: options.reporters ?? [],
-    });
-    this.store = () => this.registry.store;
-    this.layout = () => this.registry.layout;
-    this.matcher = () => this.registry.matcher;
-    this.ready = this.registry.setup(options.plugins ?? []);
-    this.messages = { ...englishMessages, ...options.messages };
-    this.writer = options.manifest.writer ?? this.createWriter(options);
-    this.pool = new WorkerPool(
-      options.concurrency ?? 1,
-      options.workerFile ?? DEFAULT_WORKER,
-    );
-  }
+export type Comparer = ReturnType<typeof createComparer>;
 
-  private createWriter(options: ComparerOptions) {
-    const manifestPath =
-      options.manifest.path ??
-      path.join(this.projectRoot, getManifestFileName('compare'));
-    return new ManifestWriter(
-      path.resolve(this.projectRoot, manifestPath),
-      {
-        projectRoot: this.projectRoot,
-        tool: options.manifest.tool ?? {
-          name: TOOL_NAME,
-          version: packageVersion(),
-        },
-        runner: options.manifest.runner ?? { name: TOOL_NAME },
-        options: {
-          engine:
-            typeof options.engine === 'object'
-              ? options.engine.name
-              : (options.engine ?? 'pixelmatch'),
-          engineOptions: options.engineOptions ?? {},
-          limits: options.limits ?? {},
-          onMissingBaseline: options.onMissingBaseline ?? 'fail',
-          onSizeMismatch: options.onSizeMismatch ?? 'fail',
-          update: options.update ?? 'none',
-        },
-      },
-      { writeDelayMs: 200 },
-    );
-  }
+/**
+ * Compares screenshots with their baselines. One comparer is one manifest: it
+ * records every comparison into it and `close` flushes it.
+ */
+export const createComparer = (options: ComparerOptions) => {
+  const projectRoot =
+    options.manifest.writer?.projectRoot ??
+    path.resolve(options.manifest.projectRoot ?? process.cwd());
+  const registry = createRegistry({
+    store: options.store,
+    layout: options.layout ?? manifestLayout(),
+    matcher: options.matcher ?? samePathMatcher(),
+    reporters: options.reporters ?? [],
+  });
+  const ready = registry.setup(options.plugins ?? []);
+  const messages = { ...englishMessages, ...options.messages };
+  const writer =
+    options.manifest.writer ?? createManifestWriter(options, projectRoot);
+  const concurrency = options.concurrency ?? 1;
+  const pool = createWorkerPool(
+    concurrency,
+    options.workerFile ?? DEFAULT_WORKER,
+  );
+  const resolveEngine = createEngineResolver({
+    spec: options.engine,
+    registry,
+    ready,
+  });
+  const { hooks } = registry;
 
-  /** The comparer's settings with the overrides of one call applied. */
-  private settings(call: CompareOptions = {}): Settings {
-    const o = this.options;
-    return {
-      limits: call.limits ?? o.limits ?? {},
-      engineOptions: { ...o.engineOptions, ...call.engineOptions },
-      update: call.update ?? o.update ?? 'none',
-      onMissingBaseline:
-        call.onMissingBaseline ?? o.onMissingBaseline ?? 'fail',
-      onSizeMismatch: call.onSizeMismatch ?? o.onSizeMismatch ?? 'fail',
-    };
-  }
-
-  /** The engine as the main thread knows it: for its name and metric, and to run it when it is an object or came from a plugin. */
-  private resolveEngine(engineOptions: EngineOptions): Promise<DiffEngine> {
-    const key = JSON.stringify(engineOptions);
-    let engine = this.engines.get(key);
-    if (!engine) {
-      engine = (async () => {
-        await this.ready;
-        const { engine: spec = 'pixelmatch' } = this.options;
-        if (typeof spec === 'object') return spec;
-        const registered = this.registry.engines.get(spec);
-        if (typeof registered === 'object') return registered;
-        if (typeof registered === 'function') return registered(engineOptions);
-        return loadEngine(spec, engineOptions);
-      })();
-      this.engines.set(key, engine);
-    }
-    return engine;
-  }
-
-  private async measure(
-    baseline: Uint8Array,
-    actual: Uint8Array,
-    engine: DiffEngine,
-    cfg: Settings,
-    include: ImagePart[],
-  ): Promise<JobResult> {
-    const { engine: spec = 'pixelmatch' } = this.options;
-    const inMainThread =
-      typeof spec === 'object' || this.registry.engines.has(spec);
-    const job = {
-      baseline,
-      actual,
-      onSizeMismatch: cfg.onSizeMismatch,
-      include,
-    };
-    if (inMainThread) return runCompare(job, engine);
-    return this.pool.run({
-      ...job,
-      engine: { id: spec, options: cfg.engineOptions, cwd: process.cwd() },
-    });
-  }
-
-  /** Compares one screenshot, decides, writes the files and records the manifest entry. */
-  async compareImage(input: CompareInput): Promise<ManifestEntry> {
-    return (await this.compare(input)).entry;
-  }
-
-  /**
-   * `compareImage` that can also hand back the compared images as PNG bytes,
-   * for a runner that shows them (a review UI). `include` names the parts;
-   * the diff is encoded anyway, the other two cost nothing when the sizes
-   * match.
-   */
-  async compare(
+  /** The file set and settings of a screenshot: named by the caller, or placed by the layout. */
+  const callFor = (
     input: CompareInput,
-    { include = [] }: { include?: ImagePart[] } = {},
-  ): Promise<CompareResult> {
-    await this.ready;
+    include: readonly ImagePart[],
+    baseline?: ImageRef,
+  ): Call => {
     const name = sanitizeName(input.name);
+    const settings = resolveSettings(options, input.options);
     if (input.files) {
-      return this.compareAt(
+      return {
         input,
         name,
-        { kind: 'baseline', path: 'baseline' },
         include,
-      );
+        settings,
+        store: fileStore(withDefaultFiles(input.files)),
+        baseline: { kind: 'baseline', path: 'baseline' },
+        actual: { kind: 'actual', path: 'actual' },
+        diff: { kind: 'diff', path: 'diff' },
+      };
     }
-    const baseline: ImageRef = {
-      kind: 'baseline',
-      path: this.layout().paths(name).baseline,
-    };
-    return this.compareAt(input, name, baseline, include);
-  }
-
-  private compareAt(
-    input: CompareInput,
-    name: string,
-    baselineRef: ImageRef,
-    include: ImagePart[],
-  ): Promise<CompareResult> {
-    const store = input.files
-      ? fileStore(withDefaults(input.files))
-      : this.store();
-    const names = input.files
-      ? { actual: 'actual', diff: 'diff' }
-      : this.layout().paths(name);
-    return this.compareWith(input, name, baselineRef, include, store, names);
-  }
-
-  private async compareWith(
-    input: CompareInput,
-    name: string,
-    baselineRef: ImageRef,
-    include: ImagePart[],
-    store: Store,
-    names: { actual: string; diff: string },
-  ): Promise<CompareResult> {
-    const cfg = this.settings(input.options);
-    const started = Date.now();
-    const ctx: CompareContext = { name, input };
-    for (const fn of this.registry.hooks.beforeCompare) await fn(ctx);
-
-    const engine = await this.resolveEngine(cfg.engineOptions);
-    const baselineBytes = await store.read(baselineRef);
-    let measurement: Measurement;
-    let diffPng: Uint8Array | undefined;
-    const images: CompareResult['images'] = {};
-    if (baselineBytes === null) {
-      measurement = { kind: 'missing-baseline' };
-      if (include.includes('actual')) images.actual = input.actual;
-    } else if (cfg.update === 'all') {
-      measurement = { kind: 'replaced' };
-      if (include.includes('actual')) images.actual = input.actual;
-    } else {
-      let job: JobResult;
-      try {
-        job = await this.measure(
-          baselineBytes,
-          input.actual,
-          engine,
-          cfg,
-          include,
-        );
-      } catch (error) {
-        throw new Error(`${name}: ${(error as Error).message}`, {
-          cause: error,
-        });
-      }
-      measurement =
-        job.kind === 'size-mismatch'
-          ? job
-          : {
-              kind: 'compared',
-              baselineSize: job.baselineSize,
-              actualSize: job.actualSize,
-              resized: job.resized,
-              result: {
-                diffPixels: job.diffPixels,
-                diffRatio: job.diffRatio,
-                score: job.score,
-              },
-            };
-      diffPng = job.kind === 'compared' ? job.diffPng : undefined;
-      if (job.kind === 'compared') {
-        if (include.includes('diff') && diffPng) images.diff = diffPng;
-        if (job.baselinePng) images.baseline = job.baselinePng;
-        if (job.actualPng) images.actual = job.actualPng;
-      }
-    }
-    for (const fn of this.registry.hooks.afterCompare)
-      await fn(ctx, measurement);
-
-    const limit = this.limitFor(measurement, cfg);
-    const baselinePath = path
-      .relative(this.projectRoot, store.locate(baselineRef) ?? baselineRef.path)
-      .split(path.sep)
-      .join('/');
-    let decision = this.decide(measurement, limit, cfg, baselinePath);
-    for (const fn of this.registry.hooks.decide) {
-      decision = await fn(ctx, decision);
-    }
-    ctx.decision = decision;
-
-    const refs = {
-      actual: { kind: 'actual', path: names.actual } as ImageRef,
-      diff: { kind: 'diff', path: names.diff } as ImageRef,
-    };
-    // files of an earlier run of this screenshot must not outlive it
-    await store.remove(refs.actual);
-    await store.remove(refs.diff);
-
-    let plan: WritePlan = { write: [] };
-    const status = decision.status;
-    if (status === 'failed' || status === 'missing-baseline') {
-      plan.write.push({ ref: refs.actual, bytes: input.actual });
-      if (diffPng) plan.write.push({ ref: refs.diff, bytes: diffPng });
-    } else if (
-      status === 'created' ||
-      status === 'updated' ||
-      status === 'approved'
-    ) {
-      plan.write.push({ ref: baselineRef, bytes: input.actual });
-    }
-    for (const fn of this.registry.hooks.beforeWrite)
-      plan = await fn(ctx, plan);
-    for (const { ref, bytes } of plan.write) await store.write(ref, bytes);
-    // a status that replaces the baseline says so even when a hook sent the
-    // write elsewhere (a store that keeps baselines remotely); a hook that adds
-    // a baseline write to another status (refreshing the baseline of a passed
-    // comparison) says so through the plan
-    const baselineWritten =
-      status === 'created' ||
-      status === 'updated' ||
-      status === 'approved' ||
-      plan.write.some(({ ref }) => ref.kind === 'baseline');
-
-    const entry = this.record(
-      store,
-      cfg,
+    const paths = registry.layout.paths(name);
+    return {
       input,
       name,
-      baselineRef,
-      refs,
-      measurement,
-      decision,
-      limit,
-      engine,
-      baselineWritten,
-      Date.now() - started,
-    );
-    for (const reporter of this.registry.reporters)
-      await reporter.onEntry?.(entry);
-    return { entry, images };
-  }
-
-  /** `maxDiffRatio` of the entry: the stricter of the ratio and the pixel count, for the size actually compared. */
-  private limitFor(measurement: Measurement, cfg: Settings) {
-    if (measurement.kind !== 'compared') return undefined;
-    const { baselineSize: b, actualSize: a, resized } = measurement;
-    const size =
-      resized === 'pad'
-        ? {
-            width: Math.max(a.width, b.width),
-            height: Math.max(a.height, b.height),
-          }
-        : resized === 'crop'
-          ? {
-              width: Math.min(a.width, b.width),
-              height: Math.min(a.height, b.height),
-            }
-          : a;
-    const { maxDiffRatio, maxDiffPixels } = cfg.limits;
-    // a pixel limit alone is the limit; the default exactness only applies to neither
-    return (
-      maxRatioFrom({ ratio: maxDiffRatio, pixels: maxDiffPixels }, size) ?? 0
-    );
-  }
-
-  private decide(
-    measurement: Measurement,
-    limit: number | undefined,
-    { update, onMissingBaseline }: Settings,
-    baselinePath: string,
-  ): Decision {
-    const say = (status: Decision['status'], reason: Reason): Decision => ({
-      status,
-      reason,
-      message: (this.messages[reason.code] as (r: Reason) => string)(reason),
-    });
-    if (measurement.kind === 'missing-baseline') {
-      return onMissingBaseline === 'create'
-        ? say('created', { code: 'created' })
-        : say('missing-baseline', { code: 'missing-baseline', baselinePath });
-    }
-    if (measurement.kind === 'replaced') {
-      return say('updated', { code: 'updated', cause: 'always' });
-    }
-    if (measurement.kind === 'size-mismatch') {
-      const { baselineSize, actualSize } = measurement;
-      return update === 'none'
-        ? say('failed', { code: 'size-changed', baselineSize, actualSize })
-        : say('updated', {
-            code: 'updated',
-            cause: 'size-changed',
-            baselineSize,
-            actualSize,
-          });
-    }
-    const { diffPixels, diffRatio } = measurement.result;
-    const compared = {
-      diffPixels,
-      diffRatio,
-      maxDiffRatio: limit ?? 0,
-      baselineSize: measurement.baselineSize,
-      actualSize: measurement.actualSize,
-      ...(measurement.resized && { resized: measurement.resized }),
+      include,
+      settings,
+      store: registry.store,
+      baseline: baseline ?? { kind: 'baseline', path: paths.baseline },
+      actual: { kind: 'actual', path: paths.actual },
+      diff: { kind: 'diff', path: paths.diff },
     };
-    if (diffRatio <= (limit ?? 0)) {
-      return say('passed', {
-        code: diffPixels === 0 ? 'identical' : 'within-limit',
-        ...compared,
-      });
-    }
-    return update !== 'none'
-      ? say('updated', { code: 'updated', cause: 'above-limit', ...compared })
-      : say('failed', { code: 'above-limit', ...compared });
-  }
+  };
 
-  private record(
-    store: Store,
-    cfg: Settings,
-    input: CompareInput,
-    name: string,
-    baselineRef: ImageRef,
-    refs: { actual: ImageRef; diff: ImageRef },
-    measurement: Measurement,
-    decision: Decision,
-    limit: number | undefined,
+  const compareBytes = (
+    { input, name, settings }: Call,
     engine: DiffEngine,
-    baselineWritten: boolean,
-    duration: number,
-  ): ManifestEntry {
-    const where = (ref: ImageRef) =>
-      store.locate(ref) ?? path.join(this.projectRoot, ref.path);
-    const status: ManifestStatus = decision.status;
-    const compared = measurement.kind === 'compared' ? measurement : undefined;
-    const sized =
-      measurement.kind === 'compared' || measurement.kind === 'size-mismatch'
-        ? measurement
-        : undefined;
-    const { maxDiffRatio = 0 } = cfg.limits;
-    const baselineRoot = path.relative(
-      this.projectRoot,
-      input.files
-        ? path.dirname(input.files.baseline)
-        : where({ kind: 'baseline', path: '' }),
-    );
-    const meta = {
-      engine: engine.name,
-      ...(compared && { diffPixels: compared.result.diffPixels }),
-      ...(compared?.result.score && { score: compared.result.score }),
-      ...(compared?.resized && { sizeMismatch: compared.resized }),
-      ...(decision.reason && { reason: decision.reason }),
-      ...(measurement.kind === 'size-mismatch' && {
-        sizeMismatch: 'fail',
-        baselineSize: measurement.baselineSize,
-        actualSize: measurement.actualSize,
-      }),
-      ...decision.extra,
+    baseline: Uint8Array,
+    include: readonly ImagePart[],
+  ) => {
+    const job = {
+      baseline,
+      actual: input.actual,
+      onSizeMismatch: settings.onSizeMismatch,
+      include: [...include],
     };
-    return this.writer.record({
-      actualPath: where(refs.actual),
-      baselinePath: where(baselineRef),
-      diffPath: where(refs.diff),
-      name,
-      testFile: input.test?.filePath,
-      titlePath: input.test?.titlePath,
-      retry: input.test?.retry,
-      status,
-      diffRatio:
-        measurement.kind === 'size-mismatch' ? 1 : compared?.result.diffRatio,
-      maxDiffRatio: limit ?? maxDiffRatio,
-      colorThreshold: engine.colorThreshold,
-      colorMetric: engine.colorMetric,
-      baselineWritten,
-      message: decision.message,
-      baselineSize: sized?.baselineSize,
-      actualSize: sized?.actualSize,
-      platform: input.platform ?? this.options.manifest.platform,
-      viewport: input.viewport,
-      variant: input.variant ?? this.options.manifest.variant,
-      extra: { ...input.extra, visualRegressionCompare: meta },
-      ...input.entry,
-      options: input.entry?.options ?? {
-        imagesPath: `${baselineRoot || '.'}/{name}.png`,
-        maxDiffRatio,
-        diffConfig: { engine: engine.name, ...cfg.engineOptions },
-        createMissingImages: cfg.onMissingBaseline === 'create',
-        updateImages:
-          cfg.update === 'failures-only'
-            ? 'failures-only'
-            : cfg.update === 'all',
-      },
-      duration: input.duration ?? duration,
+    return (
+      runsInWorker(options.engine, registry)
+        ? pool.run({
+            ...job,
+            engine: {
+              id: options.engine ?? 'pixelmatch',
+              options: settings.engineOptions,
+              cwd: process.cwd(),
+            },
+          })
+        : runCompare(job, engine)
+    ).catch((error: Error) => {
+      throw new Error(`${name}: ${error.message}`, { cause: error });
     });
-  }
+  };
+
+  /** What the screenshot looks like next to its baseline: compared, replaced as it is, or without one. */
+  const measure = async (
+    call: Call,
+    engine: DiffEngine,
+  ): Promise<{
+    measurement: Measurement;
+    images: CompareResult['images'];
+    diffPng?: Uint8Array;
+  }> => {
+    const { input, include, settings } = call;
+    const screenshot = include.includes('actual')
+      ? { actual: input.actual }
+      : {};
+    const baseline = await call.store.read(call.baseline);
+    if (baseline === null) {
+      return { measurement: { kind: 'missing-baseline' }, images: screenshot };
+    }
+    if (settings.update === 'all') {
+      return { measurement: { kind: 'replaced' }, images: screenshot };
+    }
+    const job = await compareBytes(call, engine, baseline, include);
+    return {
+      measurement: toMeasurement(job),
+      images: imagesOf(job, include),
+      diffPng: job.kind === 'compared' ? job.diffPng : undefined,
+    };
+  };
+
+  const compareCall = async (call: Call): Promise<CompareResult> => {
+    const { input, name, settings, store } = call;
+    const started = Date.now();
+    const ctx: CompareContext = { name, input };
+    await runAll(hooks.beforeCompare, ctx);
+
+    const engine = await resolveEngine(settings.engineOptions);
+    const { measurement, images, diffPng } = await measure(call, engine);
+    await runAll(hooks.afterCompare, ctx, measurement);
+
+    const where = locator(store, projectRoot);
+    const limit = acceptedRatio(measurement, settings.limits);
+    const decision = await pipe(
+      decide({
+        measurement,
+        limit,
+        settings,
+        messages,
+        baselinePath: projectPath(projectRoot, where(call.baseline)),
+      }),
+      hooks.decide.map((fn) => (decision: Decision) => fn(ctx, decision)),
+    );
+
+    // files of an earlier run of this screenshot must not outlive it
+    await Promise.all([store.remove(call.actual), store.remove(call.diff)]);
+    const decided: CompareContext = { ...ctx, decision };
+    const plan = await pipe(
+      planWrites({
+        status: decision.status,
+        baseline: call.baseline,
+        actual: call.actual,
+        diff: call.diff,
+        bytes: input.actual,
+        diffPng,
+      }),
+      hooks.beforeWrite.map((fn) => (plan: WritePlan) => fn(decided, plan)),
+    );
+    await forEachSeries(plan.write, ({ ref, bytes }) =>
+      store.write(ref, bytes),
+    );
+
+    const entry = writer.record(
+      entryInput({
+        input,
+        name,
+        settings,
+        measurement,
+        decision,
+        limit,
+        engine,
+        baselineWritten: baselineWritten(decision.status, plan),
+        duration: Date.now() - started,
+        files: {
+          baseline: where(call.baseline),
+          actual: where(call.actual),
+          diff: where(call.diff),
+        },
+        imagesDir: input.files
+          ? path.relative(projectRoot, path.dirname(input.files.baseline))
+          : path.relative(projectRoot, where({ kind: 'baseline', path: '' })),
+        defaults: options.manifest,
+      }),
+    );
+    await runAll(
+      registry.reporters.map(
+        (reporter) => async (entry: ManifestEntry) => reporter.onEntry?.(entry),
+      ),
+      entry,
+    );
+    return { entry, images };
+  };
+
+  /**
+   * Compares one screenshot, decides, writes the files and records the
+   * manifest entry. `include` names the compared images to hand back as PNG
+   * bytes, for a runner that shows them; the diff is encoded anyway, the other
+   * two cost nothing when the sizes match.
+   */
+  const compare = async (
+    input: CompareInput,
+    { include = [] }: { include?: ImagePart[] } = {},
+  ) => {
+    await ready;
+    return compareCall(callFor(input, include));
+  };
 
   /** Compares every incoming image of the store against its baseline. */
-  async compareAll(): Promise<Manifest> {
-    await this.ready;
-    const refs: ImageRef[] = [];
-    for await (const ref of this.store().list('incoming')) refs.push(ref);
-    const queue = [...refs];
-    const workers = Math.max(1, this.options.concurrency ?? 1);
-    const failures: Error[] = [];
-    await Promise.all(
-      Array.from({ length: Math.min(workers, queue.length) }, async () => {
-        for (let ref = queue.shift(); ref; ref = queue.shift()) {
-          try {
-            await this.compareIncoming(ref);
-          } catch (error) {
-            failures.push(error as Error);
-          }
-        }
-      }),
+  const compareAll = async (): Promise<Manifest> => {
+    await ready;
+    const compareIncoming = async (incoming: ImageRef) => {
+      const baseline = registry.matcher.baselineFor(incoming);
+      const actual = baseline && (await registry.store.read(incoming));
+      if (!baseline || actual === null) return;
+      const name =
+        registry.layout.nameOf('baseline', baseline.path) ??
+        baseline.path.replace(/\.png$/, '');
+      await compareCall(callFor({ name, actual }, [], baseline));
+    };
+    const failures = await mapLimit(
+      await collect(registry.store.list('incoming')),
+      concurrency,
+      compareIncoming,
     );
     if (failures.length > 0) {
       throw new AggregateError(
@@ -600,36 +274,34 @@ export class Comparer {
         `${failures.length} image${failures.length === 1 ? '' : 's'} could not be compared:\n${failures.map((f) => `  ${f.message}`).join('\n')}`,
       );
     }
-    return this.writer.toJSON();
-  }
+    return writer.toJSON();
+  };
 
-  private async compareIncoming(incoming: ImageRef) {
-    const baselineRef = this.matcher().baselineFor(incoming);
-    if (!baselineRef) return;
-    const name =
-      this.layout().nameOf('baseline', baselineRef.path) ??
-      baselineRef.path.replace(/\.png$/, '');
-    const actual = await this.store().read(incoming);
-    if (actual === null) return;
-    await this.compareAt({ name, actual }, name, baselineRef, []);
-  }
+  const finish = once(async () => {
+    writer.write();
+    writer.flush();
+    await pool.close();
+    await runAll(hooks.end, writer.toJSON());
+    await runAll(
+      registry.reporters.map(
+        (reporter) => async (manifest: Manifest) => reporter.onEnd?.(manifest),
+      ),
+      writer.toJSON(),
+    );
+  });
 
-  /** Flushes the manifest and ends the reporters. Call once, after the last comparison. */
-  async close(): Promise<Manifest> {
-    await this.ready;
-    if (!this.closed) {
-      this.closed = true;
-      this.writer.write();
-      this.writer.flush();
-      await this.pool.close();
-      for (const fn of this.registry.hooks.end) await fn(this.writer.toJSON());
-      for (const reporter of this.registry.reporters) {
-        await reporter.onEnd?.(this.writer.toJSON());
-      }
-    }
-    return this.writer.toJSON();
-  }
-}
-
-export const createComparer = (options: ComparerOptions) =>
-  new Comparer(options);
+  return {
+    writer,
+    /** `compare` that returns just the entry. */
+    compareImage: async (input: CompareInput): Promise<ManifestEntry> =>
+      (await compare(input)).entry,
+    compare,
+    compareAll,
+    /** Flushes the manifest and ends the reporters. Call once, after the last comparison. */
+    close: async (): Promise<Manifest> => {
+      await ready;
+      await finish();
+      return writer.toJSON();
+    },
+  };
+};
