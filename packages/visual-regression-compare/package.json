@@ -26,7 +26,7 @@
     "vrc": "dist/cli.js"
   },
   "scripts": {
-    "build": "del-cli dist && tsc -p tsconfig.build.json --emitDeclarationOnly --declaration --outDir dist && esbuild src/index.ts src/worker.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outdir=dist && esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --packages=external --banner:js='#!/usr/bin/env node' --outfile=dist/cli.js && node scripts/executable.mjs",
+    "build": "del-cli dist && tsc -p tsconfig.build.json --emitDeclarationOnly --declaration --outDir dist && esbuild src/index.ts src/worker.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outdir=dist && esbuild src/cli.ts --bundle --platform=node --target=node20 --format=esm --packages=external --banner:js='#!/usr/bin/env node' --outfile=dist/cli.js && node scripts/executable.mjs && node scripts/declaration-extensions.mjs",
     "test:integration": "vitest run",
     "test:integration:watch": "vitest",
     "test:integration:coverage": "vitest run --coverage",
