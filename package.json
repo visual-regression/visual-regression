@@ -17,18 +17,18 @@
   "engines": {
     "node": ">=20.9.0"
   },
-  "packageManager": "pnpm@12.6.0",
+  "packageManager": "pnpm@12.18.0",
   "devDependencies": {
-    "@frsource/eslint-config": "1.85.13",
+    "@frsource/eslint-config": "1.86.5",
     "@frsource/prettier-config": "^1.48.0",
     "@nuxt/eslint-config": "^1.17.0",
-    "eslint": "10.11.0",
+    "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-vue": "^10.11.1",
-    "globals": "17.12.0",
+    "globals": "17.14.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
     "prettier": "3.9.10",
-    "typescript-eslint": "8.70.0"
+    "typescript-eslint": "8.72.2"
   }
 }

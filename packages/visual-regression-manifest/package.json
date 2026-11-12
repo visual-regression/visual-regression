@@ -37,12 +37,12 @@
   "engines": {
     "node": ">=20.9.0"
   },
-  "packageManager": "pnpm@12.6.0",
+  "packageManager": "pnpm@12.18.0",
   "devDependencies": {
     "@types/node": "20.19.43",
     "@types/tmp": "0.2.6",
     "@vitest/coverage-v8": "4.1.12",
-    "ajv": "8.17.1",
+    "ajv": "8.20.0",
     "cpy-cli": "7.0.0",
     "del-cli": "7.0.0",
     "esbuild": "0.28.2",

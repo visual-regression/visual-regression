@@ -23,5 +23,10 @@ allowBuilds:
   workerd: false
 overrides:
   '@rollup/pluginutils@4.2.1>picomatch': '4.0.7'
+  # eslint rejects one config that holds two copies of the plugin; keep a single version (match package.json)
+  '@typescript-eslint/eslint-plugin': '8.72.2'
+  '@typescript-eslint/parser': '8.72.2'
+  '@typescript-eslint/utils': '8.72.2'
+  typescript-eslint: '8.72.2'
 patchedDependencies:
   rollup-plugin-typescript2@0.32.1: patches/rollup-plugin-typescript2@0.32.1.patch
