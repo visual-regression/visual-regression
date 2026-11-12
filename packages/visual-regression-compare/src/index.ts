@@ -31,4 +31,10 @@ export {
   summaryMarkdown,
 } from './reporters';
 export { decodePng, encodePng } from './image';
+export {
+  englishMessages,
+  type Messages,
+  type Reason,
+  type ReasonCode,
+} from './messages';
 export * from './types';

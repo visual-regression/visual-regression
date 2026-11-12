@@ -1,3 +1,4 @@
+import type { Reason } from './messages';
 import type {
   Manifest,
   ManifestColorMetric,
@@ -59,6 +60,13 @@ export type EngineModule =
  */
 export type SizeMismatch = 'fail' | 'pad' | 'crop';
 export type OnMissingBaseline = 'fail' | 'create';
+/**
+ * Whether baselines are overwritten with the screenshot:
+ * - `none`: never.
+ * - `failures-only`: when the comparison failed.
+ * - `all`: always, without comparing. A screenshot without a baseline is still
+ *   governed by `onMissingBaseline`.
+ */
 export type UpdatePolicy = 'none' | 'failures-only' | 'all';
 
 export type Limits = {
@@ -172,6 +180,8 @@ export type CompareContext = {
   name: string;
   input: CompareInput;
   attachments?: Record<string, unknown>;
+  /** What the comparison decided; set once the `decide` hooks ran, so `beforeWrite` hooks can read it. */
+  decision?: Decision;
 };
 
 export type Measurement =
@@ -188,11 +198,16 @@ export type Measurement =
       baselineSize: { width: number; height: number };
       actualSize: { width: number; height: number };
     }
-  | { kind: 'missing-baseline' };
+  | { kind: 'missing-baseline' }
+  /** `update: 'all'` with a baseline present: nothing was compared. */
+  | { kind: 'replaced' };
 
 export type Decision = {
   status: ManifestStatus;
+  /** The reason in the comparer's language. A hook that changes the reason should change this too. */
   message: string;
+  /** Why; recorded as `extra.visualRegressionCompare.reason`. */
+  reason?: Reason;
   /** Becomes the `visualRegressionCompare` namespace of the entry's `extra`, merged with the compare's own keys. */
   extra?: Record<string, unknown>;
 };
