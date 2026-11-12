@@ -13,6 +13,9 @@ export default defineConfig({
     },
   },
   test: {
+    // the tests build manifests in temp directories: CI metadata (a workspace
+    // the project root is outside of) must not leak in from the runner
+    env: { CI: 'false', GITHUB_ACTIONS: 'false', GITLAB_CI: 'false' },
     include: ['src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
