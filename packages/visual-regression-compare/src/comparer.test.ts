@@ -9,9 +9,10 @@ import {
   it,
   onTestFinished,
 } from 'vitest';
-import { isManifest } from 'visual-regression-manifest';
+import { ManifestWriter, isManifest } from 'visual-regression-manifest';
 import { Comparer, createComparer, type ComparerOptions } from './comparer';
 import { pixelmatchEngine } from './engines';
+import { decodePng } from './image';
 import { fsStore } from './store';
 import { makePng } from './test-utils';
 import type { Plugin, Reporter } from './types';
@@ -454,5 +455,236 @@ describe('plugins and reporters', () => {
     const first = await comparer.close();
     expect(await comparer.close()).toEqual(first);
     expect(fs.existsSync(comparer.writer.filePath)).toBe(true);
+  });
+});
+
+describe('per-call options', () => {
+  it('lets one call widen the limit without touching the next', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make();
+    const changed = makePng(10, 10, undefined, 5);
+    const loose = await comparer.compareImage({
+      name: 'a',
+      actual: changed,
+      options: { limits: { maxDiffRatio: 0.1 } },
+    });
+    const strict = await comparer.compareImage({ name: 'a', actual: changed });
+    expect(loose).toMatchObject({
+      status: 'passed',
+      comparison: { maxDiffRatio: 0.1 },
+    });
+    expect(strict.status).toBe('failed');
+  });
+
+  it('records the color threshold of the call that used it', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make({ engine: 'pixelmatch' });
+    const a = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+      options: { engineOptions: { threshold: 0.3 } },
+    });
+    const b = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+    });
+    expect(a.comparison.colorThreshold).toBe(0.3);
+    expect(b.comparison.colorThreshold).toBe(0.1);
+  });
+
+  it('applies includeAA per call', async () => {
+    put('base/a.png', makePng(10, 10));
+    const entry = await make().compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+      options: { engineOptions: { includeAA: true } },
+    });
+    expect(entry.extra?.visualRegressionCompare).toMatchObject({
+      engine: 'pixelmatch',
+    });
+  });
+
+  it('overrides the size policy and the missing-baseline policy', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make();
+    const padded = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 12),
+      options: { onSizeMismatch: 'pad', limits: { maxDiffRatio: 1 } },
+    });
+    expect(padded.status).toBe('passed');
+    const created = await comparer.compareImage({
+      name: 'new',
+      actual: makePng(10, 10),
+      options: { onMissingBaseline: 'create' },
+    });
+    expect(created.status).toBe('created');
+    expect(exists('base/new.png')).toBe(true);
+  });
+
+  it('replaces the whole limit pair, not one half of it', async () => {
+    put('base/a.png', makePng(10, 10));
+    const entry = await make({
+      limits: { maxDiffPixels: 0 },
+    }).compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+      options: { limits: { maxDiffRatio: 0.5 } },
+    });
+    expect(entry.status).toBe('passed');
+  });
+});
+
+describe('files', () => {
+  it('compares and writes at the paths the caller gives', async () => {
+    put('elsewhere/golden.png', makePng(10, 10));
+    const entry = await make().compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+      files: {
+        baseline: file('elsewhere/golden.png'),
+        actual: file('shots/a.actual.png'),
+        diff: file('shots/a.diff.png'),
+      },
+    });
+    expect(entry.status).toBe('failed');
+    expect(exists('shots/a.actual.png')).toBe(true);
+    expect(exists('shots/a.diff.png')).toBe(true);
+    expect(entry.images.baseline.path).toBe('elsewhere/golden.png');
+    expect(exists('base/a.png')).toBe(false);
+    expect(exists('out/a.actual.png')).toBe(false);
+  });
+
+  it('puts .actual and .diff beside the baseline by default', async () => {
+    put('elsewhere/golden.png', makePng(10, 10));
+    await make().compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+      files: { baseline: file('elsewhere/golden.png') },
+    });
+    expect(exists('elsewhere/golden.actual.png')).toBe(true);
+    expect(exists('elsewhere/golden.diff.png')).toBe(true);
+  });
+
+  it('creates a missing baseline at the given path', async () => {
+    const entry = await make({ onMissingBaseline: 'create' }).compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+      files: { baseline: file('x/y/golden.png') },
+    });
+    expect(entry.status).toBe('created');
+    expect(exists('x/y/golden.png')).toBe(true);
+  });
+});
+
+describe('compare with images', () => {
+  it('hands back the diff and the compared images', async () => {
+    put('base/a.png', makePng(10, 10));
+    const { entry, images } = await make().compare(
+      { name: 'a', actual: makePng(10, 10, undefined, 5) },
+      { include: ['baseline', 'actual', 'diff'] },
+    );
+    expect(entry.status).toBe('failed');
+    for (const part of ['baseline', 'actual', 'diff'] as const) {
+      expect(decodePng(images[part] as Uint8Array)).toMatchObject({
+        width: 10,
+        height: 10,
+      });
+    }
+  });
+
+  it('returns the padded sizes when the images differ in size', async () => {
+    put('base/a.png', makePng(10, 10));
+    const { images } = await make({ onSizeMismatch: 'pad' }).compare(
+      { name: 'a', actual: makePng(12, 14) },
+      { include: ['baseline', 'actual', 'diff'] },
+    );
+    for (const part of ['baseline', 'actual', 'diff'] as const) {
+      expect(decodePng(images[part] as Uint8Array)).toMatchObject({
+        width: 12,
+        height: 14,
+      });
+    }
+  });
+
+  it('returns images of a passing comparison too, and only what was asked', async () => {
+    put('base/a.png', makePng(10, 10));
+    const { images } = await make().compare(
+      { name: 'a', actual: makePng(10, 10) },
+      { include: ['diff'] },
+    );
+    expect(Object.keys(images)).toEqual(['diff']);
+    expect(
+      (await make().compare({ name: 'a', actual: makePng(10, 10) })).images,
+    ).toEqual({});
+  });
+
+  it('works through the worker pool', async () => {
+    put('base/a.png', makePng(10, 10));
+    const esbuild = await import('esbuild');
+    // inside the package, so the bundled worker finds pixelmatch and pngjs
+    const workerDir = fs.mkdtempSync(
+      new URL('../node_modules/.compare-', import.meta.url).pathname,
+    );
+    onTestFinished(() => fs.rmSync(workerDir, { recursive: true }));
+    const workerFile = path.join(workerDir, 'worker.mjs');
+    await esbuild.build({
+      entryPoints: [new URL('./worker.ts', import.meta.url).pathname],
+      bundle: true,
+      platform: 'node',
+      format: 'esm',
+      packages: 'external',
+      outfile: workerFile,
+      logLevel: 'silent',
+    });
+    const comparer = make({
+      engine: 'pixelmatch',
+      concurrency: 2,
+      workerFile,
+    });
+    onTestFinished(() => comparer.close());
+    const { images } = await comparer.compare(
+      { name: 'a', actual: makePng(10, 10, undefined, 5) },
+      { include: ['actual', 'diff'] },
+    );
+    expect(decodePng(images.diff as Uint8Array).width).toBe(10);
+    expect(decodePng(images.actual as Uint8Array).width).toBe(10);
+  });
+});
+
+describe('manifest ownership', () => {
+  it('records into a writer the caller owns, with its own entry fields', async () => {
+    put('base/a.png', makePng(10, 10));
+    const writer = new ManifestWriter(file('mine.json'), {
+      projectRoot: dir.path,
+      runner: { name: 'my-runner' },
+      tool: { name: 'my-tool' },
+    });
+    const comparer = make({ manifest: { writer } });
+    const options = {
+      imagesPath: '{spec_path}/__image_snapshots__',
+      maxDiffRatio: 0.01,
+      diffConfig: { threshold: 0.1 },
+      createMissingImages: false,
+      updateImages: false,
+    };
+    const entry = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+      entry: {
+        options,
+        renderer: { backend: 'docker', name: 'chromium' },
+        attachments: [
+          { name: 'trace', contentType: 'application/zip', path: 'a.zip' },
+        ],
+      },
+    });
+    expect(comparer.writer).toBe(writer);
+    expect(entry.options).toEqual(options);
+    expect(entry.renderer).toMatchObject({ backend: 'docker' });
+    await comparer.close();
+    expect(
+      isManifest(JSON.parse(fs.readFileSync(file('mine.json'), 'utf8'))),
+    ).toBe(true);
   });
 });

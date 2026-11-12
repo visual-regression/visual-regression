@@ -2,6 +2,7 @@ import type {
   Manifest,
   ManifestColorMetric,
   ManifestEntry,
+  ManifestEntryInput,
   ManifestEntryPlatform,
   ManifestExtra,
   ManifestStatus,
@@ -96,6 +97,52 @@ export type Matcher = {
   baselineFor(incoming: ImageRef): ImageRef | null;
 };
 
+/**
+ * What a single call may change about the comparer's own settings, for this
+ * screenshot only. `limits`, `update`, `onMissingBaseline` and
+ * `onSizeMismatch` replace the comparer's value; `engineOptions` are merged
+ * over it.
+ */
+export type CompareOptions = {
+  limits?: Limits;
+  engineOptions?: EngineOptions;
+  update?: UpdatePolicy;
+  onMissingBaseline?: OnMissingBaseline;
+  onSizeMismatch?: SizeMismatch;
+};
+
+/**
+ * Files of one screenshot, as absolute paths, for a runner that already knows
+ * where everything lives. They replace the store, the layout and the matcher
+ * for this call. `actual` and `diff` default to the `.actual.png` and
+ * `.diff.png` files beside the baseline.
+ */
+export type CompareFiles = {
+  baseline: string;
+  actual?: string;
+  diff?: string;
+};
+
+/** Entry fields a runner states itself; they are recorded as given. */
+export type CompareEntryFields = Pick<
+  ManifestEntryInput,
+  | 'options'
+  | 'renderer'
+  | 'attachments'
+  | 'baselineExtra'
+  | 'target'
+  | 'subject'
+>;
+
+/** The images `compare` can hand back next to the entry. `baseline` and `actual` are the sizes that were compared (padded or cropped, when sizes differed). */
+export type ImagePart = 'baseline' | 'actual' | 'diff';
+
+export type CompareResult = {
+  entry: ManifestEntry;
+  /** PNG bytes of the requested parts that exist: there is no `diff` without a baseline, and none from an engine that makes none. */
+  images: Partial<Record<ImagePart, Uint8Array>>;
+};
+
 /** Identity of one compared screenshot, as an adapter or the CLI states it. */
 export type CompareInput = {
   /** Screenshot name; becomes the file name through the layout (unsafe characters are replaced). */
@@ -108,6 +155,12 @@ export type CompareInput = {
   extra?: ManifestExtra;
   /** Capture plus preceding time in milliseconds, recorded as the entry's `duration`. */
   duration?: number;
+  /** Settings for this screenshot only. */
+  options?: CompareOptions;
+  /** Where the files are, instead of the store and layout. */
+  files?: CompareFiles;
+  /** Entry fields recorded as given (the comparer's own `options` block is replaced by `entry.options`). */
+  entry?: CompareEntryFields;
 };
 
 /**

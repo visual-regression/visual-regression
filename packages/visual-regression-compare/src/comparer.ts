@@ -1,8 +1,8 @@
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import {
   ManifestWriter,
+  IMAGE_SUFFIX,
   getManifestFileName,
   maxRatioFrom,
   type Manifest,
@@ -14,13 +14,18 @@ import { loadEngine } from './engines';
 import { runCompare, type JobResult } from './job';
 import { WorkerPool } from './pool';
 import { manifestLayout, samePathMatcher, sanitizeName } from './layout';
+import { fileStore } from './store';
 import { createRegistry, type Registry } from './plugins';
 import type {
   CompareContext,
+  CompareFiles,
   CompareInput,
+  CompareOptions,
+  CompareResult,
   Decision,
   DiffEngine,
   EngineOptions,
+  ImagePart,
   ImageRef,
   Layout,
   Limits,
@@ -69,6 +74,12 @@ export type ComparerOptions = {
   layout?: Layout;
   matcher?: Matcher;
   manifest: {
+    /**
+     * A manifest writer the caller owns, for a runner that builds the header
+     * (CI, run and reproduction metadata, one file per worker) itself. The
+     * other keys of this object are then ignored.
+     */
+    writer?: ManifestWriter;
     /** Where the manifest is written; default `visual-regression-manifest.compare.json` in the project root. */
     path?: string;
     /** Absolute path every manifest path is relative to; default the working directory. */
@@ -81,10 +92,33 @@ export type ComparerOptions = {
   };
   plugins?: Plugin[];
   reporters?: Reporter[];
-  /** Worker threads for decoding and comparing; default the CPU count. */
+  /**
+   * Worker threads for decoding and comparing, and parallel reads in
+   * `compareAll`. Default `1`: everything runs in the calling thread, which is
+   * what a runner adapter wants (its own workers already use the CPUs). The
+   * command line passes the CPU count.
+   */
   concurrency?: number;
   /** The built worker module; found next to this file in the published package. */
   workerFile?: URL | string;
+};
+
+type Settings = {
+  limits: Limits;
+  engineOptions: EngineOptions;
+  update: UpdatePolicy;
+  onMissingBaseline: OnMissingBaseline;
+  onSizeMismatch: SizeMismatch;
+};
+
+/** `actual` and `diff` beside the baseline unless the caller named them. */
+const withDefaults = ({ baseline, actual, diff }: CompareFiles) => {
+  const stem = baseline.replace(/\.png$/, '');
+  return {
+    baseline,
+    actual: actual ?? `${stem}${IMAGE_SUFFIX.actual}.png`,
+    diff: diff ?? `${stem}${IMAGE_SUFFIX.diff}.png`,
+  };
 };
 
 const DEFAULT_WORKER = new URL('./worker.js', import.meta.url);
@@ -103,13 +137,13 @@ export class Comparer {
   private readonly pool: WorkerPool;
   private readonly registry: Registry;
   private readonly ready: Promise<void>;
-  private engine: Promise<DiffEngine> | undefined;
+  private readonly engines = new Map<string, Promise<DiffEngine>>();
   private closed = false;
 
   constructor(private readonly options: ComparerOptions) {
-    this.projectRoot = path.resolve(
-      options.manifest.projectRoot ?? process.cwd(),
-    );
+    this.projectRoot = options.manifest.writer
+      ? options.manifest.writer.projectRoot
+      : path.resolve(options.manifest.projectRoot ?? process.cwd());
     this.registry = createRegistry({
       store: options.store,
       layout: options.layout ?? manifestLayout(),
@@ -120,10 +154,18 @@ export class Comparer {
     this.layout = () => this.registry.layout;
     this.matcher = () => this.registry.matcher;
     this.ready = this.registry.setup(options.plugins ?? []);
+    this.writer = options.manifest.writer ?? this.createWriter(options);
+    this.pool = new WorkerPool(
+      options.concurrency ?? 1,
+      options.workerFile ?? DEFAULT_WORKER,
+    );
+  }
+
+  private createWriter(options: ComparerOptions) {
     const manifestPath =
       options.manifest.path ??
       path.join(this.projectRoot, getManifestFileName('compare'));
-    this.writer = new ManifestWriter(
+    return new ManifestWriter(
       path.resolve(this.projectRoot, manifestPath),
       {
         projectRoot: this.projectRoot,
@@ -146,76 +188,141 @@ export class Comparer {
       },
       { writeDelayMs: 200 },
     );
-    this.pool = new WorkerPool(
-      options.concurrency ?? os.cpus().length,
-      options.workerFile ?? DEFAULT_WORKER,
-    );
+  }
+
+  /** The comparer's settings with the overrides of one call applied. */
+  private settings(call: CompareOptions = {}): Settings {
+    const o = this.options;
+    return {
+      limits: call.limits ?? o.limits ?? {},
+      engineOptions: { ...o.engineOptions, ...call.engineOptions },
+      update: call.update ?? o.update ?? 'none',
+      onMissingBaseline:
+        call.onMissingBaseline ?? o.onMissingBaseline ?? 'fail',
+      onSizeMismatch: call.onSizeMismatch ?? o.onSizeMismatch ?? 'fail',
+    };
   }
 
   /** The engine as the main thread knows it: for its name and metric, and to run it when it is an object or came from a plugin. */
-  private resolveEngine(): Promise<DiffEngine> {
-    this.engine ??= (async () => {
-      await this.ready;
-      const { engine = 'pixelmatch', engineOptions = {} } = this.options;
-      if (typeof engine === 'object') return engine;
-      const registered = this.registry.engines.get(engine);
-      if (typeof registered === 'object') return registered;
-      if (typeof registered === 'function') return registered(engineOptions);
-      return loadEngine(engine, engineOptions);
-    })();
-    return this.engine;
+  private resolveEngine(engineOptions: EngineOptions): Promise<DiffEngine> {
+    const key = JSON.stringify(engineOptions);
+    let engine = this.engines.get(key);
+    if (!engine) {
+      engine = (async () => {
+        await this.ready;
+        const { engine: spec = 'pixelmatch' } = this.options;
+        if (typeof spec === 'object') return spec;
+        const registered = this.registry.engines.get(spec);
+        if (typeof registered === 'object') return registered;
+        if (typeof registered === 'function') return registered(engineOptions);
+        return loadEngine(spec, engineOptions);
+      })();
+      this.engines.set(key, engine);
+    }
+    return engine;
   }
 
   private async measure(
     baseline: Uint8Array,
     actual: Uint8Array,
     engine: DiffEngine,
+    cfg: Settings,
+    include: ImagePart[],
   ): Promise<JobResult> {
-    const { engine: spec = 'pixelmatch', engineOptions } = this.options;
+    const { engine: spec = 'pixelmatch' } = this.options;
     const inMainThread =
       typeof spec === 'object' || this.registry.engines.has(spec);
-    const onSizeMismatch = this.options.onSizeMismatch ?? 'fail';
-    if (inMainThread) {
-      return runCompare({ baseline, actual, onSizeMismatch }, engine);
-    }
-    return this.pool.run({
+    const job = {
       baseline,
       actual,
-      onSizeMismatch,
-      engine: { id: spec, options: engineOptions, cwd: process.cwd() },
+      onSizeMismatch: cfg.onSizeMismatch,
+      include,
+    };
+    if (inMainThread) return runCompare(job, engine);
+    return this.pool.run({
+      ...job,
+      engine: { id: spec, options: cfg.engineOptions, cwd: process.cwd() },
     });
   }
 
   /** Compares one screenshot, decides, writes the files and records the manifest entry. */
   async compareImage(input: CompareInput): Promise<ManifestEntry> {
+    return (await this.compare(input)).entry;
+  }
+
+  /**
+   * `compareImage` that can also hand back the compared images as PNG bytes,
+   * for a runner that shows them (a review UI). `include` names the parts;
+   * the diff is encoded anyway, the other two cost nothing when the sizes
+   * match.
+   */
+  async compare(
+    input: CompareInput,
+    { include = [] }: { include?: ImagePart[] } = {},
+  ): Promise<CompareResult> {
     await this.ready;
     const name = sanitizeName(input.name);
+    if (input.files) {
+      return this.compareAt(
+        input,
+        name,
+        { kind: 'baseline', path: 'baseline' },
+        include,
+      );
+    }
     const baseline: ImageRef = {
       kind: 'baseline',
       path: this.layout().paths(name).baseline,
     };
-    return this.compareAt(input, name, baseline);
+    return this.compareAt(input, name, baseline, include);
   }
 
-  private async compareAt(
+  private compareAt(
     input: CompareInput,
     name: string,
     baselineRef: ImageRef,
-  ): Promise<ManifestEntry> {
+    include: ImagePart[],
+  ): Promise<CompareResult> {
+    const store = input.files
+      ? fileStore(withDefaults(input.files))
+      : this.store();
+    const names = input.files
+      ? { actual: 'actual', diff: 'diff' }
+      : this.layout().paths(name);
+    return this.compareWith(input, name, baselineRef, include, store, names);
+  }
+
+  private async compareWith(
+    input: CompareInput,
+    name: string,
+    baselineRef: ImageRef,
+    include: ImagePart[],
+    store: Store,
+    names: { actual: string; diff: string },
+  ): Promise<CompareResult> {
+    const cfg = this.settings(input.options);
     const started = Date.now();
     const ctx: CompareContext = { name, input };
     for (const fn of this.registry.hooks.beforeCompare) await fn(ctx);
 
-    const engine = await this.resolveEngine();
-    const baselineBytes = await this.store().read(baselineRef);
+    const engine = await this.resolveEngine(cfg.engineOptions);
+    const baselineBytes = await store.read(baselineRef);
     let measurement: Measurement;
     let diffPng: Uint8Array | undefined;
+    const images: CompareResult['images'] = {};
     if (baselineBytes === null) {
       measurement = { kind: 'missing-baseline' };
+      if (include.includes('actual')) images.actual = input.actual;
     } else {
       let job: JobResult;
       try {
-        job = await this.measure(baselineBytes, input.actual, engine);
+        job = await this.measure(
+          baselineBytes,
+          input.actual,
+          engine,
+          cfg,
+          include,
+        );
       } catch (error) {
         throw new Error(`${name}: ${(error as Error).message}`, {
           cause: error,
@@ -236,24 +343,28 @@ export class Comparer {
               },
             };
       diffPng = job.kind === 'compared' ? job.diffPng : undefined;
+      if (job.kind === 'compared') {
+        if (include.includes('diff') && diffPng) images.diff = diffPng;
+        if (job.baselinePng) images.baseline = job.baselinePng;
+        if (job.actualPng) images.actual = job.actualPng;
+      }
     }
     for (const fn of this.registry.hooks.afterCompare)
       await fn(ctx, measurement);
 
-    const limit = this.limitFor(measurement);
-    let decision = this.decide(measurement, limit);
+    const limit = this.limitFor(measurement, cfg);
+    let decision = this.decide(measurement, limit, cfg);
     for (const fn of this.registry.hooks.decide) {
       decision = await fn(ctx, decision);
     }
 
-    const names = this.layout().paths(name);
     const refs = {
       actual: { kind: 'actual', path: names.actual } as ImageRef,
       diff: { kind: 'diff', path: names.diff } as ImageRef,
     };
     // files of an earlier run of this screenshot must not outlive it
-    await this.store().remove(refs.actual);
-    await this.store().remove(refs.diff);
+    await store.remove(refs.actual);
+    await store.remove(refs.diff);
 
     let plan: WritePlan = { write: [] };
     const status = decision.status;
@@ -269,10 +380,11 @@ export class Comparer {
     }
     for (const fn of this.registry.hooks.beforeWrite)
       plan = await fn(ctx, plan);
-    for (const { ref, bytes } of plan.write)
-      await this.store().write(ref, bytes);
+    for (const { ref, bytes } of plan.write) await store.write(ref, bytes);
 
     const entry = this.record(
+      store,
+      cfg,
       input,
       name,
       baselineRef,
@@ -285,11 +397,11 @@ export class Comparer {
     );
     for (const reporter of this.registry.reporters)
       await reporter.onEntry?.(entry);
-    return entry;
+    return { entry, images };
   }
 
   /** `maxDiffRatio` of the entry: the stricter of the ratio and the pixel count, for the size actually compared. */
-  private limitFor(measurement: Measurement) {
+  private limitFor(measurement: Measurement, cfg: Settings) {
     if (measurement.kind !== 'compared') return undefined;
     const { baselineSize: b, actualSize: a, resized } = measurement;
     const size =
@@ -304,7 +416,7 @@ export class Comparer {
               height: Math.min(a.height, b.height),
             }
           : a;
-    const { maxDiffRatio, maxDiffPixels } = this.options.limits ?? {};
+    const { maxDiffRatio, maxDiffPixels } = cfg.limits;
     // a pixel limit alone is the limit; the default exactness only applies to neither
     return (
       maxRatioFrom({ ratio: maxDiffRatio, pixels: maxDiffPixels }, size) ?? 0
@@ -314,8 +426,8 @@ export class Comparer {
   private decide(
     measurement: Measurement,
     limit: number | undefined,
+    { update, onMissingBaseline }: Settings,
   ): Decision {
-    const { update = 'none', onMissingBaseline = 'fail' } = this.options;
     if (measurement.kind === 'missing-baseline') {
       return onMissingBaseline === 'create'
         ? {
@@ -364,6 +476,8 @@ export class Comparer {
   }
 
   private record(
+    store: Store,
+    cfg: Settings,
     input: CompareInput,
     name: string,
     baselineRef: ImageRef,
@@ -374,17 +488,18 @@ export class Comparer {
     engine: DiffEngine,
     duration: number,
   ): ManifestEntry {
-    const store = this.store();
     const where = (ref: ImageRef) =>
       store.locate(ref) ?? path.join(this.projectRoot, ref.path);
     const status: ManifestStatus = decision.status;
     const compared = measurement.kind === 'compared' ? measurement : undefined;
     const sized =
       measurement.kind !== 'missing-baseline' ? measurement : undefined;
-    const { maxDiffRatio = 0 } = this.options.limits ?? {};
+    const { maxDiffRatio = 0 } = cfg.limits;
     const baselineRoot = path.relative(
       this.projectRoot,
-      where({ kind: 'baseline', path: '' }),
+      input.files
+        ? path.dirname(input.files.baseline)
+        : where({ kind: 'baseline', path: '' }),
     );
     const meta = {
       engine: engine.name,
@@ -421,15 +536,16 @@ export class Comparer {
       viewport: input.viewport,
       variant: input.variant ?? this.options.manifest.variant,
       extra: { ...input.extra, visualRegressionCompare: meta },
-      options: {
+      ...input.entry,
+      options: input.entry?.options ?? {
         imagesPath: `${baselineRoot || '.'}/{name}.png`,
         maxDiffRatio,
-        diffConfig: { engine: engine.name, ...this.options.engineOptions },
-        createMissingImages: this.options.onMissingBaseline === 'create',
+        diffConfig: { engine: engine.name, ...cfg.engineOptions },
+        createMissingImages: cfg.onMissingBaseline === 'create',
         updateImages:
-          this.options.update === 'failures-only'
+          cfg.update === 'failures-only'
             ? 'failures-only'
-            : this.options.update === 'all',
+            : cfg.update === 'all',
       },
       duration: input.duration ?? duration,
     });
@@ -441,7 +557,7 @@ export class Comparer {
     const refs: ImageRef[] = [];
     for await (const ref of this.store().list('incoming')) refs.push(ref);
     const queue = [...refs];
-    const workers = Math.max(1, this.options.concurrency ?? os.cpus().length);
+    const workers = Math.max(1, this.options.concurrency ?? 1);
     const failures: Error[] = [];
     await Promise.all(
       Array.from({ length: Math.min(workers, queue.length) }, async () => {
@@ -471,7 +587,7 @@ export class Comparer {
       baselineRef.path.replace(/\.png$/, '');
     const actual = await this.store().read(incoming);
     if (actual === null) return;
-    await this.compareAt({ name, actual }, name, baselineRef);
+    await this.compareAt({ name, actual }, name, baselineRef, []);
   }
 
   /** Flushes the manifest and ends the reporters. Call once, after the last comparison. */
