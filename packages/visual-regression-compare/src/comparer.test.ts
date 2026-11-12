@@ -12,6 +12,7 @@ import {
 import { ManifestWriter, isManifest } from 'visual-regression-manifest';
 import { Comparer, createComparer, type ComparerOptions } from './comparer';
 import { pixelmatchEngine } from './engines';
+import { englishMessages } from './messages';
 import { decodePng } from './image';
 import { fsStore } from './store';
 import { makePng } from './test-utils';
@@ -182,43 +183,63 @@ describe('compareImage', () => {
       expect(b.status).toBe('passed');
     });
 
-    it('all also replaces a baseline that matches within the limit', async () => {
+    it('all replaces the baseline without comparing, every time', async () => {
       put('base/a.png', makePng(10, 10));
       const comparer = make({ update: 'all', limits: { maxDiffRatio: 0.5 } });
       const near = makePng(10, 10, undefined, 2);
-      expect(
-        (await comparer.compareImage({ name: 'a', actual: near })).status,
-      ).toBe('updated');
-      expect(
-        (await comparer.compareImage({ name: 'a', actual: near })).status,
-      ).toBe('passed');
+      for (let i = 0; i < 2; i++) {
+        const entry = await comparer.compareImage({ name: 'a', actual: near });
+        expect(entry).toMatchObject({
+          status: 'updated',
+          baselineWritten: true,
+          extra: {
+            visualRegressionCompare: {
+              reason: { code: 'updated', cause: 'always' },
+            },
+          },
+        });
+        expect(fs.readFileSync(file('base/a.png'))).toEqual(Buffer.from(near));
+      }
     });
 
-    it('leaves a baseline alone when only the PNG encoding differs', async () => {
-      const identical = makePng(10, 10);
-      put('base/a.png', makePng(10, 10, undefined, 0));
-      const reencoded = Buffer.from(identical);
-      // same pixels, different bytes: flip a byte in a non-pixel chunk is brittle,
-      // so compare against an uncompressed encoding of the same pixels
-      const { PNG } = await import('pngjs');
-      const png = PNG.sync.read(Buffer.from(identical));
-      const other = PNG.sync.write(png, { deflateLevel: 0 });
-      expect(Buffer.compare(other, reencoded)).not.toBe(0);
-      const entry = await make({ update: 'all' }).compareImage({
-        name: 'a',
-        actual: other,
-      });
-      expect(entry).toMatchObject({ status: 'passed', baselineWritten: false });
-    });
-
-    it('replaces the baseline after a size change', async () => {
+    it('all replaces a baseline whose pixels are the same, too', async () => {
       put('base/a.png', makePng(10, 10));
       const entry = await make({ update: 'all' }).compareImage({
+        name: 'a',
+        actual: makePng(10, 10),
+      });
+      expect(entry).toMatchObject({ status: 'updated', baselineWritten: true });
+    });
+
+    it('all still leaves a missing baseline to onMissingBaseline', async () => {
+      const failing = await make({ update: 'all' }).compareImage({
+        name: 'a',
+        actual: makePng(10, 10),
+      });
+      expect(failing.status).toBe('missing-baseline');
+      const creating = await make({
+        update: 'all',
+        onMissingBaseline: 'create',
+      }).compareImage({ name: 'b', actual: makePng(10, 10) });
+      expect(creating.status).toBe('created');
+    });
+
+    it('replaces the baseline after a size change under failures-only', async () => {
+      put('base/a.png', makePng(10, 10));
+      const entry = await make({ update: 'failures-only' }).compareImage({
         name: 'a',
         actual: makePng(20, 10),
       });
       expect(entry.status).toBe('updated');
       expect(entry.message).toContain('The size changed');
+      expect(entry.extra?.visualRegressionCompare).toMatchObject({
+        reason: {
+          code: 'updated',
+          cause: 'size-changed',
+          baselineSize: { width: 10, height: 10 },
+          actualSize: { width: 20, height: 10 },
+        },
+      });
     });
   });
 
@@ -686,5 +707,155 @@ describe('manifest ownership', () => {
     expect(
       isManifest(JSON.parse(fs.readFileSync(file('mine.json'), 'utf8'))),
     ).toBe(true);
+  });
+});
+
+describe('reasons and messages', () => {
+  const reasonOf = (entry: { extra?: Record<string, unknown> }) =>
+    (entry.extra?.visualRegressionCompare as { reason: unknown }).reason;
+
+  it('records why as data next to the English message', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make({ limits: { maxDiffRatio: 0.01 } });
+    const failed = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+    });
+    expect(reasonOf(failed)).toEqual({
+      code: 'above-limit',
+      diffPixels: 5,
+      diffRatio: 0.05,
+      maxDiffRatio: 0.01,
+      baselineSize: { width: 10, height: 10 },
+      actualSize: { width: 10, height: 10 },
+    });
+    expect(failed.message).toBe('5 pixels (5%) differ; the limit is 1%.');
+    const same = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+    });
+    expect(reasonOf(same)).toMatchObject({ code: 'identical', diffPixels: 0 });
+    const missing = await comparer.compareImage({
+      name: 'sub/new',
+      actual: makePng(10, 10),
+    });
+    expect(reasonOf(missing)).toEqual({
+      code: 'missing-baseline',
+      baselinePath: 'base/sub/new.png',
+    });
+    expect(missing.message).toBe(
+      'There is no baseline image at "base/sub/new.png".',
+    );
+  });
+
+  it('records the padding in the reason', async () => {
+    put('base/a.png', makePng(10, 10));
+    const entry = await make({
+      onSizeMismatch: 'pad',
+      limits: { maxDiffRatio: 1 },
+    }).compareImage({ name: 'a', actual: makePng(10, 12) });
+    expect(reasonOf(entry)).toMatchObject({
+      code: 'within-limit',
+      resized: 'pad',
+      actualSize: { width: 10, height: 12 },
+    });
+    expect(entry.message).toContain('padded to the same size');
+  });
+
+  it('speaks another language for the reasons it covers and English for the rest', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make({
+      messages: {
+        'above-limit': (r) =>
+          `${r.diffPixels} px se liší (limit ${r.maxDiffRatio})`,
+        identical: () => 'Shodné s referencí.',
+      },
+    });
+    const failed = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+    });
+    expect(failed.message).toBe('5 px se liší (limit 0)');
+    const same = await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10),
+    });
+    expect(same.message).toBe('Shodné s referencí.');
+    const missing = await comparer.compareImage({
+      name: 'nope',
+      actual: makePng(10, 10),
+    });
+    expect(missing.message).toContain('There is no baseline image');
+    // the data does not depend on the language
+    expect(reasonOf(failed)).toMatchObject({ code: 'above-limit' });
+  });
+
+  it('exports the English messages to build a language from', () => {
+    expect(Object.keys(englishMessages).sort()).toEqual([
+      'above-limit',
+      'created',
+      'identical',
+      'missing-baseline',
+      'size-changed',
+      'updated',
+      'within-limit',
+    ]);
+  });
+});
+
+describe('beforeWrite and the baseline', () => {
+  it('lets a hook refresh the baseline of a passed comparison and reports it', async () => {
+    put('base/a.png', makePng(10, 10));
+    const refreshed = makePng(10, 10, [200, 200, 200, 255]);
+    const comparer = make({
+      plugins: [
+        {
+          name: 'refresh',
+          setup(api) {
+            api.on('beforeWrite', (ctx, plan) =>
+              ctx.decision?.status === 'passed'
+                ? {
+                    write: [
+                      ...plan.write,
+                      {
+                        ref: { kind: 'baseline', path: 'a.png' },
+                        bytes: ctx.input.actual,
+                      },
+                    ],
+                  }
+                : plan,
+            );
+          },
+        },
+      ],
+    });
+    const entry = await comparer.compareImage({ name: 'a', actual: refreshed });
+    expect(entry).toMatchObject({ status: 'passed', baselineWritten: true });
+    expect(fs.readFileSync(file('base/a.png'))).toEqual(Buffer.from(refreshed));
+  });
+
+  it('lets a hook change the bytes of the diff image', async () => {
+    put('base/a.png', makePng(10, 10));
+    const comparer = make({
+      plugins: [
+        {
+          name: 'stamp',
+          setup(api) {
+            api.on('beforeWrite', (_ctx, plan) => ({
+              write: plan.write.map((w) =>
+                w.ref.kind === 'diff'
+                  ? { ...w, bytes: Buffer.from('stamped') }
+                  : w,
+              ),
+            }));
+          },
+        },
+      ],
+    });
+    await comparer.compareImage({
+      name: 'a',
+      actual: makePng(10, 10, undefined, 5),
+    });
+    expect(fs.readFileSync(file('out/a.diff.png'), 'utf8')).toBe('stamped');
   });
 });

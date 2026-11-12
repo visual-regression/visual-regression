@@ -47,25 +47,25 @@ Every `*.png` below `screenshots/actual` is compared with the same relative path
 
 ## Options
 
-| Option                                | Default                      | What it does                                                                                                                                                         |
-| ------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--baseline <dir>`                    | required                     | Directory of baseline images.                                                                                                                                        |
-| `--diff <dir>`                        | next to the baselines        | Where `.actual` and `.diff` files are written.                                                                                                                       |
-| `--engine <id>`                       | `pixelmatch`                 | A built-in engine, a module path (`./my-engine.mjs`) or a package name.                                                                                              |
-| `--max-diff-ratio <n>`                | `0`                          | Largest accepted share of differing pixels, 0..1.                                                                                                                    |
-| `--max-diff-pixels <n>`               |                              | Largest accepted number of differing pixels. With both limits, the stricter one wins.                                                                                |
-| `--color-threshold <n>`               | `0.1`                        | Per-pixel color tolerance of the engine (pixelmatch: YIQ distance, 0..1).                                                                                            |
-| `--include-aa`                        | off                          | Count anti-aliased pixels as differences.                                                                                                                            |
-| `--on-missing fail\|create`           | `fail`                       | A screenshot without baseline is `missing-baseline`, or becomes the baseline (`created`).                                                                            |
-| `--on-size-mismatch fail\|pad\|crop`  | `fail`                       | See [Size changes](#size-changes).                                                                                                                                   |
-| `--update none\|failures-only\|all`   | `none`                       | Overwrite baselines (status `updated`): never, when the comparison failed, or whenever pixels differ (the same pixels in another PNG encoding leave the file alone). |
-| `--match <template>`                  | same relative path           | Baseline path from the screenshot path: `{dir}` (with trailing slash), `{name}`, `{path}`.                                                                           |
-| `--manifest <path>`                   | in `<actual-dir>`            | Where the manifest is written.                                                                                                                                       |
-| `--runner`, `--variant`, `--platform` |                              | Metadata recorded on every entry; `--platform linux/chrome`.                                                                                                         |
-| `--report <list>`                     | `console`                    | `console`, `ctrf[:<file>]` (CTRF report), `github-summary[:<file>]` (default `$GITHUB_STEP_SUMMARY`).                                                                |
-| `--concurrency <n>`                   | CPU count                    | Worker threads for decoding and comparing.                                                                                                                           |
-| `--fail-on <list>`                    | `failed,missing-baseline`    | Statuses that make the exit code `1`.                                                                                                                                |
-| `--config <file>`                     | `visual-regression.config.*` | See [Config file](#config-file).                                                                                                                                     |
+| Option                                | Default                      | What it does                                                                                                                                                           |
+| ------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--baseline <dir>`                    | required                     | Directory of baseline images.                                                                                                                                          |
+| `--diff <dir>`                        | next to the baselines        | Where `.actual` and `.diff` files are written.                                                                                                                         |
+| `--engine <id>`                       | `pixelmatch`                 | A built-in engine, a module path (`./my-engine.mjs`) or a package name.                                                                                                |
+| `--max-diff-ratio <n>`                | `0`                          | Largest accepted share of differing pixels, 0..1.                                                                                                                      |
+| `--max-diff-pixels <n>`               |                              | Largest accepted number of differing pixels. With both limits, the stricter one wins.                                                                                  |
+| `--color-threshold <n>`               | `0.1`                        | Per-pixel color tolerance of the engine (pixelmatch: YIQ distance, 0..1).                                                                                              |
+| `--include-aa`                        | off                          | Count anti-aliased pixels as differences.                                                                                                                              |
+| `--on-missing fail\|create`           | `fail`                       | A screenshot without baseline is `missing-baseline`, or becomes the baseline (`created`).                                                                              |
+| `--on-size-mismatch fail\|pad\|crop`  | `fail`                       | See [Size changes](#size-changes).                                                                                                                                     |
+| `--update none\|failures-only\|all`   | `none`                       | Overwrite baselines (status `updated`): never, when the comparison failed, or always, without comparing. A screenshot without a baseline still follows `--on-missing`. |
+| `--match <template>`                  | same relative path           | Baseline path from the screenshot path: `{dir}` (with trailing slash), `{name}`, `{path}`.                                                                             |
+| `--manifest <path>`                   | in `<actual-dir>`            | Where the manifest is written.                                                                                                                                         |
+| `--runner`, `--variant`, `--platform` |                              | Metadata recorded on every entry; `--platform linux/chrome`.                                                                                                           |
+| `--report <list>`                     | `console`                    | `console`, `ctrf[:<file>]` (CTRF report), `github-summary[:<file>]` (default `$GITHUB_STEP_SUMMARY`).                                                                  |
+| `--concurrency <n>`                   | CPU count                    | Worker threads for decoding and comparing.                                                                                                                             |
+| `--fail-on <list>`                    | `failed,missing-baseline`    | Statuses that make the exit code `1`.                                                                                                                                  |
+| `--config <file>`                     | `visual-regression.config.*` | See [Config file](#config-file).                                                                                                                                       |
 
 A baseline that is a Git LFS pointer (a checkout without `git lfs pull`) fails with a message saying so, not with a decoding error.
 
@@ -210,11 +210,62 @@ await comparer.compareImage({
 });
 ```
 
+### Reasons and languages
+
+Every entry says why it got its status twice: as data in `extra.visualRegressionCompare.reason`, and as a sentence in `message`. A viewer or a review UI can phrase the data in any language; the sentence is English unless the comparer is given other words.
+
+```json
+{
+  "code": "above-limit",
+  "diffPixels": 2096,
+  "diffRatio": 0.039,
+  "maxDiffRatio": 0.001,
+  "baselineSize": { "width": 640, "height": 400 },
+  "actualSize": { "width": 640, "height": 400 }
+}
+```
+
+| `code`             | Status             | Fields besides `code`                                                                  |
+| ------------------ | ------------------ | -------------------------------------------------------------------------------------- |
+| `identical`        | `passed`           | `diffPixels` (0), `diffRatio`, `maxDiffRatio`, `baselineSize`, `actualSize`, `resized` |
+| `within-limit`     | `passed`           | the same                                                                               |
+| `above-limit`      | `failed`           | the same                                                                               |
+| `size-changed`     | `failed`           | `baselineSize`, `actualSize`                                                           |
+| `missing-baseline` | `missing-baseline` | `baselinePath`, relative to the project root                                           |
+| `created`          | `created`          |                                                                                        |
+| `updated`          | `updated`          | `cause`: `always`, `above-limit` or `size-changed`, and what that comparison measured  |
+
+`resized` is `pad` or `crop` when the sizes differed and both images were brought to one size before comparing.
+
+The words come from `messages`, one function per code. English is built in, so nothing needs to be provided; give only the codes you want to say differently, and the others keep their English:
+
+```ts
+import {
+  createComparer,
+  englishMessages,
+  type Messages,
+} from 'visual-regression-compare';
+
+const polish: Partial<Messages> = {
+  identical: () => 'Identyczny z wzorcem.',
+  'above-limit': (r) =>
+    `Różni się ${r.diffPixels} pikseli (${(r.diffRatio * 100).toFixed(2)}%), limit to ${r.maxDiffRatio * 100}%.`,
+};
+
+const comparer = createComparer({
+  store,
+  manifest: { writer },
+  messages: polish,
+});
+```
+
+`englishMessages` is the built-in set, to start a full translation from. The `reason` data does not depend on the language.
+
 ## Extending
 
 - **Engine**: a module whose default export is `{ name, colorMetric, colorThreshold?, compare(baseline, actual) }` or a function from options to one. `compare` gets two RGBA images of the same size and returns `{ diffPixels, diffRatio, diff?, score? }`.
 - **Store, layout, matcher, reporter**: replace where images live (`Store`), how files are named (`Layout`), how a baseline is found (`Matcher`) and what happens with the entries (`Reporter`).
-- **Plugin**: `{ name, setup(api) }` registers engines, reporters, a store, a layout or a matcher, and hooks `beforeCompare`, `afterCompare`, `decide`, `beforeWrite` and `end`. `decide` can turn a `failed` into `approved`; `beforeWrite` can drop the local write of a store that keeps baselines elsewhere. `CompareContext.attachments` is reserved for extra inputs such as a DOM snapshot; nothing fills it yet, and extra inputs have no standard shape.
+- **Plugin**: `{ name, setup(api) }` registers engines, reporters, a store, a layout or a matcher, and hooks `beforeCompare`, `afterCompare`, `decide`, `beforeWrite` and `end`. `decide` can turn a `failed` into `approved`; `beforeWrite` can drop the local write of a store that keeps baselines elsewhere, or add one (a hook can refresh the baseline of a passed comparison: the entry then has `baselineWritten: true`). The hooks that run after `decide` can read the outcome as `ctx.decision`. `CompareContext.attachments` is reserved for extra inputs such as a DOM snapshot; nothing fills it yet, and extra inputs have no standard shape.
 
 ## License
 

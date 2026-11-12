@@ -13,6 +13,7 @@ Takes plain images, compares them against baselines with a pluggable engine, wri
 - `src/job.ts`, `pool.ts`, `worker.ts`: the CPU-bound part (decode, pad/crop, engine, encode diff) as plain data in/out; the pool runs it in worker threads when the engine is named by id and falls back to the calling thread otherwise.
 - `src/engines/`: `loadEngine(id)` (built-in, module path, package) and the pixelmatch engine.
 - `src/store.ts`, `layout.ts`: `fsStore` (baseline/incoming/actual/diff roots), `manifestLayout`, matchers, `sanitizeName`.
+- `src/messages.ts`: the `Reason` union (written to `extra.visualRegressionCompare.reason`), the `Messages` type and the built-in `englishMessages`. A new status path needs a reason code and an English message there, and a row in the README table.
 - `src/plugins.ts`: the plugin registry and hooks. `src/reporters.ts`: console, CTRF, GitHub summary.
 - `src/approve.ts`: applies approvals from manifests (hash-checked, rewrites the manifests). `src/options.ts`, `config.ts`, `run.ts`, `cli.ts`: the command line (`run.ts` returns the exit code, `cli.ts` is the bin).
 

@@ -15,6 +15,7 @@ import { runCompare, type JobResult } from './job';
 import { WorkerPool } from './pool';
 import { manifestLayout, samePathMatcher, sanitizeName } from './layout';
 import { fileStore } from './store';
+import { englishMessages, type Messages, type Reason } from './messages';
 import { createRegistry, type Registry } from './plugins';
 import type {
   CompareContext,
@@ -93,6 +94,13 @@ export type ComparerOptions = {
   plugins?: Plugin[];
   reporters?: Reporter[];
   /**
+   * The words of the entries' `message`, one function per reason (see
+   * `Messages`): a language. English is built in, so this is only needed for
+   * another language or other wording; a reason it does not cover keeps its
+   * English message.
+   */
+  messages?: Partial<Messages>;
+  /**
    * Worker threads for decoding and comparing, and parallel reads in
    * `compareAll`. Default `1`: everything runs in the calling thread, which is
    * what a runner adapter wants (its own workers already use the CPUs). The
@@ -123,11 +131,6 @@ const withDefaults = ({ baseline, actual, diff }: CompareFiles) => {
 
 const DEFAULT_WORKER = new URL('./worker.js', import.meta.url);
 
-const percent = (ratio: number) => `${Number((ratio * 100).toPrecision(3))}%`;
-
-const sizeText = ({ width, height }: { width: number; height: number }) =>
-  `${width}x${height}`;
-
 export class Comparer {
   readonly writer: ManifestWriter;
   private readonly projectRoot: string;
@@ -138,6 +141,7 @@ export class Comparer {
   private readonly registry: Registry;
   private readonly ready: Promise<void>;
   private readonly engines = new Map<string, Promise<DiffEngine>>();
+  private readonly messages: Messages;
   private closed = false;
 
   constructor(private readonly options: ComparerOptions) {
@@ -154,6 +158,7 @@ export class Comparer {
     this.layout = () => this.registry.layout;
     this.matcher = () => this.registry.matcher;
     this.ready = this.registry.setup(options.plugins ?? []);
+    this.messages = { ...englishMessages, ...options.messages };
     this.writer = options.manifest.writer ?? this.createWriter(options);
     this.pool = new WorkerPool(
       options.concurrency ?? 1,
@@ -313,6 +318,9 @@ export class Comparer {
     if (baselineBytes === null) {
       measurement = { kind: 'missing-baseline' };
       if (include.includes('actual')) images.actual = input.actual;
+    } else if (cfg.update === 'all') {
+      measurement = { kind: 'replaced' };
+      if (include.includes('actual')) images.actual = input.actual;
     } else {
       let job: JobResult;
       try {
@@ -353,10 +361,15 @@ export class Comparer {
       await fn(ctx, measurement);
 
     const limit = this.limitFor(measurement, cfg);
-    let decision = this.decide(measurement, limit, cfg);
+    const baselinePath = path
+      .relative(this.projectRoot, store.locate(baselineRef) ?? baselineRef.path)
+      .split(path.sep)
+      .join('/');
+    let decision = this.decide(measurement, limit, cfg, baselinePath);
     for (const fn of this.registry.hooks.decide) {
       decision = await fn(ctx, decision);
     }
+    ctx.decision = decision;
 
     const refs = {
       actual: { kind: 'actual', path: names.actual } as ImageRef,
@@ -381,6 +394,15 @@ export class Comparer {
     for (const fn of this.registry.hooks.beforeWrite)
       plan = await fn(ctx, plan);
     for (const { ref, bytes } of plan.write) await store.write(ref, bytes);
+    // a status that replaces the baseline says so even when a hook sent the
+    // write elsewhere (a store that keeps baselines remotely); a hook that adds
+    // a baseline write to another status (refreshing the baseline of a passed
+    // comparison) says so through the plan
+    const baselineWritten =
+      status === 'created' ||
+      status === 'updated' ||
+      status === 'approved' ||
+      plan.write.some(({ ref }) => ref.kind === 'baseline');
 
     const entry = this.record(
       store,
@@ -393,6 +415,7 @@ export class Comparer {
       decision,
       limit,
       engine,
+      baselineWritten,
       Date.now() - started,
     );
     for (const reporter of this.registry.reporters)
@@ -427,52 +450,50 @@ export class Comparer {
     measurement: Measurement,
     limit: number | undefined,
     { update, onMissingBaseline }: Settings,
+    baselinePath: string,
   ): Decision {
+    const say = (status: Decision['status'], reason: Reason): Decision => ({
+      status,
+      reason,
+      message: (this.messages[reason.code] as (r: Reason) => string)(reason),
+    });
     if (measurement.kind === 'missing-baseline') {
       return onMissingBaseline === 'create'
-        ? {
-            status: 'created',
-            message: 'Baseline image was created from the actual screenshot.',
-          }
-        : {
-            status: 'missing-baseline',
-            message: 'There is no baseline image.',
-          };
+        ? say('created', { code: 'created' })
+        : say('missing-baseline', { code: 'missing-baseline', baselinePath });
+    }
+    if (measurement.kind === 'replaced') {
+      return say('updated', { code: 'updated', cause: 'always' });
     }
     if (measurement.kind === 'size-mismatch') {
-      const message = `The size changed: baseline ${sizeText(measurement.baselineSize)}, actual ${sizeText(measurement.actualSize)}.`;
+      const { baselineSize, actualSize } = measurement;
       return update === 'none'
-        ? { status: 'failed', message }
-        : {
-            status: 'updated',
-            message: `${message} Baseline image was replaced with the actual screenshot.`,
-          };
+        ? say('failed', { code: 'size-changed', baselineSize, actualSize })
+        : say('updated', {
+            code: 'updated',
+            cause: 'size-changed',
+            baselineSize,
+            actualSize,
+          });
     }
     const { diffPixels, diffRatio } = measurement.result;
-    const passed = diffRatio <= (limit ?? 0);
-    const resized = measurement.resized
-      ? ` Both images were ${measurement.resized === 'pad' ? 'padded' : 'cropped'} to the same size (baseline ${sizeText(measurement.baselineSize)}, actual ${sizeText(measurement.actualSize)}).`
-      : '';
-    const counts = `${diffPixels} pixels (${percent(diffRatio)}) differ`;
-    if (passed && !(update === 'all' && diffPixels > 0)) {
-      return {
-        status: 'passed',
-        message:
-          diffPixels === 0
-            ? `Identical to the baseline.${resized}`
-            : `${counts}, within the limit of ${percent(limit ?? 0)}.${resized}`,
-      };
-    }
-    if (update !== 'none') {
-      return {
-        status: 'updated',
-        message: `${counts}. Baseline image was replaced with the actual screenshot.${resized}`,
-      };
-    }
-    return {
-      status: 'failed',
-      message: `${counts}; the limit is ${percent(limit ?? 0)}.${resized}`,
+    const compared = {
+      diffPixels,
+      diffRatio,
+      maxDiffRatio: limit ?? 0,
+      baselineSize: measurement.baselineSize,
+      actualSize: measurement.actualSize,
+      ...(measurement.resized && { resized: measurement.resized }),
     };
+    if (diffRatio <= (limit ?? 0)) {
+      return say('passed', {
+        code: diffPixels === 0 ? 'identical' : 'within-limit',
+        ...compared,
+      });
+    }
+    return update !== 'none'
+      ? say('updated', { code: 'updated', cause: 'above-limit', ...compared })
+      : say('failed', { code: 'above-limit', ...compared });
   }
 
   private record(
@@ -486,6 +507,7 @@ export class Comparer {
     decision: Decision,
     limit: number | undefined,
     engine: DiffEngine,
+    baselineWritten: boolean,
     duration: number,
   ): ManifestEntry {
     const where = (ref: ImageRef) =>
@@ -493,7 +515,9 @@ export class Comparer {
     const status: ManifestStatus = decision.status;
     const compared = measurement.kind === 'compared' ? measurement : undefined;
     const sized =
-      measurement.kind !== 'missing-baseline' ? measurement : undefined;
+      measurement.kind === 'compared' || measurement.kind === 'size-mismatch'
+        ? measurement
+        : undefined;
     const { maxDiffRatio = 0 } = cfg.limits;
     const baselineRoot = path.relative(
       this.projectRoot,
@@ -506,6 +530,7 @@ export class Comparer {
       ...(compared && { diffPixels: compared.result.diffPixels }),
       ...(compared?.result.score && { score: compared.result.score }),
       ...(compared?.resized && { sizeMismatch: compared.resized }),
+      ...(decision.reason && { reason: decision.reason }),
       ...(measurement.kind === 'size-mismatch' && {
         sizeMismatch: 'fail',
         baselineSize: measurement.baselineSize,
@@ -527,8 +552,7 @@ export class Comparer {
       maxDiffRatio: limit ?? maxDiffRatio,
       colorThreshold: engine.colorThreshold,
       colorMetric: engine.colorMetric,
-      baselineWritten:
-        status === 'created' || status === 'updated' || status === 'approved',
+      baselineWritten,
       message: decision.message,
       baselineSize: sized?.baselineSize,
       actualSize: sized?.actualSize,
