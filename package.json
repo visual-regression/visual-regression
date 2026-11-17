@@ -19,7 +19,7 @@
   },
   "packageManager": "pnpm@12.18.0",
   "devDependencies": {
-    "@frsource/eslint-config": "1.86.5",
+    "@frsource/eslint-config": "1.86.6",
     "@frsource/prettier-config": "^1.48.0",
     "@nuxt/eslint-config": "^1.17.0",
     "eslint": "10.14.0",
