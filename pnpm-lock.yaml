@@ -177,11 +177,11 @@ importers:
   .:
     devDependencies:
       '@frsource/eslint-config':
-        specifier: 1.86.5
-        version: 1.86.5(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
+        specifier: 1.86.6
+        version: 1.86.6(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       '@frsource/prettier-config':
         specifier: ^1.48.0
-        version: 1.48.2(prettier@3.9.10)
+        version: 1.48.3(prettier@3.9.10)
       '@nuxt/eslint-config':
         specifier: ^1.17.0
         version: 1.17.0(@typescript-eslint/utils@8.72.2(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vue/compiler-sfc@3.5.45)(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
@@ -2080,14 +2080,14 @@ packages:
   '@frsource/base64@1.0.237':
     resolution: {integrity: sha512-X0tSa8rrusTEkYNy7aE+M+sZlsdyjMt8OgxWc6RerYefph3EKIVRTaL0qg8iw53iabvM7mJDK8MNc4W1yTAz2w==}
 
-  '@frsource/eslint-config@1.86.5':
-    resolution: {integrity: sha512-uPDqo1zg2lPzVkkMiH1MjC2HjATtHB8ZrN+4wvXMw2UZvbdfI2bVpb+Dyk2NetvMCmmfFNbY5Xi8X/wX57zbjA==}
+  '@frsource/eslint-config@1.86.6':
+    resolution: {integrity: sha512-jlgJjtUvmezL2rr+G4Wx0SbbQ7FHfWN1EhX6TDciI5N9rv6SQtxC8Hf3GNsAA6gETj52pcsrF/MTeL2svyvfmA==}
     peerDependencies:
       eslint: '>= 10'
       typescript: '>= 5.0.0'
 
-  '@frsource/prettier-config@1.48.2':
-    resolution: {integrity: sha512-BtrnUzvXL8IF3KGAFAsfFFWT8y5l3GvVFumem87pKRB6uancRPpr072BvH92zr+0Sygj9oPoifouUHnF/qklXA==}
+  '@frsource/prettier-config@1.48.3':
+    resolution: {integrity: sha512-AabQPkhpZR/91ayu26XNk6IUsIYa3hjxiqpE/Imz7MfUGpVSctcu9TmWAoHK8/nRkksWvJ9GTBSsfjI9dr1jBQ==}
     peerDependencies:
       prettier: '>= 3'
 
@@ -14075,7 +14075,7 @@ snapshots:
 
   '@frsource/base64@1.0.237': {}
 
-  '@frsource/eslint-config@1.86.5(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)':
+  '@frsource/eslint-config@1.86.6(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))
       '@typescript-eslint/eslint-plugin': 8.72.2(@typescript-eslint/parser@8.72.2(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.14.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
@@ -14088,7 +14088,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@frsource/prettier-config@1.48.2(prettier@3.9.10)':
+  '@frsource/prettier-config@1.48.3(prettier@3.9.10)':
     dependencies:
       prettier: 3.9.10
 
