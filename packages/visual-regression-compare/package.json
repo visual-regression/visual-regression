@@ -1,7 +1,7 @@
 {
   "name": "visual-regression-compare",
   "description": "Tool-agnostic image comparison for visual regression testing: pairs baseline and actual screenshots, runs a pluggable diff engine, applies limits, writes .actual and .diff files and a visual-regression-manifest run manifest. A CLI for folders of images and a library for test-runner adapters.",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "author": "Jakub Freisler <jakub.freisler@frsource.org>",
   "homepage": "https://visual-regression.dev/compare-cli",
   "repository": {
