@@ -1,0 +1,282 @@
+{
+  "uuid": "58d7f354-ed22-4dfb-b1ab-5ecc1a991e90",
+  "name": "box-b",
+  "historyId": "1f278c894fe6e153dae3a892a338998d:5bd835b0d6b1d4ada3b9f0db936e82c8",
+  "status": "failed",
+  "statusDetails": {
+    "message": "Error: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n",
+    "trace": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n\nError: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+  },
+  "stage": "finished",
+  "steps": [
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create context",
+              "start": 1795342109604,
+              "uuid": "eca03a14-6cf2-4272-8fbe-10ddec733054",
+              "stop": 1795342109609
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342109603,
+          "uuid": "0eae15f0-1141-4508-9ded-6cb1706179ea",
+          "stop": 1795342109609
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create page",
+              "start": 1795342109610,
+              "uuid": "3a03a224-d214-4748-99b8-8cbcf0432bcb",
+              "stop": 1795342109688
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342109609,
+          "uuid": "271fd009-a1dc-4ad4-ab00-3754738fb9b8",
+          "stop": 1795342109688
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "Before Hooks",
+      "start": 1795342109599,
+      "uuid": "fa63fd46-6cd7-4f7d-bdc3-d7d9febc709a",
+      "stop": 1795342109688
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342109689,
+      "name": "Navigate",
+      "uuid": "d0ea1a01-5988-426e-9a32-3bca5b7d2d13",
+      "stop": 1795342109702
+    },
+    {
+      "status": "failed",
+      "statusDetails": {
+        "message": "Error: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n",
+        "trace": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n\nError: expect(locator).toHaveScreenshot(expected) failed\n\nLocator: locator('#box-b')\n  9600 pixels (ratio 1.00 of all image pixels) are different.\n\n  Snapshot: box-b.png\n\nCall log:\n  - Expect \"toHaveScreenshot(box-b.png)\" locator('#box-b') with timeout 5000ms\n    - verifying given screenshot expectation\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n  - waiting 100ms before taking screenshot\n  - waiting for locator('#box-b')\n    - locator resolved to <div id=\"box-b\" class=\"box\"></div>\n  - taking element screenshot\n    - disabled all CSS animations\n  - waiting for fonts to load...\n  - fonts loaded\n  - attempting scroll into view action\n    - waiting for element to be stable\n  - captured a stable screenshot\n  - 9600 pixels (ratio 1.00 of all image pixels) are different.\n\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+      },
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342109702,
+      "name": "Expect \"toHaveScreenshot(box-b.png)\"",
+      "uuid": "3e8e0aee-bb8a-433a-bb23-fb1417385ef3",
+      "stop": 1795342109953
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "box-b-expected.png",
+          "source": "e704c597-791d-4b40-8da3-f5898c2cf1d2-attachment.png",
+          "type": "image/png"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342109981,
+      "name": "box-b-expected.png",
+      "stop": 1795342109981
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "box-b-actual.png",
+          "source": "10fe7440-ac58-4340-b1e1-cd9a58e0456a-attachment.png",
+          "type": "image/png"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342109989,
+      "name": "box-b-actual.png",
+      "stop": 1795342109989
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "box-b-diff.png",
+          "source": "38238bba-8eae-4d17-afc4-d47d6edee73f-attachment.png",
+          "type": "image/png"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342109996,
+      "name": "box-b-diff.png",
+      "stop": 1795342109996
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "error-context",
+          "source": "44fe95bc-1007-4edb-b7e9-c9b3dc8a06f1-attachment.md",
+          "type": "text/markdown"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342109999,
+      "name": "error-context",
+      "stop": 1795342109999
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342109954,
+          "uuid": "b3c5bda0-aec5-4948-bbcb-9aa293872547",
+          "stop": 1795342109954
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Close context",
+              "start": 1795342109958,
+              "uuid": "96160f11-9b89-4b9e-8800-c347acfae19e",
+              "stop": 1795342109960
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342109954,
+          "uuid": "15276aab-88c4-46b7-b547-08d481d33ec6",
+          "stop": 1795342109960
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "After Hooks",
+      "start": 1795342109953,
+      "uuid": "cfcbadfd-8863-45d1-ad5b-daeeedd7fc67",
+      "stop": 1795342109963
+    }
+  ],
+  "attachments": [
+    {
+      "name": "box-b",
+      "source": "9b3c14df-d0a7-4c85-a068-adc7b22e032e-attachment.imagediff",
+      "type": "application/vnd.allure.image.diff"
+    },
+    {
+      "name": "box-b",
+      "source": "fc857938-4af6-4f66-af9b-ed3fe75515c8-attachment.imagediff",
+      "type": "application/vnd.allure.image.diff"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "Project",
+      "value": "chromium"
+    }
+  ],
+  "labels": [
+    {
+      "name": "language",
+      "value": "javascript"
+    },
+    {
+      "name": "framework",
+      "value": "playwright"
+    },
+    {
+      "name": "package",
+      "value": "@visual-regression/e2e-playwright.box.spec.mjs"
+    },
+    {
+      "name": "_fallbackTestCaseId",
+      "value": "c450fdb329a661d4c8a3a7131dace60e"
+    },
+    {
+      "name": "titlePath",
+      "value": " > chromium > box.spec.mjs"
+    },
+    {
+      "name": "host",
+      "value": "host"
+    },
+    {
+      "name": "thread",
+      "value": "thread"
+    },
+    {
+      "name": "parentSuite",
+      "value": "chromium"
+    },
+    {
+      "name": "suite",
+      "value": "box.spec.mjs"
+    }
+  ],
+  "links": [],
+  "start": 1795342109598,
+  "testCaseId": "1f278c894fe6e153dae3a892a338998d",
+  "fullName": "box.spec.mjs › box-b",
+  "titlePath": [
+    "@visual-regression/e2e-playwright",
+    "box.spec.mjs"
+  ],
+  "stop": 1795342109954
+}

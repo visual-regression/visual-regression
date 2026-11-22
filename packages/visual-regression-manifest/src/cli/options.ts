@@ -1,5 +1,6 @@
 import { parseArgs } from 'util';
 import { TOOLS, UsageError, type ConvertFlags } from './convert';
+import { FORMATS, type ExportFlags } from './export';
 
 const OPTIONS = {
   'project-root': { type: 'string', short: 'p' },
@@ -16,24 +17,39 @@ const OPTIONS = {
 } as const;
 
 export const helpText = `Usage: visual-regression-manifest convert <tool> [report] [options]
+       visual-regression-manifest export <format> <manifest> [options]
 
-Write the run manifest of a visual regression tool's output. Tools that write a
-JSON report take its path; the others are read from the files they leave in the
-project root.
+convert writes the run manifest of a visual regression tool's output. Tools
+that write a JSON report or a folder take its path; the others are read from
+the files they leave in the project root.
+
+export writes a manifest as a report other tools read.
 
 Tools:
 ${Object.entries(TOOLS)
   .map(
     ([name, { kind, defaultInput }]) =>
-      `  ${name.padEnd(26)}${kind === 'scan' ? 'scans the project root' : defaultInput ? `report (default ${defaultInput})` : 'report'}`,
+      `  ${name.padEnd(26)}${kind === 'scan' ? 'scans the project root' : defaultInput ? `${kind} (default ${defaultInput})` : kind}`,
+  )
+  .join('\n')}
+
+Formats:
+${Object.entries(FORMATS)
+  .map(
+    ([name, { kind, defaultOut }]) =>
+      `  ${name.padEnd(26)}${kind} (default ${defaultOut})`,
   )
   .join('\n')}
 
 Options:
-  -p, --project-root <dir>   The project the tool ran in (default: the current directory)
-  -o, --out <dir|file>       Where to write the manifest: a folder, which gets
-                             visual-regression-manifest.<tool>.json, or a .json
-                             file (default: the project root, next to the images)
+  -p, --project-root <dir>   convert: the project the tool ran in (default: the
+                             current directory). export: where the manifest's
+                             images are (default: the manifest's projectRoot)
+  -o, --out <dir|file>       convert: where to write the manifest: a folder,
+                             which gets visual-regression-manifest.<tool>.json,
+                             or a .json file (default: the project root, next
+                             to the images). export: the folder to write into,
+                             or the file for a format that is one file
       --max-diff-ratio <n>   The tool's limit as a share of the pixels, 0 to 1
       --max-diff-pixels <n>  The tool's limit as a number of pixels
       --color-threshold <n>  The tool's per-pixel color tolerance
@@ -41,8 +57,9 @@ Options:
       --lenient              Also convert the tests of reports made by other
                              reporters (ctrf)
       --configurations <a,b> The keys of your loki configurations (loki)
-      --options <json>       More converter options as a JSON object, such as
-                             '{"baselineDir":"shots"}'. See the README
+      --options <json>       More converter or exporter options as a JSON
+                             object, such as '{"baselineDir":"shots"}'. See
+                             the README
   -v, --version              Print the version
   -h, --help                 Print this help
 
@@ -50,12 +67,25 @@ Examples:
   visual-regression-manifest convert playwright report.json --max-diff-ratio 0.01
   visual-regression-manifest convert lost-pixel --update
   visual-regression-manifest convert backstopjs -o run && npx visual-regression-viewer run
+  visual-regression-manifest export allure visual-regression-manifest.json
+  visual-regression-manifest export junit visual-regression-manifest.json -o reports/visual.xml
 `;
 
 export type Command =
   | { kind: 'help' }
   | { kind: 'version' }
-  | { kind: 'convert'; tool: string; flags: ConvertFlags; out?: string };
+  | { kind: 'convert'; tool: string; flags: ConvertFlags; out?: string }
+  | { kind: 'export'; format: string; flags: ExportFlags };
+
+/** The flags that describe a tool's run; an export has none of them. */
+const CONVERT_ONLY = [
+  'max-diff-ratio',
+  'max-diff-pixels',
+  'color-threshold',
+  'update',
+  'lenient',
+  'configurations',
+] as const;
 
 const number = (flag: string, value: string | undefined) => {
   if (value === undefined) return undefined;
@@ -100,11 +130,37 @@ export const parseCommand = (argv: string[]): Command => {
   if (values.help) return { kind: 'help' };
   if (values.version) return { kind: 'version' };
   const [command, tool, input, ...rest] = positionals;
+  if (command === 'export') {
+    if (tool === undefined) {
+      throw new UsageError(
+        `export needs a format: ${Object.keys(FORMATS).join(', ')}`,
+      );
+    }
+    if (input === undefined || rest.length > 0) {
+      throw new UsageError(
+        `export needs one manifest file, got ${input === undefined ? 'none' : [input, ...rest].join(' ')}`,
+      );
+    }
+    const stray = CONVERT_ONLY.find((flag) => values[flag] !== undefined);
+    if (stray) {
+      throw new UsageError(`--${stray} does not apply to export`);
+    }
+    return {
+      kind: 'export',
+      format: tool,
+      flags: {
+        manifest: input,
+        out: values.out,
+        projectRoot: values['project-root'],
+        options: jsonObject(values.options),
+      },
+    };
+  }
   if (command !== 'convert') {
     throw new UsageError(
       command === undefined
-        ? 'Expected a command: convert'
-        : `Unknown command ${JSON.stringify(command)}; the only one is convert`,
+        ? 'Expected a command: convert or export'
+        : `Unknown command ${JSON.stringify(command)}; choose convert or export`,
     );
   }
   if (tool === undefined) {

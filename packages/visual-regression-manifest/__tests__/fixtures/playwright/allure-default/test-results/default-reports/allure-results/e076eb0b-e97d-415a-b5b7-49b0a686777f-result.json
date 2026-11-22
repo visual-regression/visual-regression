@@ -1,0 +1,288 @@
+{
+  "uuid": "e076eb0b-e97d-415a-b5b7-49b0a686777f",
+  "name": "box-c",
+  "historyId": "7a0a259da08486064944c99140af5733:5bd835b0d6b1d4ada3b9f0db936e82c8",
+  "status": "failed",
+  "statusDetails": {
+    "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png, writing actual.",
+    "trace": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |     ^\n  11 |   });\n  12 | }\n  13 |\n\nError: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png, writing actual.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:5"
+  },
+  "stage": "finished",
+  "steps": [
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Launch browser",
+              "start": 1795342110391,
+              "uuid": "1ed8114e-c6be-4492-9a6e-1030a0105da6",
+              "stop": 1795342110472
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"browser\"",
+          "start": 1795342110390,
+          "uuid": "e28172dd-1131-4456-814b-67016a584dd2",
+          "stop": 1795342110472
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create context",
+              "start": 1795342110475,
+              "uuid": "70d0892d-5b66-48c5-8231-eaeab3b42ca9",
+              "stop": 1795342110480
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342110474,
+          "uuid": "a1bd7304-b233-4a60-b92a-83a63ada2362",
+          "stop": 1795342110481
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create page",
+              "start": 1795342110482,
+              "uuid": "09c3ae26-bad1-4dcf-a77b-aed76caa8a1a",
+              "stop": 1795342110519
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342110481,
+          "uuid": "82b79c7a-74de-409c-95c5-deaa11c663ec",
+          "stop": 1795342110519
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "Before Hooks",
+      "start": 1795342110385,
+      "uuid": "0d463a9b-2809-4a90-9325-0452df0eb358",
+      "stop": 1795342110519
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342110520,
+      "name": "Navigate",
+      "uuid": "621eb332-d8fa-420c-8130-0b2a54bd8546",
+      "stop": 1795342110527
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342110529,
+      "name": "Expect \"toHaveScreenshot(box-c.png)\"",
+      "uuid": "5b3b21ee-622f-4098-a40b-e763e99e5f34",
+      "stop": 1795342110770
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "box-c-expected.png",
+          "source": "a0ca1bd5-e369-442a-a375-7acf67e3619d-attachment.png",
+          "type": "image/png"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342110799,
+      "name": "box-c-expected.png",
+      "stop": 1795342110799
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "box-c-actual.png",
+          "source": "3d832669-c372-4f03-8fcb-8ef708c6f9a2-attachment.png",
+          "type": "image/png"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342110805,
+      "name": "box-c-actual.png",
+      "stop": 1795342110805
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "error-context",
+          "source": "b3fbebb9-08d9-4526-b549-e5346e2b0ccb-attachment.md",
+          "type": "text/markdown"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342110813,
+      "name": "error-context",
+      "stop": 1795342110813
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342110771,
+          "uuid": "5545cf74-f591-4f9d-a76c-bc0f1619f4fe",
+          "stop": 1795342110771
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Close context",
+              "start": 1795342110777,
+              "uuid": "cb601421-0c2c-4ddd-84ca-152a3e1fab1d",
+              "stop": 1795342110779
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342110771,
+          "uuid": "1c18b52a-34cb-4160-b588-0bb23efff2b9",
+          "stop": 1795342110779
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "After Hooks",
+      "start": 1795342110771,
+      "uuid": "36603772-03cd-4b7f-9da1-cee4d5156867",
+      "stop": 1795342110783
+    }
+  ],
+  "attachments": [
+    {
+      "name": "box-c",
+      "source": "aef0727e-2832-4c1a-b209-807108524519-attachment.imagediff",
+      "type": "application/vnd.allure.image.diff"
+    },
+    {
+      "name": "box-c",
+      "source": "08c24330-876f-40e7-be4c-2437f0065122-attachment.imagediff",
+      "type": "application/vnd.allure.image.diff"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "Project",
+      "value": "chromium"
+    }
+  ],
+  "labels": [
+    {
+      "name": "language",
+      "value": "javascript"
+    },
+    {
+      "name": "framework",
+      "value": "playwright"
+    },
+    {
+      "name": "package",
+      "value": "@visual-regression/e2e-playwright.box.spec.mjs"
+    },
+    {
+      "name": "_fallbackTestCaseId",
+      "value": "bfc37d38f4d7b702904c0b8b17ecb538"
+    },
+    {
+      "name": "titlePath",
+      "value": " > chromium > box.spec.mjs"
+    },
+    {
+      "name": "host",
+      "value": "host"
+    },
+    {
+      "name": "thread",
+      "value": "thread"
+    },
+    {
+      "name": "parentSuite",
+      "value": "chromium"
+    },
+    {
+      "name": "suite",
+      "value": "box.spec.mjs"
+    }
+  ],
+  "links": [],
+  "start": 1795342110374,
+  "testCaseId": "7a0a259da08486064944c99140af5733",
+  "fullName": "box.spec.mjs › box-c",
+  "titlePath": [
+    "@visual-regression/e2e-playwright",
+    "box.spec.mjs"
+  ],
+  "stop": 1795342110679
+}

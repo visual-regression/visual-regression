@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -115,6 +116,63 @@ describe('convertTool', () => {
     );
   });
 
+  describe('allure', () => {
+    const { root, expectations } = must(
+      realOutput('playwright').find(({ mode }) => mode === 'allure-none'),
+    );
+    const results = 'test-results/none-reports/allure-results';
+    // the converter writes the images out: work on a copy of the fixture
+    const copy = async (to = '') => {
+      const dir = await tmpDir();
+      fs.cpSync(root, path.join(dir, to), { recursive: true });
+      return dir;
+    };
+
+    it('converts the results folder typed, relative to the working directory', async () => {
+      const dir = await copy();
+      const manifest = convertTool(
+        'allure',
+        flags({ projectRoot: '.', input: results, maxDiffRatio: 0.02 }),
+        dir,
+      );
+      expect(validateManifest(manifest)).toEqual([]);
+      expectRealOutput(manifest, dir, expectations);
+      expect(manifest.entries[0].comparison.maxDiffRatio).toBe(0.02);
+    });
+
+    it('reads allure-results in the project root by default', async () => {
+      const dir = await copy();
+      fs.renameSync(path.join(dir, results), path.join(dir, 'allure-results'));
+      const manifest = convertTool('allure', flags({ projectRoot: dir }), '/');
+      expect(manifest.summary.entries).toBe(1);
+      expect(manifest.entries[0].images.baseline.path).toMatch(
+        /^allure-results\/visual-regression-images\//,
+      );
+    });
+
+    it('takes the project root itself as the results folder', async () => {
+      const dir = await copy();
+      const manifest = convertTool(
+        'allure',
+        flags({ projectRoot: results, input: results }),
+        dir,
+      );
+      expect(manifest.entries[0].images.baseline.path).toMatch(
+        /^visual-regression-images\//,
+      );
+    });
+
+    it('refuses a folder that is missing or lies outside the project', async () => {
+      const dir = await copy('project');
+      const run = (input?: string) =>
+        convertTool('allure', flags({ projectRoot: 'project', input }), dir);
+      expect(run).toThrow(/allure folder .*allure-results is not a directory/);
+      expect(() => run('project/meta.json')).toThrow(/is not a directory/);
+      fs.mkdirSync(path.join(dir, 'elsewhere'));
+      expect(() => run('elsewhere')).toThrow(/outside the project root/);
+    });
+  });
+
   it('refuses a project root that is not a directory', () => {
     expect(() =>
       convertTool('vitest', flags({ projectRoot: 'missing' }), '/'),
@@ -123,9 +181,7 @@ describe('convertTool', () => {
 
   it('explains a report that is missing, is not JSON, or lies outside the project', async () => {
     const root = await tmpDir();
-    await import('fs').then(({ default: fs }) =>
-      fs.writeFileSync(path.join(root, 'broken.json'), '{'),
-    );
+    fs.writeFileSync(path.join(root, 'broken.json'), '{');
     const run = (input: string, projectRoot = root) =>
       convertTool('playwright', flags({ projectRoot, input }), root);
     expect(() => run('gone.json')).toThrow(/Cannot read the report/);

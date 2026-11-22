@@ -148,3 +148,22 @@ export {
   type FromCtrfOptions,
   type ToCtrfOptions,
 } from './convert/ctrf';
+export {
+  ALLURE_IMAGE_DIFF_TYPE,
+  ALLURE_STATUS_LABEL,
+  fromAllureResults,
+  toAllureResults,
+  toAllureStatus,
+  writeAllureResults,
+  type AllureAttachment,
+  type AllureImageDiff,
+  type AllureLabel,
+  type AllureParameter,
+  type AllureResult,
+  type AllureResultsFile,
+  type AllureStatus,
+  type AllureStep,
+  type FromAllureResultsOptions,
+  type ToAllureResultsOptions,
+} from './convert/allure';
+export { toJUnit, type ToJUnitOptions } from './convert/junit';

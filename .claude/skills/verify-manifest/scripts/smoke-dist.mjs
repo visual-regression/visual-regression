@@ -84,6 +84,42 @@ check('ctrf: toCtrf -> fromCtrf is lossless on entries', () => {
     found[0].manifest.entries.map((e) => [e.name, e.status]),
   );
 });
+check(
+  'allure: writeAllureResults -> fromAllureResults keeps names and statuses',
+  () => {
+    const m = found[0].manifest;
+    const dir = path.join(runDir, 'allure-results');
+    const written = esm.writeAllureResults(dir, m, { onWarning: () => {} });
+    assert.equal(
+      written.filter((file) => file.endsWith('-result.json')).length,
+      m.entries.length,
+    );
+    const back = esm.fromAllureResults({ projectRoot: runDir, ci: null });
+    assert.deepEqual(esm.validateManifest(back), []);
+    // only an entry with an actual image gets an image diff, which is what converts back
+    const paired = m.entries.filter(
+      (e) =>
+        e.images.actual.path &&
+        fs.existsSync(path.join(runDir, e.images.actual.path)),
+    );
+    assert.ok(paired.length > 0);
+    assert.deepEqual(
+      back.entries.map((e) => [e.name, e.status]).sort(),
+      paired.map((e) => [e.name, e.status]).sort(),
+    );
+  },
+);
+check('junit: toJUnit counts the entries that need a human as failures', () => {
+  const m = found[0].manifest;
+  const xml = esm.toJUnit(m);
+  assert.match(
+    xml,
+    new RegExp(
+      `<testsuites [^>]*tests="${m.summary.entries}" failures="${m.summary.needsHuman}"`,
+    ),
+  );
+  assert.equal(xml.match(/<testcase /g).length, m.entries.length);
+});
 check('convert: image triples produce a valid manifest', () => {
   const m = esm.fromImageTriples({
     projectRoot: runDir,

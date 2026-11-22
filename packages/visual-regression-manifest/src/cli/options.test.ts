@@ -69,14 +69,60 @@ describe('parseCommand', () => {
     [['convert', 'vitest', '--options', '{'], /JSON object/],
     [['convert', 'vitest', '--options', '[]'], /JSON object/],
     [['convert', 'vitest', '--nope'], /nope/],
+    [['export'], /export needs a format: allure, junit/],
+    [['export', 'junit'], /export needs one manifest file, got none/],
+    [['export', 'junit', 'a.json', 'b.json'], /got a\.json b\.json/],
+    [
+      ['export', 'junit', 'a.json', '--max-diff-ratio', '0.1'],
+      /--max-diff-ratio does not apply to export/,
+    ],
+    [['export', 'junit', 'a.json', '--update'], /--update does not apply/],
+    [['export', 'junit', 'a.json', '--options', '[]'], /JSON object/],
   ])('rejects %j', (argv, message) => {
     const run = () => parseCommand(argv);
     expect(run).toThrow(UsageError);
     expect(run).toThrow(message);
   });
 
-  it('lists every tool in the help', () => {
+  it('parses an export, its manifest and where to write it', () => {
+    expect(
+      parseCommand([
+        'export',
+        'junit',
+        'run/visual-regression-manifest.json',
+        '-o',
+        'reports/visual.xml',
+        '-p',
+        'app',
+        '--options',
+        '{"attachmentPaths":"absolute"}',
+      ]),
+    ).toEqual({
+      kind: 'export',
+      format: 'junit',
+      flags: {
+        manifest: 'run/visual-regression-manifest.json',
+        out: 'reports/visual.xml',
+        projectRoot: 'app',
+        options: { attachmentPaths: 'absolute' },
+      },
+    });
+    expect(parseCommand(['export', 'allure', 'm.json'])).toEqual({
+      kind: 'export',
+      format: 'allure',
+      flags: {
+        manifest: 'm.json',
+        out: undefined,
+        projectRoot: undefined,
+        options: undefined,
+      },
+    });
+  });
+
+  it('lists every tool and format in the help', () => {
     expect(helpText).toContain('backstopjs');
     expect(helpText).toContain('report (default reg.json)');
+    expect(helpText).toContain('folder (default allure-results)');
+    expect(helpText).toContain('file (default visual-regression-junit.xml)');
   });
 });

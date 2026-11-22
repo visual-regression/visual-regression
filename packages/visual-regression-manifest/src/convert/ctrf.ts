@@ -159,7 +159,7 @@ const MIME_BY_EXT: Record<string, string> = {
   '.bmp': 'image/bmp',
 };
 
-const mimeOf = (file: string) =>
+export const mimeOf = (file: string) =>
   MIME_BY_EXT[path.posix.extname(file).toLowerCase()] ??
   'application/octet-stream';
 
