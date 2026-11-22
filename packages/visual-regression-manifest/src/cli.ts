@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { getManifestFileName } from './constants';
 import { UsageError, convertTool } from './cli/convert';
+import { exportManifest } from './cli/export';
 import { helpText, parseCommand } from './cli/options';
 import { writeManifestFile } from './writer';
 
@@ -30,6 +31,15 @@ const run = () => {
     return console.log(version);
   }
   const cwd = process.cwd();
+  if (command.kind === 'export') {
+    const { out, summary } = exportManifest(
+      command.format,
+      command.flags,
+      cwd,
+      (message) => console.error(`Warning: ${message}`),
+    );
+    return console.log(`Wrote ${shown(cwd, out)}: ${summary}`);
+  }
   const manifest = convertTool(command.tool, command.flags, cwd);
   const out = path.resolve(cwd, command.out ?? command.flags.projectRoot);
   const file = out.endsWith('.json')

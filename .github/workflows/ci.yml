@@ -161,7 +161,7 @@ jobs:
         with:
           package: '@visual-regression/e2e-playwright'
       - run: pnpm --filter @visual-regression/e2e-harness typecheck
-      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/playwright.test.ts
+      - run: pnpm --filter @visual-regression/e2e-harness e2e tests/playwright.test.ts tests/allure-export.test.ts
       - uses: actions/upload-artifact@v6
         if: ${{ failure() }}
         with:

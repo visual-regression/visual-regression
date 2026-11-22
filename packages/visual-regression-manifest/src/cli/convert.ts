@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fromAllureResults } from '../convert/allure';
 import { fromBackstopReport } from '../convert/backstop';
 import { fromCtrf } from '../convert/ctrf';
 import { fromCypressImageDiff } from '../convert/cypress-image-diff';
@@ -36,9 +37,9 @@ export type ToolFlag = Exclude<
 >;
 
 type Tool = {
-  /** `report`: converts the JSON report `input`; `scan`: reads the folders the tool leaves in the project. */
-  kind: 'report' | 'scan';
-  /** Where the report is when `input` is left out; without one the report is required. */
+  /** `report`: converts the JSON report `input`; `folder`: reads the folder `input`; `scan`: reads the folders the tool leaves in the project. */
+  kind: 'report' | 'folder' | 'scan';
+  /** Where the report or folder is when `input` is left out; without one it is required. */
   defaultInput?: string;
   flags: readonly ToolFlag[];
   run: (ctx: Context) => Manifest;
@@ -48,10 +49,10 @@ type Context = {
   flags: ConvertFlags;
   /** Absolute project root. */
   projectRoot: string;
-  /** The parsed report, typed by the converter that reads it; `undefined` for scanning tools. */
+  /** The parsed report, typed by the converter that reads it; `undefined` for tools without one. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   report: any;
-  /** Directory of the report relative to the project root, `undefined` when it is the root. */
+  /** Directory of the report (or the folder itself) relative to the project root, `undefined` when it is the root. */
   reportDir?: string;
 };
 
@@ -206,6 +207,19 @@ export const TOOLS: Record<string, Tool> = {
         }),
       ),
   },
+  allure: {
+    kind: 'folder',
+    defaultInput: 'allure-results',
+    flags: LIMITS,
+    run: (ctx) =>
+      fromAllureResults(
+        withExtra(ctx, {
+          projectRoot: ctx.projectRoot,
+          resultsDir: ctx.reportDir ?? '.',
+          ...pick(ctx.flags, LIMITS),
+        }),
+      ),
+  },
   ctrf: {
     kind: 'report',
     flags: ['lenient'],
@@ -282,6 +296,27 @@ export const convertTool = (
   }
   if (flags.input === undefined && tool.defaultInput === undefined) {
     throw new UsageError(`${name} needs the path of its report`);
+  }
+  if (tool.kind === 'folder') {
+    const dir =
+      flags.input !== undefined
+        ? path.resolve(cwd, flags.input)
+        : path.resolve(projectRoot, tool.defaultInput as string);
+    if (!fs.statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
+      throw new UsageError(`The ${name} folder ${dir} is not a directory`);
+    }
+    const inProject = path.relative(projectRoot, dir);
+    if (inProject.startsWith('..') || path.isAbsolute(inProject)) {
+      throw new UsageError(
+        `The ${name} folder ${dir} is outside the project root ${projectRoot}; move it, or set --project-root`,
+      );
+    }
+    return tool.run({
+      flags,
+      projectRoot,
+      report: undefined,
+      reportDir: inProject === '' ? undefined : inProject,
+    });
   }
   // a typed path is relative to where the user is, the conventional one to the project
   const file =

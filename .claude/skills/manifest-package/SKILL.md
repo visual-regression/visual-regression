@@ -1,6 +1,6 @@
 ---
 name: manifest-package
-description: Work on packages/visual-regression-manifest — the run-manifest format (schema.json, types), reader/writer/merger/builder, and the converters in src/convert/ (CTRF, Playwright, Backstop, jest-image-snapshot, cypress-visual-regression, Roborazzi, Vitest, image triples). Use when editing that package, adding a converter, or changing the schema.
+description: Work on packages/visual-regression-manifest — the run-manifest format (schema.json, types), reader/writer/merger/builder, and the converters in src/convert/ (CTRF, Allure, JUnit XML, Playwright, Backstop, jest-image-snapshot, cypress-visual-regression, Roborazzi, Vitest, image triples). Use when editing that package, adding a converter, or changing the schema.
 ---
 
 # visual-regression-manifest
@@ -13,8 +13,8 @@ Published npm package defining the run-manifest format. Everything else in the r
 - `src/types.ts`, `constants.ts` — types and shared constants; public API is re-exported from `src/index.ts`.
 - `src/reader.ts`, `writer.ts`, `merge.ts`, `builder.ts`, `validate.ts` — read, write, merge the manifests of a run, build entries, validate.
 - `src/paths.ts`, `png.ts`, `limits.ts`, `ci.ts`, `summary.ts` — path safety, PNG size reading, comparison limits, CI detection, status counts.
-- `src/cli.ts`, `src/cli/` — the `visual-regression-manifest convert <tool>` command: `options.ts` parses flags, `convert.ts` holds the per-tool table (kind, accepted flags, call into the converter). Built by esbuild into `dist/cli.js` (the `bin`); `.claude/skills/verify-manifest` drives it.
-- `src/convert/*.ts` — one converter per tool (`walk.ts` is a shared helper). Tests sit next to them; real tool output captured by `examples/converters` lives under `__tests__/fixtures/<tool>/<mode>/` with an `expectations.json`.
+- `src/cli.ts`, `src/cli/` — the `visual-regression-manifest convert <tool>` and `export <format>` commands: `options.ts` parses flags, `convert.ts` holds the per-tool table (kind, accepted flags, call into the converter), `export.ts` the per-format table (`allure`, `junit`). Built by esbuild into `dist/cli.js` (the `bin`); `.claude/skills/verify-manifest` drives it.
+- `src/convert/*.ts` — one converter per tool (`walk.ts` is a shared helper); `ctrf.ts` and `allure.ts` also export a manifest, `junit.ts` only exports. Tests sit next to them; real tool output captured by `examples/converters` lives under `__tests__/fixtures/<tool>/<mode>/` with an `expectations.json`.
 - `README.md` — also the source of the site's `/manifest/*` pages (see the `site` skill). `docs/ctrf-proposal.md` is the CTRF proposal.
 
 ## Working on it

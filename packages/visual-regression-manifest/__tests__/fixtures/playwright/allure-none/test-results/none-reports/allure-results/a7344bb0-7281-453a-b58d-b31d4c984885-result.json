@@ -1,0 +1,248 @@
+{
+  "uuid": "a7344bb0-7281-453a-b58d-b31d4c984885",
+  "name": "box-c",
+  "historyId": "7a0a259da08486064944c99140af5733:5bd835b0d6b1d4ada3b9f0db936e82c8",
+  "status": "failed",
+  "statusDetails": {
+    "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.",
+    "trace": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n\nError: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+  },
+  "stage": "finished",
+  "steps": [
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Launch browser",
+              "start": 1795342107502,
+              "uuid": "3f8f5830-9b06-4705-8770-0a94dcf8cfce",
+              "stop": 1795342107591
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"browser\"",
+          "start": 1795342107501,
+          "uuid": "40560a35-53b6-41f8-8331-14904c598589",
+          "stop": 1795342107591
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create context",
+              "start": 1795342107592,
+              "uuid": "5629cc3c-631a-404d-81da-9ab29d2f599b",
+              "stop": 1795342107596
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342107592,
+          "uuid": "cea0a0c8-68a6-41cc-b38c-1205c0701692",
+          "stop": 1795342107597
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create page",
+              "start": 1795342107597,
+              "uuid": "c286820b-c174-43da-8d00-874bdb382b9e",
+              "stop": 1795342107632
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342107597,
+          "uuid": "5a8aabed-a55c-4718-9f2a-6c965400bdb8",
+          "stop": 1795342107632
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "Before Hooks",
+      "start": 1795342107497,
+      "uuid": "d54c69eb-8008-4668-a1e5-c3a6abef36ea",
+      "stop": 1795342107632
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342107633,
+      "name": "Navigate",
+      "uuid": "6d17cca3-c54c-4c28-adbf-2418bb60f80b",
+      "stop": 1795342107641
+    },
+    {
+      "status": "failed",
+      "statusDetails": {
+        "message": "Error: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.",
+        "trace": "   8 |   test(`box-${box}`, async ({ page: tab }) => {\n   9 |     await tab.goto(page.href);\n> 10 |     await expect(tab.locator(`#box-${box}`)).toHaveScreenshot(`box-${box}.png`);\n     |                                              ^\n  11 |   });\n  12 | }\n  13 |\n\nError: A snapshot doesn't exist at __PROJECT_ROOT__/tests/box.spec.mjs-snapshots/box-c-chromium-darwin.png.\n    at __PROJECT_ROOT__/tests/box.spec.mjs:10:46"
+      },
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342107643,
+      "name": "Expect \"toHaveScreenshot(box-c.png)\"",
+      "uuid": "9404da71-9282-4d5a-ad2a-cce73acf49d1",
+      "stop": 1795342107644
+    },
+    {
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [
+        {
+          "name": "error-context",
+          "source": "68b930ee-df1c-4c08-b811-5ba6280e4e36-attachment.md",
+          "type": "text/markdown"
+        }
+      ],
+      "parameters": [],
+      "start": 1795342107681,
+      "name": "error-context",
+      "stop": 1795342107681
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342107644,
+          "uuid": "a26489c1-6b0d-44f6-80f1-a15d25eee04d",
+          "stop": 1795342107644
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Close context",
+              "start": 1795342107661,
+              "uuid": "2aa4eb5c-4d5a-4679-9441-1f979aa7df0f",
+              "stop": 1795342107663
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342107645,
+          "uuid": "acb0c444-65ff-44a6-9e9b-61a6406bc51e",
+          "stop": 1795342107663
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "After Hooks",
+      "start": 1795342107644,
+      "uuid": "350a9c62-8594-4223-ae57-a16f314846f3",
+      "stop": 1795342107667
+    }
+  ],
+  "attachments": [],
+  "parameters": [
+    {
+      "name": "Project",
+      "value": "chromium"
+    }
+  ],
+  "labels": [
+    {
+      "name": "language",
+      "value": "javascript"
+    },
+    {
+      "name": "framework",
+      "value": "playwright"
+    },
+    {
+      "name": "package",
+      "value": "@visual-regression/e2e-playwright.box.spec.mjs"
+    },
+    {
+      "name": "_fallbackTestCaseId",
+      "value": "bfc37d38f4d7b702904c0b8b17ecb538"
+    },
+    {
+      "name": "titlePath",
+      "value": " > chromium > box.spec.mjs"
+    },
+    {
+      "name": "host",
+      "value": "host"
+    },
+    {
+      "name": "thread",
+      "value": "thread"
+    },
+    {
+      "name": "parentSuite",
+      "value": "chromium"
+    },
+    {
+      "name": "suite",
+      "value": "box.spec.mjs"
+    }
+  ],
+  "links": [],
+  "start": 1795342107488,
+  "testCaseId": "7a0a259da08486064944c99140af5733",
+  "fullName": "box.spec.mjs › box-c",
+  "titlePath": [
+    "@visual-regression/e2e-playwright",
+    "box.spec.mjs"
+  ],
+  "stop": 1795342107559
+}

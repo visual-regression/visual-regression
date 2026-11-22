@@ -27,5 +27,6 @@ export default defineConfig({
       'playwright-ctrf-json-reporter',
       { outputDir: reports, outputFile: 'ctrf-report.json' },
     ],
+    ['allure-playwright', { resultsDir: `${reports}/allure-results` }],
   ],
 });

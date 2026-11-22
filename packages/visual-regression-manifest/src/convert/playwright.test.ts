@@ -187,7 +187,10 @@ describe('fromPlaywrightReport', () => {
   // captured by examples/converters/playwright: one project, element screenshots,
   // run with updateSnapshots 'none' and with the default
   describe.each(
-    realOutput('playwright').filter(({ mode }) => !mode.startsWith('ctrf-')),
+    // the same runs read from other reports have fixtures of their own
+    realOutput('playwright').filter(
+      ({ mode }) => !/^(ctrf|allure)-/.test(mode),
+    ),
   )(
     'real output of an updateSnapshots $mode run',
     ({ mode, root, expectations }) => {

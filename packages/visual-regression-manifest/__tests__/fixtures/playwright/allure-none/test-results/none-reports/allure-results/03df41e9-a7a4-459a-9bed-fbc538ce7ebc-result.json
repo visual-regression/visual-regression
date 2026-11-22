@@ -1,0 +1,226 @@
+{
+  "uuid": "03df41e9-a7a4-459a-9bed-fbc538ce7ebc",
+  "name": "box-a",
+  "historyId": "af3b43cb05b68c33889d9dc75ad7dd3e:5bd835b0d6b1d4ada3b9f0db936e82c8",
+  "status": "passed",
+  "statusDetails": {},
+  "stage": "finished",
+  "steps": [
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Launch browser",
+              "start": 1795342106474,
+              "uuid": "bae87d96-2c2f-4e7b-989a-4644a921d22b",
+              "stop": 1795342106560
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"browser\"",
+          "start": 1795342106473,
+          "uuid": "929a0a13-3c86-473f-b92e-9a75f56041cd",
+          "stop": 1795342106561
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create context",
+              "start": 1795342106564,
+              "uuid": "aaf81858-6c7d-4380-af0a-8489e9a8c42d",
+              "stop": 1795342106572
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342106562,
+          "uuid": "5714e1bf-0f41-48a6-82b6-d0fbb8880164",
+          "stop": 1795342106573
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Create page",
+              "start": 1795342106574,
+              "uuid": "046abdd6-3c27-476b-a46c-083bf540de9f",
+              "stop": 1795342106632
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342106573,
+          "uuid": "8d8d7860-a98a-4b10-8119-eb7d805ec5f5",
+          "stop": 1795342106632
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "Before Hooks",
+      "start": 1795342106468,
+      "uuid": "21a3110a-449d-4de0-9be4-5c5c2e38e839",
+      "stop": 1795342106632
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342106634,
+      "name": "Navigate",
+      "uuid": "0fb7712d-ac21-4e4b-856d-3d1a6de15f5e",
+      "stop": 1795342106647
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [],
+      "attachments": [],
+      "parameters": [],
+      "start": 1795342106650,
+      "name": "Expect \"toHaveScreenshot(box-a.png)\"",
+      "uuid": "d07077f6-22f8-4a3c-82d5-e2310ecab649",
+      "stop": 1795342106734
+    },
+    {
+      "status": "passed",
+      "statusDetails": {},
+      "stage": "finished",
+      "steps": [
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"page\"",
+          "start": 1795342106734,
+          "uuid": "90555a11-0c92-486d-9a91-8c0695fc3f8d",
+          "stop": 1795342106734
+        },
+        {
+          "status": "passed",
+          "statusDetails": {},
+          "stage": "finished",
+          "steps": [
+            {
+              "status": "passed",
+              "statusDetails": {},
+              "stage": "finished",
+              "steps": [],
+              "attachments": [],
+              "parameters": [],
+              "name": "Close context",
+              "start": 1795342106736,
+              "uuid": "8bbb8017-1ba8-4644-ab13-0488cb037ccf",
+              "stop": 1795342106744
+            }
+          ],
+          "attachments": [],
+          "parameters": [],
+          "name": "Fixture \"context\"",
+          "start": 1795342106734,
+          "uuid": "d9f2572c-c5a3-425d-b4a7-b5bfe1cebf53",
+          "stop": 1795342106744
+        }
+      ],
+      "attachments": [],
+      "parameters": [],
+      "name": "After Hooks",
+      "start": 1795342106734,
+      "uuid": "4a5b6871-33ec-43c8-a441-cef0f21cf1de",
+      "stop": 1795342106747
+    }
+  ],
+  "attachments": [],
+  "parameters": [
+    {
+      "name": "Project",
+      "value": "chromium"
+    }
+  ],
+  "labels": [
+    {
+      "name": "language",
+      "value": "javascript"
+    },
+    {
+      "name": "framework",
+      "value": "playwright"
+    },
+    {
+      "name": "package",
+      "value": "@visual-regression/e2e-playwright.box.spec.mjs"
+    },
+    {
+      "name": "_fallbackTestCaseId",
+      "value": "0f2a2879133d9e1c88564b2997bf7d8d"
+    },
+    {
+      "name": "titlePath",
+      "value": " > chromium > box.spec.mjs"
+    },
+    {
+      "name": "host",
+      "value": "host"
+    },
+    {
+      "name": "thread",
+      "value": "thread"
+    },
+    {
+      "name": "parentSuite",
+      "value": "chromium"
+    },
+    {
+      "name": "suite",
+      "value": "box.spec.mjs"
+    }
+  ],
+  "links": [],
+  "start": 1795342106458,
+  "testCaseId": "af3b43cb05b68c33889d9dc75ad7dd3e",
+  "fullName": "box.spec.mjs › box-a",
+  "titlePath": [
+    "@visual-regression/e2e-playwright",
+    "box.spec.mjs"
+  ],
+  "stop": 1795342106640
+}

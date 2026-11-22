@@ -22,6 +22,8 @@ The format is runner-agnostic. The same file is written by the [pixsame](https:/
 
 It is built on [CTRF](https://ctrf.io), the Common Test Report Format: the envelope (`reportFormat`, `specVersion`), `tool`, `summary`, the CI and platform fields and the open `extra` objects carry CTRF's names, so a manifest converts to a CTRF report and back without renaming anything ([`toCtrf` / `fromCtrf`](#ctrf)). This format adds what CTRF has no field for: a visual comparison's three images, its statuses, its diff ratio and its threshold.
 
+A manifest also exports to the reports other tools already read: [Allure results](#allure), where a comparison shows up in Allure's image diff view, and [JUnit XML](#junit-xml), which most CI systems take.
+
 The spec lives at [visual-regression.dev/manifest](https://visual-regression.dev/manifest). This package has no runtime dependencies. To convert a tool's output without writing code, use [the command line](#from-the-command-line).
 
 - [The format](#the-format)
@@ -291,7 +293,7 @@ writer.reset(); // start of a run: forget everything, delete the file
 
 ## Converting to and from other formats
 
-Every converter below but Loki's is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind.
+Every converter below but Loki's is run against the real tool in the repository's [`examples/converters`](https://github.com/visual-regression/visual-regression/tree/main/examples/converters): the tool records baselines, one comparison is made to fail, one baseline is removed, and the converted manifest is checked against the files the tool left behind. The Allure export is fed to the real `allure generate` there. The JUnit export is checked against no CI system.
 
 ### From the command line
 
@@ -323,6 +325,7 @@ The manifest is written to `visual-regression-manifest.<tool>.json` in the proje
 | `reg-cli`                   | `reg.json` by default                                  | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`, `--update` |
 | `lost-pixel`                | the project root                                       | `--max-diff-ratio` (its `threshold`), `--update`                         |
 | `loki`                      | the project root                                       | `--configurations chrome.laptop,chrome.iphone7`                          |
+| `allure`                    | the results folder, `allure-results` by default        | `--max-diff-ratio`, `--max-diff-pixels`, `--color-threshold`             |
 | `ctrf`                      | the CTRF report                                        | `--lenient`                                                              |
 
 The flags are the options of the converters, described below for each tool: the limits are what your tool was configured with, because the files it leaves behind do not say. A flag the tool does not take is refused. Everything else a converter accepts (`baselineDir`, `snapshotPathTemplate`, `runner`, ...) goes into `--options` as a JSON object, which is merged over what the flags set:
@@ -332,6 +335,23 @@ npx visual-regression-manifest convert lost-pixel --options '{"baselineDir":"sho
 ```
 
 A report has to lie inside the project root, as the manifest only holds paths relative to it. The command exits with 1 and prints the reason when it cannot convert.
+
+`export` goes the other way and writes a manifest as a report other tools read:
+
+```bash
+# an Allure results folder, for `allure generate`
+npx visual-regression-manifest export allure visual-regression-manifest.json
+
+# a JUnit XML report, for the test tab of your CI
+npx visual-regression-manifest export junit visual-regression-manifest.json -o reports/visual.xml
+```
+
+| Format   | Writes                                                    | `-o` default                  |
+| -------- | --------------------------------------------------------- | ----------------------------- |
+| `allure` | [Allure results](#allure), next to the ones in the folder | `allure-results`              |
+| `junit`  | one [JUnit XML](#junit-xml) file                          | `visual-regression-junit.xml` |
+
+Both write into the current directory unless `-o` says otherwise. The Allure export reads the images from the `projectRoot` the manifest records; when the manifest comes from another machine (a downloaded CI artifact), `-p, --project-root <dir>` says where they are now. The JUnit export reads no images and takes no `-p`; its options (`name`, `attachmentPaths`) go into `--options` as a JSON object.
 
 ### CTRF
 
@@ -366,6 +386,74 @@ const same = fromCtrf(JSON.parse(fs.readFileSync('ctrf-report.json', 'utf8')));
 | any other `extra` namespace                                                                                     | the same namespace on the CTRF object                                                    |
 
 `fromCtrf` reads reports made by `toCtrf` back without loss (apart from the entry order, which is re-sorted, and the summary, which is recomputed). With `{ lenient: true, projectRoot }` it also converts the visual tests of reports from other reporters, taking the three images from attachments named or tagged `baseline`/`expected`, `actual` and `diff`, and the status from `rawStatus` or from which images exist; absolute paths become relative to `projectRoot`; one outside it has no safe relative form, so it is left out with a warning (`onWarning`, default `process.emitWarning`) and a test whose baseline is outside is skipped. A test without a baseline attachment has no entry, and a baseline the run just wrote looks like a failed comparison: a plain CTRF report cannot tell them apart.
+
+### Allure
+
+[Allure Report](https://allurereport.org) shows a screenshot comparison in its own view (expected, actual, diff, overlay, side by side) when a test carries an image diff attachment. A manifest becomes an Allure results folder with one test per entry:
+
+```ts
+import {
+  readManifestFile,
+  writeAllureResults,
+} from 'visual-regression-manifest';
+
+const manifest = readManifestFile('visual-regression-manifest.json');
+writeAllureResults('allure-results', manifest);
+// then: npx allure generate allure-results
+```
+
+| manifest                                                                                                 | Allure result                                                                                                              |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| entry `name`                                                                                             | `name`, the last part of `fullName`                                                                                        |
+| `status`                                                                                                 | `status`: `failed` and `missing-baseline` are `failed`, the rest `passed`; verbatim in the `visualRegression.status` label |
+| `message`                                                                                                | `statusDetails.message`                                                                                                    |
+| `test.filePath`, `test.titlePath`                                                                        | the `parentSuite`, `suite` and `subSuite` labels, `titlePath`                                                              |
+| `images` of an entry with an actual image                                                                | one `application/vnd.allure.image.diff` attachment holding the images (the actual image alone when there is no baseline)   |
+| the baseline of an entry without an actual image, `attachments`                                          | plain attachments, copied into the folder                                                                                  |
+| `variant`                                                                                                | the `variant` parameter                                                                                                    |
+| `comparison.diffRatio`, `maxDiffRatio`, `colorThreshold`, `colorMetric`, the browser, the OS, `viewport` | parameters left out of the test's history                                                                                  |
+| `recordedAt`, `duration`                                                                                 | `stop`, `start`                                                                                                            |
+| `runner.name`                                                                                            | the `framework` label                                                                                                      |
+
+The images are embedded in the attachment, so the results folder stands on its own. The files are added to whatever results the folder holds, and an entry always gets the same file names: exporting a run again overwrites its own files, but the files of entries that are gone stay until you empty the folder. `toAllureResults` gives the same files in memory, all at once; use `writeAllureResults` for a run with many or large images.
+
+The manifest says which files are read (its `projectRoot` and its paths), so export a manifest only when you trust where it comes from. The export reads regular files inside the project root and nothing else: a file that cannot be read, is not an image where one is due, or lies outside the project (by its path or through a link) is left out with a warning (`onWarning`, default `process.emitWarning`). `projectRoot` says where the images are when that is not the manifest's own `projectRoot`. Everything else in the manifest (hashes, renderer, CI, options) has no place in Allure results and is not written.
+
+The other way, `fromAllureResults` reads an Allure results folder and makes one entry per image diff attachment. The attachment is the same in every Allure adapter, whatever the framework and language; the converter is run against the results of `allure-playwright` only:
+
+```ts
+import { fromAllureResults } from 'visual-regression-manifest';
+
+const manifest = fromAllureResults({
+  projectRoot: process.cwd(),
+  resultsDir: 'allure-results', // the default
+  maxDiffRatio: 0.01, // what your tool was configured with
+});
+```
+
+Allure keeps the images inside the attachment, and a manifest lists image files, so this converter, unlike the others, writes files: the images go into `visual-regression-images` inside the results folder (`imagesDir` to put them elsewhere in the project). The manifest's baseline is that copy, not the file your tool compares against: the manifest is good for reviewing a run, not for approving one.
+
+A diff without an expected image is `missing-baseline`; any other is `failed`, or `passed` when the test passed; a `visualRegression.status` label wins over both. The variant is the `variant` parameter, else the test's parameters joined (a Playwright project, a browser). Only the last attempt of a retried test is converted. Allure records no diff ratio: it is `0` unless a `diffRatio` parameter says otherwise. A comparison that left no image diff attachment (a passing one, mostly) has no entry, and the test file is not known. That also holds for results `writeAllureResults` wrote: reading them back keeps the names, statuses, ratios and variants of the entries that have an actual image, and nothing else.
+
+### JUnit XML
+
+Most CI systems read JUnit XML: the test tabs of GitLab and Jenkins, pull request annotations, flaky test dashboards. `toJUnit` gives a manifest as one report with a `<testsuite>` per test file and a `<testcase>` per entry:
+
+```ts
+import fs from 'fs';
+import { readManifestFile, toJUnit } from 'visual-regression-manifest';
+
+const manifest = readManifestFile('visual-regression-manifest.json');
+fs.writeFileSync('visual-regression-junit.xml', toJUnit(manifest));
+```
+
+`failed` and `missing-baseline` entries carry a `<failure>` with the entry's message (or one made from the diff ratio and the limit); every other status passes. JUnit XML has no place for a comparison, so this export loses most of it, and a manifest cannot be read back from the report:
+
+- The status, the diff ratio, the limit and the variant are `<properties>` of the test case (`visualRegression.status`, ...), which most readers ignore.
+- The images are `[[ATTACHMENT|path]]` lines in `<system-out>`, the convention GitLab and the Jenkins JUnit Attachments plugin read. The diff comes first, then the actual image, then the baseline, and nothing says which is which. A reader copies the files these lines name, so a path that leaves the project is never written.
+- The test cases carry `<properties>` and a `file` attribute, which lenient readers accept and a strict JUnit schema does not.
+
+`attachmentPaths` chooses the paths: `'repository'` (the default) writes them relative to the repository root, which GitLab expects, and falls back to the project root when the manifest does not know the repository; `'absolute'` writes them under the manifest's `projectRoot`, which Jenkins expects; `false` leaves the lines out. `name` names the root `<testsuites>` (default: the manifest's `tool.name`).
 
 ### Playwright's `toHaveScreenshot`
 
@@ -618,6 +706,8 @@ The status is inferred from which files exist (`inferStatus`), image sizes are r
 | `ManifestWriter`, `ManifestBuilder`, `writeManifestFile`, `createManifestHeader`                                                                                                          | writing                                                               |
 | `detectCi`                                                                                                                                                                                | the `ci` block from environment variables (GitHub Actions, GitLab CI) |
 | `toCtrf`, `fromCtrf`, `toCtrfStatus`, `EXTRA_NAMESPACE`                                                                                                                                   | CTRF                                                                  |
+| `toAllureResults`, `writeAllureResults`, `fromAllureResults`, `toAllureStatus`, `ALLURE_IMAGE_DIFF_TYPE`, `ALLURE_STATUS_LABEL`                                                           | Allure results                                                        |
+| `toJUnit`                                                                                                                                                                                 | JUnit XML                                                             |
 | `fromPlaywrightReport`, `fromVitestScreenshots`, `fromJestImageSnapshots`, `fromCypressVisualRegression`, `fromBackstopReport`, `fromRoborazziResults`, `fromImageTriples`, `inferStatus` | converters                                                            |
 | `readPngSize`                                                                                                                                                                             | width and height from a PNG header                                    |
 
