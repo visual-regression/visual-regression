@@ -45,12 +45,12 @@
     "@types/node": "20.19.43",
     "@types/pngjs": "^6.0.5",
     "@types/tmp": "0.2.6",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "4.1.12",
     "del-cli": "7.0.0",
     "esbuild": "0.28.2",
     "tmp-promise": "3.0.3",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "keywords": [
     "visual regression testing",
