@@ -42,7 +42,7 @@
     "visual-regression-manifest": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "20.19.43",
+    "@types/node": "26.6.11",
     "@types/pngjs": "^6.0.5",
     "@types/tmp": "0.2.6",
     "@vitest/coverage-v8": "4.1.11",
